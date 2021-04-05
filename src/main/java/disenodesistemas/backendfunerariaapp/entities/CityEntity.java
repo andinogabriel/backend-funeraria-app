@@ -1,11 +1,15 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity(name = "cities")
+@Getter @Setter
 public class CityEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
