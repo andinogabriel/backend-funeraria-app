@@ -2,14 +2,18 @@ package disenodesistemas.backendfunerariaapp.entities;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Entity(name = "users")
 @Table(indexes = { @Index(columnList = "userId", name = "index_userid", unique = true), @Index(columnList = "email", name = "index_email", unique = true) })
+@EntityListeners(AuditingEntityListener.class)
 @Getter @Setter
 public class UserEntity implements Serializable {
 
@@ -37,6 +41,9 @@ public class UserEntity implements Serializable {
     @Column(nullable = false)
     private String encryptedPassword;
 
+    @CreatedDate
+    private Date startDate;
+
     @ManyToOne
     @JoinColumn(name = "gender_id")
     private GenderEntity gender;
@@ -44,5 +51,7 @@ public class UserEntity implements Serializable {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "userNumber")
     private List<MobileNumberEntity> mobileNumbers = new ArrayList<>();
 
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "userAddress")
+    private List<AddressEntity> addresses = new ArrayList<>();
 
 }
