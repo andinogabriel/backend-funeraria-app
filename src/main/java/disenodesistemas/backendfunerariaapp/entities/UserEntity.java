@@ -35,5 +35,9 @@ public class UserEntity implements Serializable {
     @Column(nullable = false)
     private String encryptedPassword;
 
+    @ManyToOne
+    @JoinColumn(name = "gender_id")
+    private GenderEntity gender;
+
 
 }
