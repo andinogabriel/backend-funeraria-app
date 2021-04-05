@@ -5,6 +5,8 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity(name = "users")
 @Table(indexes = { @Index(columnList = "userId", name = "index_userid", unique = true), @Index(columnList = "email", name = "index_email", unique = true) })
@@ -38,6 +40,9 @@ public class UserEntity implements Serializable {
     @ManyToOne
     @JoinColumn(name = "gender_id")
     private GenderEntity gender;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "userNumber")
+    private List<MobileNumberEntity> mobileNumbers = new ArrayList<>();
 
 
 }
