@@ -23,5 +23,9 @@ public class MobileNumberEntity implements Serializable {
     @JoinColumn(name = "user_id")
     private UserEntity userNumber;
 
+    @ManyToOne
+    @JoinColumn(name = "supplier_id")
+    private SupplierEntity supplierNumber;
+
 
 }
