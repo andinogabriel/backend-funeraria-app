@@ -31,5 +31,13 @@ public class AddressEntity implements Serializable {
     @JoinColumn(name = "city_id")
     private CityEntity city;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private UserEntity userAddress;
+
+    @ManyToOne
+    @JoinColumn(name = "supplier_id")
+    private SupplierEntity supplierAddress;
+
 
 }
