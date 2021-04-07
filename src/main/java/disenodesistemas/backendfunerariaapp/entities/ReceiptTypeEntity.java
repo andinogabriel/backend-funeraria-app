@@ -8,9 +8,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity(name =  "genders")
+@Entity(name = "receipt_types")
 @Getter @Setter
-public class GenderEntity implements Serializable {
+public class ReceiptTypeEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -21,8 +21,9 @@ public class GenderEntity implements Serializable {
     @Column(nullable = false, length = 75)
     private String name;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "affiliateGender")
-    private List<AffiliateEntity> affiliates = new ArrayList<>();
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "receiptType")
+    private List<EntryEntity> entries = new ArrayList<>();
 
-
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "receiptType")
+    private List<ServiceEntity> services = new ArrayList<>();
 }

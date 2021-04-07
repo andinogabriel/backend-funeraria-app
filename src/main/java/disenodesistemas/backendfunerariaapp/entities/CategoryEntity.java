@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,9 +9,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity(name = "provinces")
+@Entity(name = "categories")
 @Getter @Setter
-public class ProvinceEntity implements Serializable {
+public class CategoryEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -18,14 +19,12 @@ public class ProvinceEntity implements Serializable {
     @GeneratedValue
     private long id;
 
-    @Column(nullable = false, length = 90)
+    @Column(nullable = false, length = 75)
     private String name;
 
-    @Column(nullable = false, length = 5)
-    private String code31662;
+    private String description;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "province")
-    private List<CityEntity> cities = new ArrayList<>();
-
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "category")
+    private List<ItemEntity> items = new ArrayList<>();
 
 }

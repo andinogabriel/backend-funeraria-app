@@ -18,15 +18,16 @@ public class CityEntity implements Serializable {
     @GeneratedValue
     private long id;
 
+    @ManyToOne
+    @JoinColumn(name = "province_id")
+    private ProvinceEntity province;
+
     @Column(nullable = false, length = 90)
     private String name;
 
     @Column(nullable = false, length = 15)
     private String zipCode;
 
-    @ManyToOne
-    @JoinColumn(name = "province_id")
-    private ProvinceEntity province;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "city")
     private List<AddressEntity> addresses = new ArrayList<>();

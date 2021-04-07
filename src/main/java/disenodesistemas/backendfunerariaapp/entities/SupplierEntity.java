@@ -36,5 +36,6 @@ public class SupplierEntity implements Serializable {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "supplierNumber")
     private List<MobileNumberEntity> mobileNumbers = new ArrayList<>();
 
-
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "entrySupplier")
+    private List<EntryEntity> entries = new ArrayList<>();
 }

@@ -44,14 +44,19 @@ public class UserEntity implements Serializable {
     @CreatedDate
     private Date startDate;
 
-    @ManyToOne
-    @JoinColumn(name = "gender_id")
-    private GenderEntity gender;
-
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "userNumber")
     private List<MobileNumberEntity> mobileNumbers = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "userAddress")
     private List<AddressEntity> addresses = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "affiliateUser")
+    private List<AffiliateEntity> affiliates = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "deceasedUser")
+    private List<DeceasedEntity> deceasedList = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "entryUser")
+    private List<EntryEntity> entries = new ArrayList<>();
 
 }
