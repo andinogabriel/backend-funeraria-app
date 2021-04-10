@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.validator.constraints.Range;
 
+import java.util.List;
+
 @Getter @Setter
 public class UserDetailsRequestModel {
     //Clase para que el usuario se registre
@@ -21,15 +23,13 @@ public class UserDetailsRequestModel {
     @Pattern(regexp = "(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])", message = "El email debe ser valido.")
     private String email;
 
-    @NotBlank(message = "El DNI es obligatorio.")
-    @Range(min = 6, max = 9, message = "El DNI debe ser valido.")
-    private Integer dni;
-
     @Size(min = 8, max = 30, message = "La contraseña debe tener entre 8 y 30 caracteres") //Size es para strings
     private String password;
 
     @Size(min = 8, max = 30, message = "La contraseña debe tener entre 8") //Size es para strings
     private String rePassword;
+
+
 
 
 }
