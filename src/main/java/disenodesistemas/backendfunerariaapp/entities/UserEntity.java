@@ -32,9 +32,6 @@ public class UserEntity implements Serializable {
     @Column(nullable = false, length = 75)
     private String lastName;
 
-    @Column(nullable = false)
-    private Integer dni;
-
     @Column(nullable = false, length = 150)
     private String email;
 

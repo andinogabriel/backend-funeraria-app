@@ -17,6 +17,9 @@ public class ServiceDetailEntity implements Serializable {
     private long id;
 
     @Column(nullable = false)
+    private String serviceDetailId;
+
+    @Column(nullable = false)
     private Integer quantity;
 
     @ManyToOne
@@ -26,6 +29,6 @@ public class ServiceDetailEntity implements Serializable {
     @ManyToOne
     @JoinColumn(name = "item_id")
     private ItemEntity itemService;
-    
+
 
 }

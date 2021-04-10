@@ -28,10 +28,10 @@ public class EntryEntity implements Serializable {
     private String entryId;
 
     @Column(nullable = false, length = 20)
-    private String receiptNumber;
+    private Integer receiptNumber;
 
     @Column(nullable = false, length = 10)
-    private String receiptSeries;
+    private Integer receiptSeries;
 
     @CreatedDate
     private Date entryDate;

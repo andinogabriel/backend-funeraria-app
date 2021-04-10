@@ -10,6 +10,8 @@ import java.io.Serializable;
 import java.util.Date;
 
 @Entity(name = "affiliates")
+@Table(indexes = { @Index(columnList = "affiliateId", name = "affiliate_id", unique = true), @Index(columnList = "dni", name = "index_dni", unique = true) })
+
 @Getter @Setter
 @EntityListeners(AuditingEntityListener.class)
 public class AffiliateEntity implements Serializable {
@@ -47,7 +49,7 @@ public class AffiliateEntity implements Serializable {
     private UserEntity affiliateUser;
 
     @ManyToOne
-    @JoinColumn(name = "kinship_id")
+    @JoinColumn(name = "relationship_id")
     private RelationshipEntity affiliateRelationship;
 
 

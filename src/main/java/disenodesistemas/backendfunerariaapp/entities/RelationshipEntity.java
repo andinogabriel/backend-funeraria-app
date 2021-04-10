@@ -8,7 +8,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity(name = "kinship") //Parentesco
+@Entity(name = "relationships") //Parentesco
 @Getter @Setter
 public class RelationshipEntity implements Serializable {
     //Family or another relationship with the user
