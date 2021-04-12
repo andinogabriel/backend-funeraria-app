@@ -5,6 +5,7 @@ import disenodesistemas.backendfunerariaapp.entities.UserEntity;
 import disenodesistemas.backendfunerariaapp.exceptions.EmailExistsException;
 import disenodesistemas.backendfunerariaapp.repository.UserRepository;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -70,9 +71,9 @@ public class UserService implements UserServiceInterface{
             throw new UsernameNotFoundException(email);
         }
 
-        UserDto userToReturn = mapper.map(userEntity, UserDto.class);
+        UserDto userToReturn = new UserDto();
 
-        //BeanUtils.copyProperties(userEntity, userToReturn);
+        BeanUtils.copyProperties(userEntity, userToReturn);
 
         return userToReturn;
     }
