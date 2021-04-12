@@ -43,9 +43,6 @@ public class UserController {
 
         UserDto userDto = mapper.map(userDetails, UserDto.class); //OBjeto que sirve para enviar a la logica de nuestra app
 
-        //Copia las propiedades de un objeto a otro objeto
-        //BeanUtils.copyProperties(userDetails, userDto);
-
         //Se encarga de crear el usuario en la DB
         UserDto createdUser = userService.createUser(userDto);
 
