@@ -47,7 +47,7 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
         final AuthenticationFilter filter = new AuthenticationFilter(authenticationManager());
 
         //Especificamos la url para el login
-        filter.setFilterProcessesUrl("/users/login");
+        filter.setFilterProcessesUrl("/api/v1/users/login");
 
         return filter;
     }

@@ -17,7 +17,6 @@ public class UserRest {
     private String lastName;
     private String email;
     private Date birthDate;
-    private GenderRest gender;
     private Date startDate;
     private List<AffiliateRest> affiliates;
     private List<DeceasedRest> deceasedList;

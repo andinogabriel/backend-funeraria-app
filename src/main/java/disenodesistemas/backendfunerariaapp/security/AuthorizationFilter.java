@@ -45,11 +45,8 @@ public class AuthorizationFilter extends BasicAuthenticationFilter {
             //Quitamos Bearer del token
             token = token.replace(SecurityConstants.TOKEN_PREFIX, "");
             //Revisamos si la key es la misma que firmamos el token, en user almacenamos el email
-            String user = Jwts.parser()
-                    .setSigningKey(SecurityConstants.getTokenSecret())
-                    .parseClaimsJws(token)
-                    .getBody()
-                    .getSubject(); //En el subject tenemos el correo electronico del user
+            String user = Jwts.parser().setSigningKey(SecurityConstants.getTokenSecret()).parseClaimsJws(token)
+                    .getBody().getSubject(); //En el subject tenemos el correo electronico del user
             //Si existe un email dentro del token retornamos un objeto donde le pasamos el email, no hay necesidad de pasar el password
             if (user != null) {
                 return new UsernamePasswordAuthenticationToken(user, null, new ArrayList<>());

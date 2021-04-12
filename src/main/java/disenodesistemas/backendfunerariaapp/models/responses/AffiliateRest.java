@@ -13,6 +13,7 @@ public class AffiliateRest {
     private String lastName;
     private String firstName;
     private Date birthDate;
+    private Date startDate;
     private UserRest userAffiliate;
     private GenderRest genderAffiliate;
     private RelationshipRest relationshipUser;
