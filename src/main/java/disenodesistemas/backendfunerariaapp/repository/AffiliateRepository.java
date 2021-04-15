@@ -12,4 +12,6 @@ public interface AffiliateRepository extends PagingAndSortingRepository<Affiliat
 
     AffiliateEntity findByAffiliateId(String affiliateId);
 
+    List<AffiliateEntity> getByUserIdOrderByStartDateDesc(long userId);
+
 }
