@@ -46,7 +46,7 @@ public class AffiliateEntity implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private UserEntity affiliateUser;
+    private UserEntity user;
 
     @ManyToOne
     @JoinColumn(name = "relationship_id")

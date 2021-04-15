@@ -47,7 +47,7 @@ public class UserEntity implements Serializable {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "userAddress")
     private List<AddressEntity> addresses = new ArrayList<>();
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "affiliateUser")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
     private List<AffiliateEntity> affiliates = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "deceasedUser")
