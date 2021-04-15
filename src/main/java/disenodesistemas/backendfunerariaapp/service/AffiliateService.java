@@ -14,6 +14,9 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.UUID;
 
 @Service
@@ -42,7 +45,7 @@ public class AffiliateService implements AffiliateServiceInterface {
         RelationshipEntity relationshipEntity = relationshipRepository.findById(affiliate.getAffiliateRelationship());
 
         AffiliateEntity affiliateEntity = new AffiliateEntity();
-        affiliateEntity.setAffiliateUser(userEntity);
+        affiliateEntity.setUser(userEntity);
         affiliateEntity.setAffiliateGender(genderEntity);
         affiliateEntity.setAffiliateRelationship(relationshipEntity);
         affiliateEntity.setDni(affiliate.getDni());

@@ -1,8 +1,11 @@
 package disenodesistemas.backendfunerariaapp.service;
 
+import disenodesistemas.backendfunerariaapp.dto.AffiliateDto;
 import disenodesistemas.backendfunerariaapp.dto.UserDto;
+import disenodesistemas.backendfunerariaapp.entities.AffiliateEntity;
 import disenodesistemas.backendfunerariaapp.entities.UserEntity;
 import disenodesistemas.backendfunerariaapp.exceptions.EmailExistsException;
+import disenodesistemas.backendfunerariaapp.repository.AffiliateRepository;
 import disenodesistemas.backendfunerariaapp.repository.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
@@ -14,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -21,6 +25,9 @@ public class UserService implements UserServiceInterface{
 
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    AffiliateRepository affiliateRepository;
 
     @Autowired
     BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -76,6 +83,23 @@ public class UserService implements UserServiceInterface{
         BeanUtils.copyProperties(userEntity, userToReturn);
 
         return userToReturn;
+    }
+
+    @Override
+    public List<AffiliateDto> getUserAffiliates(String email) {
+
+        UserEntity userEntity = userRepository.findByEmail(email);
+
+        List<AffiliateEntity> affiliates = affiliateRepository.getByUserIdOrderByStartDateDesc(userEntity.getId());
+
+        List<AffiliateDto> affiliatesDto = new ArrayList<>();
+
+        for (AffiliateEntity affiliate : affiliates) {
+            AffiliateDto affiliateDto = mapper.map(affiliate, AffiliateDto.class);
+            affiliatesDto.add(affiliateDto);
+        }
+
+        return affiliatesDto;
     }
 
 
