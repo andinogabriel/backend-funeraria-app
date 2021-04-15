@@ -2,9 +2,12 @@ package disenodesistemas.backendfunerariaapp.models.responses;
 
 import disenodesistemas.backendfunerariaapp.entities.ReceiptTypeEntity;
 import disenodesistemas.backendfunerariaapp.entities.SupplierEntity;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
+@Getter @Setter
 public class EntryRest {
 
     private String entryId;

@@ -14,9 +14,9 @@ public class AffiliateRest {
     private String firstName;
     private Date birthDate;
     private Date startDate;
-    private UserRest userAffiliate;
+    private UserRest user;
     private GenderRest genderAffiliate;
-    private RelationshipRest relationshipUser;
+    private RelationshipRest affiliateRelationship;
 
 
 }
