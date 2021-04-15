@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,7 +15,10 @@ public class AffiliateCreationDto implements Serializable {
     private String firstName;
     private String lastName;
     private Integer dni;
+
+    @JsonFormat(shape=JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     private Date birthDate;
+
     private Date startDate;
     private long affiliateGender;
     private String userEmail;
