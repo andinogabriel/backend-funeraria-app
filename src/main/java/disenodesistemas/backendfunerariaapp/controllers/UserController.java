@@ -1,7 +1,9 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
+import disenodesistemas.backendfunerariaapp.dto.AffiliateDto;
 import disenodesistemas.backendfunerariaapp.dto.UserDto;
 import disenodesistemas.backendfunerariaapp.models.requests.UserDetailsRequestModel;
+import disenodesistemas.backendfunerariaapp.models.responses.AffiliateRest;
 import disenodesistemas.backendfunerariaapp.models.responses.UserRest;
 import disenodesistemas.backendfunerariaapp.service.UserServiceInterface;
 import org.modelmapper.ModelMapper;
@@ -11,6 +13,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -51,6 +55,24 @@ public class UserController {
 
         return userToReturn;
 
+    }
+
+    @GetMapping(path = "/affiliates")
+    public List<AffiliateRest> getAffiliates() {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getPrincipal().toString();
+
+        List<AffiliateDto> affiliatesDto = userService.getUserAffiliates(email);
+
+        List<AffiliateRest> affiliatesRest = new ArrayList<>();
+
+        for (AffiliateDto affiliate : affiliatesDto) {
+            AffiliateRest affiliateRest = mapper.map(affiliate, AffiliateRest.class);
+            affiliatesRest.add(affiliateRest);
+
+        }
+        return affiliatesRest;
     }
 
 }
