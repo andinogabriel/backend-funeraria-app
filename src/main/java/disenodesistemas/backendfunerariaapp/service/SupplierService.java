@@ -1,12 +1,18 @@
 package disenodesistemas.backendfunerariaapp.service;
 
+import disenodesistemas.backendfunerariaapp.dto.MobileNumberDto;
 import disenodesistemas.backendfunerariaapp.dto.SupplierDto;
+import disenodesistemas.backendfunerariaapp.entities.MobileNumberEntity;
 import disenodesistemas.backendfunerariaapp.entities.SupplierEntity;
 import disenodesistemas.backendfunerariaapp.repository.AddressRepository;
 import disenodesistemas.backendfunerariaapp.repository.MobileNumberRepository;
 import disenodesistemas.backendfunerariaapp.repository.SupplierRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -48,18 +54,6 @@ public class SupplierService {
         return supplierDto;
     }
 
-    public List<SupplierDto> getSuppliers() {
-
-        List<SupplierEntity> supplierEntities = supplierRepository.findAll();
-
-        List<SupplierDto> suppliersDto = new ArrayList<>();
-
-        for (SupplierEntity supplier : supplierEntities) {
-            SupplierDto supplierDto = mapper.map(supplier, SupplierDto.class);
-            suppliersDto.add(supplierDto);
-        }
-        return suppliersDto;
-    }
 
     public void deleteSupplier(long id) {
         SupplierEntity supplierEntity = supplierRepository.findById(id);
@@ -82,5 +76,55 @@ public class SupplierService {
         return supplierDto;
     }
 
+    public List<MobileNumberDto> getSupplierNumbers(long supplierNumber) {
+        SupplierEntity supplierEntity = supplierRepository.findById(supplierNumber);
+
+        List<MobileNumberEntity> mobileNumberEntities = mobileNumberRepository.findBySupplierNumber(supplierEntity);
+
+        List<MobileNumberDto> mobileNumbersDto = new ArrayList<>();
+
+        for (MobileNumberEntity mobileNumber : mobileNumberEntities) {
+            MobileNumberDto mobileNumberDto = mapper.map(mobileNumber, MobileNumberDto.class);
+            mobileNumbersDto.add(mobileNumberDto);
+        }
+        return mobileNumbersDto;
+    }
+
+    public Page<SupplierDto> getSuppliersPaginated(int page, int limit, String sortBy, String sortDir) {
+        if (page > 0) {
+            page = page - 1;
+        }
+
+        List<SupplierDto> suppliersDto = new ArrayList<>();
+        Pageable pageable = PageRequest.of(
+                page, limit,
+                sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending()
+        );
+        Page<SupplierEntity> suppliersPage = supplierRepository.findAll(pageable);
+        Page<SupplierDto> pagesDto = mapper.map(suppliersPage, Page.class);
+
+        //List<SupplierEntity> suppliers = suppliersPage.getContent();
+
+        /*
+        for (SupplierEntity supplier : suppliers) {
+            SupplierDto supplierDto = mapper.map(supplier, SupplierDto.class);
+            suppliersDto.add(supplierDto);
+        }*/
+        return pagesDto;
+    }
+
+    public Page<SupplierDto> getSuppliersByName(String name, int page, int limit, String sortBy, String sortDir) {
+        if (page > 0) {
+            page = page - 1;
+        }
+        List<SupplierDto> suppliersDto = new ArrayList<>();
+        Pageable pageable = PageRequest.of(
+                page, limit,
+                sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending()
+        );
+        Page<SupplierEntity> suppliersPage = supplierRepository.findByNameContaining(pageable, name);
+        Page<SupplierDto> pagesDto = mapper.map(suppliersPage, Page.class);
+        return pagesDto;
+    }
 
 }
