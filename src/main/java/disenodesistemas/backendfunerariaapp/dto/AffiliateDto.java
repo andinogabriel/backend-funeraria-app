@@ -18,7 +18,6 @@ public class AffiliateDto implements Serializable {
     private String firstName;
     private Integer dni;
 
-    @JsonFormat(shape=JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     private Date birthDate;
 
     private Date startDate;
