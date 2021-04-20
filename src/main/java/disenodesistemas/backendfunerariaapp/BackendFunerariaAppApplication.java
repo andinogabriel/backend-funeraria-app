@@ -1,6 +1,10 @@
 package disenodesistemas.backendfunerariaapp;
 
+import disenodesistemas.backendfunerariaapp.dto.MobileNumberDto;
+import disenodesistemas.backendfunerariaapp.dto.SupplierDto;
 import disenodesistemas.backendfunerariaapp.dto.UserDto;
+import disenodesistemas.backendfunerariaapp.models.responses.MobileNumberRest;
+import disenodesistemas.backendfunerariaapp.models.responses.SupplierRest;
 import disenodesistemas.backendfunerariaapp.models.responses.UserRest;
 import disenodesistemas.backendfunerariaapp.security.AppProperties;
 import org.modelmapper.ModelMapper;
@@ -42,7 +46,8 @@ public class BackendFunerariaAppApplication {
 
 		//Cuando mapee de UserDto a la clase UserRest no queremos que traigan los afiliados de UserRest
 		mapper.typeMap(UserDto.class, UserRest.class).addMappings(m -> m.skip(UserRest::setAffiliates));
-		//Cuando se este mapeando de AffiliateDto a AffiliateRest, evitamos que la columna de affiliates de UserRest se mapee para evitar mapeo infinito
+		//mapper.typeMap(SupplierDto.class, SupplierRest.class).addMappings(m -> m.skip(SupplierRest::setMobileNumbers));
+		//mapper.typeMap(SupplierDto.class, SupplierRest.class).addMappings(m -> m.skip(SupplierRest::setAddresses));
 
 		return mapper;
 	}
