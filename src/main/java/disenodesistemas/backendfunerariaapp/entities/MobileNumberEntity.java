@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -23,7 +24,8 @@ public class MobileNumberEntity implements Serializable {
     @JoinColumn(name = "user_id")
     private UserEntity userNumber;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnoreProperties(value = {"mobileNumbers", "handler","hibernateLazyInitializer"}, allowSetters = true)
     @JoinColumn(name = "supplier_id")
     private SupplierEntity supplierNumber;
 
