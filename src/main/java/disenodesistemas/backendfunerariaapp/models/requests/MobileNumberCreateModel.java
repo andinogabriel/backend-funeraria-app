@@ -1,14 +1,13 @@
 package disenodesistemas.backendfunerariaapp.models.requests;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter @Setter
 public class MobileNumberCreateModel {
 
     private Integer mobileNumber;
+    private long userNumber;
+    private long supplierNumber;
 
-    public Integer getNumber() {
-        return mobileNumber;
-    }
-
-    public void setNumber(Integer number) {
-        this.mobileNumber = number;
-    }
 }

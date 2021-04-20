@@ -19,7 +19,6 @@ public class AffiliateDetailsRequestModel {
     private String lastName;
 
     @NotNull(message = "La fecha de nacimiento es obligatoria.")
-    @JsonFormat(shape=JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     private Date birthDate;
 
     @NotNull(message = "El número de DNI es obligatorio.")
@@ -31,7 +30,7 @@ public class AffiliateDetailsRequestModel {
 
     @NotNull(message = "El genero es obligatorio.")
     @Range(min = 1, max = 3, message = "El genero es invalido.")
-    private long genderId;
+    private long affiliateGender;
 
 
 }

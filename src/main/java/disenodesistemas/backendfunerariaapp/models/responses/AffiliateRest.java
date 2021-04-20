@@ -15,7 +15,7 @@ public class AffiliateRest {
     private Date birthDate;
     private Date startDate;
     private UserRest user;
-    private GenderRest genderAffiliate;
+    private GenderRest affiliateGender;
     private RelationshipRest affiliateRelationship;
 
 
