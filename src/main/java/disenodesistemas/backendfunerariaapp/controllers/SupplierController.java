@@ -84,7 +84,7 @@ public class SupplierController {
     }
 
     @GetMapping(path = "/paginated")
-    public Page<SupplierRest> getSuppliersPaginated(@RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "10") int limit, @RequestParam(value = "sortBy") String sortBy, @RequestParam(value = "sortDir") String sortDir) {
+    public Page<SupplierRest> getSuppliersPaginated(@RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "5") int limit, @RequestParam(value = "sortBy", defaultValue = "name") String sortBy, @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
         Page<SupplierDto> suppliersDto = supplierService.getSuppliersPaginated(page, limit, sortBy, sortDir);
         Page<SupplierRest> suppliersPage = mapper.map(suppliersDto, Page.class);
         //List<SupplierRest> suppliersRest = new ArrayList<>();
