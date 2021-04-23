@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -31,6 +32,7 @@ public class SupplierEntity implements Serializable {
     private String email;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "supplierAddress")
+    @JsonManagedReference
     private List<AddressEntity> addresses = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "supplierNumber")

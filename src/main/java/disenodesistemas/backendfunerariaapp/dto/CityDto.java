@@ -11,8 +11,9 @@ public class CityDto implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private long id;
-    private String zipCode;
     private ProvinceDto province;
+    private String name;
+    private String zipCode;
     private List<AddressDto> addresses;
 
 

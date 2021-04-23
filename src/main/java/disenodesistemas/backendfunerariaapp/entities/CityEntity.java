@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,6 +20,7 @@ public class CityEntity implements Serializable {
     private long id;
 
     @ManyToOne
+    @JsonIgnoreProperties(value = {"cities", "handler","hibernateLazyInitializer"}, allowSetters = true)
     @JoinColumn(name = "province_id")
     private ProvinceEntity province;
 
@@ -27,7 +29,6 @@ public class CityEntity implements Serializable {
 
     @Column(nullable = false, length = 15)
     private String zipCode;
-
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "city")
     private List<AddressEntity> addresses = new ArrayList<>();

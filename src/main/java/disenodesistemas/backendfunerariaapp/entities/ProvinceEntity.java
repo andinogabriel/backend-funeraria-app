@@ -18,11 +18,11 @@ public class ProvinceEntity implements Serializable {
     @GeneratedValue
     private long id;
 
-    @Column(nullable = false, length = 90)
-    private String name;
-
     @Column(nullable = false, length = 5)
     private String code31662;
+
+    @Column(nullable = false, length = 90)
+    private String name;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "province")
     private List<CityEntity> cities = new ArrayList<>();

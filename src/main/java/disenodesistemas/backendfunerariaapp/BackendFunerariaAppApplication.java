@@ -1,11 +1,7 @@
 package disenodesistemas.backendfunerariaapp;
 
-import disenodesistemas.backendfunerariaapp.dto.MobileNumberDto;
-import disenodesistemas.backendfunerariaapp.dto.SupplierDto;
-import disenodesistemas.backendfunerariaapp.dto.UserDto;
-import disenodesistemas.backendfunerariaapp.models.responses.MobileNumberRest;
-import disenodesistemas.backendfunerariaapp.models.responses.SupplierRest;
-import disenodesistemas.backendfunerariaapp.models.responses.UserRest;
+import disenodesistemas.backendfunerariaapp.dto.*;
+import disenodesistemas.backendfunerariaapp.models.responses.*;
 import disenodesistemas.backendfunerariaapp.security.AppProperties;
 import org.modelmapper.ModelMapper;
 import org.springframework.boot.SpringApplication;
@@ -46,9 +42,8 @@ public class BackendFunerariaAppApplication {
 
 		//Cuando mapee de UserDto a la clase UserRest no queremos que traigan los afiliados de UserRest
 		mapper.typeMap(UserDto.class, UserRest.class).addMappings(m -> m.skip(UserRest::setAffiliates));
-		//mapper.typeMap(SupplierDto.class, SupplierRest.class).addMappings(m -> m.skip(SupplierRest::setMobileNumbers));
-		//mapper.typeMap(SupplierDto.class, SupplierRest.class).addMappings(m -> m.skip(SupplierRest::setAddresses));
-
+		mapper.typeMap(SupplierDto.class, SupplierRest.class).addMappings(m-> m.skip(SupplierRest::setAddresses));
+		mapper.typeMap(SupplierDto.class, SupplierRest.class).addMappings(m -> m.skip(SupplierRest::setMobileNumbers));
 		return mapper;
 	}
 

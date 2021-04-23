@@ -1,5 +1,7 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,7 +21,7 @@ public class AddressEntity implements Serializable {
     @Column(nullable = false, length = 90)
     private String streetName;
 
-    private Integer blockStreet; //Altura de la calle
+    private Integer blockStreet;
 
     @Column(length = 90)
     private String apartment;
@@ -36,6 +38,7 @@ public class AddressEntity implements Serializable {
     private UserEntity userAddress;
 
     @ManyToOne
+    @JsonBackReference
     @JoinColumn(name = "supplier_id")
     private SupplierEntity supplierAddress;
 
