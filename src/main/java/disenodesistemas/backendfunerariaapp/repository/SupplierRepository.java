@@ -15,7 +15,7 @@ public interface SupplierRepository extends PagingAndSortingRepository<SupplierE
 
     SupplierEntity findById(long id);
 
-    Page<SupplierEntity> findByNameContaining(Pageable pageableRequest,String name);
+    Page<SupplierEntity> findByNameContaining(Pageable pageableRequest, String name);
 
     Page<SupplierEntity> findAll(Pageable pageableRequest);
 
