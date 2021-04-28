@@ -12,8 +12,8 @@ public class AddressDto implements Serializable {
 
     private long id;
     private String apartment;
-    private Integer blockStreet; //Altura de la calle
-    private String flat; //Piso del departamento
+    private Integer blockStreet;
+    private String flat;
     private String streetName;
     private CityDto city;
     private SupplierDto supplierAddress;
