@@ -42,8 +42,6 @@ public class BackendFunerariaAppApplication {
 
 		//Cuando mapee de UserDto a la clase UserRest no queremos que traigan los afiliados de UserRest
 		mapper.typeMap(UserDto.class, UserRest.class).addMappings(m -> m.skip(UserRest::setAffiliates));
-		mapper.typeMap(SupplierDto.class, SupplierRest.class).addMappings(m-> m.skip(SupplierRest::setAddresses));
-		mapper.typeMap(SupplierDto.class, SupplierRest.class).addMappings(m -> m.skip(SupplierRest::setMobileNumbers));
 		return mapper;
 	}
 

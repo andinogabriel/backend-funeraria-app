@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,9 +21,6 @@ public class ItemEntity implements Serializable {
     @GeneratedValue
     private long id;
 
-    @Column(nullable = false, length = 60)
-    private String itemId;
-
     @Column(nullable = false, length = 85)
     private String name;
 
@@ -38,9 +36,24 @@ public class ItemEntity implements Serializable {
     @Digits(integer = 6, fraction = 2)
     private BigDecimal price;
 
+    @Digits(integer = 6, fraction = 2)
+    private BigDecimal itemLength;
+
+    @Digits(integer = 6, fraction = 2)
+    private BigDecimal itemHeight;
+
+    @Digits(integer = 6, fraction = 2)
+    private BigDecimal itemWidth;
+
     @ManyToOne
+    @JsonIgnoreProperties(value = {"items", "handler","hibernateLazyInitializer"}, allowSetters = true)
     @JoinColumn(name = "category_id")
     private CategoryEntity category;
+
+    @ManyToOne
+    @JsonIgnoreProperties(value = {"brandItems", "handler","hibernateLazyInitializer"}, allowSetters = true)
+    @JoinColumn(name = "brand_id")
+    private BrandEntity brand;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "item")
     private List<EntryDetailEntity> entryDetails = new ArrayList<>();

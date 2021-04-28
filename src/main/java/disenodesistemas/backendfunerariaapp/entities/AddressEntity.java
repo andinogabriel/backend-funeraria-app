@@ -30,6 +30,7 @@ public class AddressEntity implements Serializable {
     private String flat; //Piso del departamento
 
     @ManyToOne
+    @JsonIgnoreProperties(value = {"addresses", "handler","hibernateLazyInitializer"}, allowSetters = true)
     @JoinColumn(name = "city_id")
     private CityEntity city;
 
@@ -42,5 +43,17 @@ public class AddressEntity implements Serializable {
     @JoinColumn(name = "supplier_id")
     private SupplierEntity supplierAddress;
 
-
+    @Override
+    public String toString() {
+        return "AddressEntity{" +
+                "id=" + id +
+                ", streetName='" + streetName + '\'' +
+                ", blockStreet=" + blockStreet +
+                ", apartment='" + apartment + '\'' +
+                ", flat='" + flat + '\'' +
+                ", city=" + city +
+                ", userAddress=" + userAddress +
+                ", supplierAddress=" + supplierAddress +
+                '}';
+    }
 }
