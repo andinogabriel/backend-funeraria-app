@@ -8,7 +8,7 @@ import java.util.Date;
 @Getter @Setter
 public class AffiliateRest {
 
-    private String affiliateId;
+    private String affiliateId; 
     private Integer dni;
     private String lastName;
     private String firstName;

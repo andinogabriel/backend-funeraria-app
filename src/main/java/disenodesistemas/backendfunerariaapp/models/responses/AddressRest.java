@@ -6,6 +6,7 @@ import lombok.Setter;
 @Getter @Setter
 public class AddressRest {
 
+    private long id;
     private String apartment;
     private Integer blockStreet;
     private String flat;

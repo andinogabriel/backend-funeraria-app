@@ -4,11 +4,10 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter @Setter
-public class CityRest {
+public class CategoryRest {
 
     private long id;
-    private ProvinceRest province;
     private String name;
-    private String zipCode;
+    private String description;
 
 }
