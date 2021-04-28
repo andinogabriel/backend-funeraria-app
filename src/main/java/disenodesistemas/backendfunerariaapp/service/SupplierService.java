@@ -43,7 +43,7 @@ public class SupplierService {
 
         SupplierEntity createdSupplier = supplierRepository.save(supplierEntity);
 
-        SupplierDto supplierDto = mapper.map(supplierEntity, SupplierDto.class);
+        SupplierDto supplierDto = mapper.map(createdSupplier, SupplierDto.class);
 
         return supplierDto;
     }
@@ -71,7 +71,7 @@ public class SupplierService {
 
         SupplierEntity updatedSupplier = supplierRepository.save(supplierEntity);
 
-        SupplierDto supplierDto = mapper.map(supplierEntity, SupplierDto.class);
+        SupplierDto supplierDto = mapper.map(updatedSupplier, SupplierDto.class);
 
         return supplierDto;
     }
@@ -117,11 +117,12 @@ public class SupplierService {
         if (page > 0) {
             page = page - 1;
         }
-        List<SupplierDto> suppliersDto = new ArrayList<>();
+
         Pageable pageable = PageRequest.of(
                 page, limit,
                 sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending()
         );
+
         Page<SupplierEntity> suppliersPage = supplierRepository.findByNameContaining(pageable, name);
         Page<SupplierDto> pagesDto = mapper.map(suppliersPage, Page.class);
         return pagesDto;
