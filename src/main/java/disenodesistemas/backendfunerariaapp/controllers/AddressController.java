@@ -4,13 +4,11 @@ import disenodesistemas.backendfunerariaapp.dto.AddressCreationDto;
 import disenodesistemas.backendfunerariaapp.dto.AddressDto;
 import disenodesistemas.backendfunerariaapp.models.requests.AddressCreateRequestModel;
 import disenodesistemas.backendfunerariaapp.models.responses.AddressRest;
+import disenodesistemas.backendfunerariaapp.models.responses.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.service.AddressService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
@@ -30,6 +28,23 @@ public class AddressController {
         AddressDto addressDto = addressService.createAddress(addressCreationDto);
         AddressRest addressRest = mapper.map(addressDto, AddressRest.class);
         return addressRest;
+    }
+
+    @PutMapping(path = "/{id}")
+    public AddressRest updateAddress(@PathVariable long id, @RequestBody @Valid AddressCreateRequestModel addressCreateRequestModel) {
+        AddressCreationDto addressDto = mapper.map(addressCreateRequestModel, AddressCreationDto.class);
+        AddressDto addressToUpdate = addressService.updateAddress(id, addressDto);
+        AddressRest addressUpdated = mapper.map(addressToUpdate, AddressRest.class);
+        return addressUpdated;
+    }
+
+    @DeleteMapping(path = "/{id}")
+    public OperationStatusModel deleteAddress(@PathVariable long id) {
+        OperationStatusModel operationStatusModel = new OperationStatusModel();
+        operationStatusModel.setName("DELETE");
+        addressService.deleteAddress(id);
+        operationStatusModel.setName("SUCCESS");
+        return operationStatusModel;
     }
 
 }
