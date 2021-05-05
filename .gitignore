@@ -18,7 +18,7 @@ target/
 *.iws
 *.iml
 *.ipr
-src/main/resources/application.properties
+
 
 ### NetBeans ###
 /nbproject/private/
@@ -33,3 +33,5 @@ build/
 ### VS Code ###
 .vscode/
 
+### Sensitive Data ###
+src/main/resources/application.properties
