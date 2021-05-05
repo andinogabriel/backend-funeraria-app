@@ -7,18 +7,25 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import disenodesistemas.backendfunerariaapp.security.SecurityConstants;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class AmazonConfig {
 
+    @Value("${accessKey}")
+    private String accessKey;
+
+    @Value("${secretKey}")
+    private String secretKey;
+
     //Esta clase que nos da el S3 cliente
     @Bean
     public AmazonS3 s3() {
         AWSCredentials awsCredentials = new BasicAWSCredentials(
-                "AKIA4QHJKA66WYNWPMXX",
-                "jNJI6VgSq4viWG11PB2+pchvZCFwastNYHx7CZfq"
+                accessKey,
+                secretKey
         );
         return AmazonS3ClientBuilder
                 .standard()
