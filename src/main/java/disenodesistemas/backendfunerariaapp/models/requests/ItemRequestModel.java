@@ -19,7 +19,7 @@ public class ItemRequestModel {
 
     private long brand;
 
-    private String image;
+    private String itemImageLink;
 
     @NotNull(message = "El precio es obligatorio.")
     @Digits(integer=8, fraction=2, message = "El precio solo debe tener 2 decimales.")

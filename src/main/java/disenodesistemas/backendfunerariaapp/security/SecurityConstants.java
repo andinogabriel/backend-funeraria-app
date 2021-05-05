@@ -18,4 +18,14 @@ public class SecurityConstants {
         return appProperties.getTokenSecret();
     }
 
+    public static String getAccessKey() {
+        AppProperties appProperties = (AppProperties) SpringApplicationContext.getBean("AppProperties");
+        return appProperties.getAccessKey();
+    }
+
+    public static String getSecretKey() {
+        AppProperties appProperties = (AppProperties) SpringApplicationContext.getBean("AppProperties");
+        return appProperties.getSecretKey();
+    }
+
 }

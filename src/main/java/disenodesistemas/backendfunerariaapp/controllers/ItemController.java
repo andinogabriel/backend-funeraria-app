@@ -6,13 +6,17 @@ import disenodesistemas.backendfunerariaapp.models.requests.ItemRequestModel;
 import disenodesistemas.backendfunerariaapp.models.responses.ItemRest;
 import disenodesistemas.backendfunerariaapp.models.responses.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.service.ItemService;
+import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 
+@AllArgsConstructor
 @RestController
 @RequestMapping("api/v1/items")
 public class ItemController {
@@ -74,6 +78,16 @@ public class ItemController {
         itemService.deleteItem(id);
         operationStatusModel.setName("SUCCESS");
         return operationStatusModel;
+    }
+
+    @PostMapping(path = "{id}/image/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public void uploadItemImage(@PathVariable("id") long id, @RequestParam("file")MultipartFile file) {
+        itemService.uploadItemImage(id, file);
+    }
+
+    @GetMapping("{id}/image/download")
+    public byte[] downloadItemImage(@PathVariable("id") long id) {
+        return itemService.downloadItemImage(id);
     }
 
 }

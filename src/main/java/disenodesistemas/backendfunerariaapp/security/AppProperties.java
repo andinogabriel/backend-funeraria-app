@@ -15,4 +15,12 @@ public class AppProperties {
         return env.getProperty("tokenSecret");
     }
 
+    public String getAccessKey() {
+        return env.getProperty("accessKey");
+    }
+
+    public String getSecretKey() {
+        return env.getProperty("secretKey");
+    }
+
 }

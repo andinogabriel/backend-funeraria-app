@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
 
+
 @Getter @Setter
 public class ItemDto implements Serializable {
 
@@ -16,7 +17,7 @@ public class ItemDto implements Serializable {
     private String name;
     private String description;
     private String code;
-    private String image;
+    private String itemImageLink;
     private BigDecimal price;
     private BigDecimal itemLength;
     private BigDecimal itemHeight;
