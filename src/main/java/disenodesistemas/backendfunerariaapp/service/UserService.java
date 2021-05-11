@@ -7,6 +7,7 @@ import disenodesistemas.backendfunerariaapp.entities.UserEntity;
 import disenodesistemas.backendfunerariaapp.exceptions.EmailExistsException;
 import disenodesistemas.backendfunerariaapp.repository.AffiliateRepository;
 import disenodesistemas.backendfunerariaapp.repository.UserRepository;
+import disenodesistemas.backendfunerariaapp.entities.ConfirmationToken;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -33,10 +35,13 @@ public class UserService implements UserServiceInterface{
     BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Autowired
+    ConfirmationTokenService confirmationTokenService;
+
+    @Autowired
     ModelMapper mapper;
 
     @Override
-    public UserDto createUser(UserDto user) {
+    public String createUser(UserEntity user) {
         if (userRepository.findByEmail(user.getEmail()) != null)
             throw new EmailExistsException("El email ya se encuentra registrado.");
 
@@ -50,11 +55,19 @@ public class UserService implements UserServiceInterface{
 
         UserEntity storedUserDetails = userRepository.save(userEntity);
 
-        UserDto userToReturn = mapper.map(storedUserDetails, UserDto.class);
+        String token = UUID.randomUUID().toString();
+        ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(60), storedUserDetails);
+        confirmationTokenService.saveConfirmationToken(confirmationToken);
 
-        return userToReturn;
+
+        return token;
 
     }
+
+    public void enableAppUser(String email) {
+        userRepository.enableAppUser(email);
+    }
+
 
     //Iniciar Sesion
     @Override

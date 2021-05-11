@@ -23,8 +23,7 @@ public class CityController {
     @GetMapping(path = "/{id}")
     public CityRest getCityById(@PathVariable long id) {
         CityDto cityDto = cityService.getCityById(id);
-        CityRest cityRest = mapper.map(cityDto, CityRest.class);
-        return cityRest;
+        return mapper.map(cityDto, CityRest.class);
     }
 
     @GetMapping

@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class CategoryService {
@@ -33,13 +32,10 @@ public class CategoryService {
 
     public CategoryDto createCategory(CategoryDto category) {
         CategoryEntity categoryEntity = new CategoryEntity();
-
         categoryEntity.setName(category.getName());
         categoryEntity.setDescription(category.getDescription());
-
         CategoryEntity categoryCreated = categoryRepository.save(categoryEntity);
-        CategoryDto categoryDto = mapper.map(categoryCreated, CategoryDto.class);
-        return categoryDto;
+        return mapper.map(categoryCreated, CategoryDto.class);
     }
 
     public CategoryDto updateCategory(long id, CategoryDto categoryDto) {
@@ -47,8 +43,7 @@ public class CategoryService {
         categoryEntity.setName(categoryDto.getName());
         categoryEntity.setDescription(categoryDto.getDescription());
         CategoryEntity updatedCategory = categoryRepository.save(categoryEntity);
-        CategoryDto categoryToReturn = mapper.map(updatedCategory, CategoryDto.class);
-        return categoryToReturn;
+        return mapper.map(updatedCategory, CategoryDto.class);
     }
 
     public void deleteCategory(long id) {

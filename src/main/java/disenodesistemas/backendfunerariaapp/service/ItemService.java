@@ -44,7 +44,7 @@ public class ItemService {
     @Autowired
     ModelMapper mapper;
 
-    public Page<ItemDto> getItemsPaginated(int page, int limit, String sortBy, String sortDir) {
+    public Page<ItemDto> getItemsPaginated(int page, int limit, String[] sortBy, String sortDir) {
         if (page > 0) {
             page = page - 1;
         }
@@ -54,12 +54,15 @@ public class ItemService {
                 sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending()
         );
 
-        Page<ItemEntity> itemEntities = itemRepository.findAllByOrderByName(pageable);
-        Page<ItemDto> itemsDto = mapper.map(itemEntities, Page.class);
-        return itemsDto;
+        Page<ItemEntity> itemEntities = itemRepository.findAll(pageable);
+        return mapper.map(itemEntities, Page.class);
     }
 
     public Page<ItemDto> getItemsByCategoryId(long id, int page, int limit, String sortBy, String sortDir) {
+        if (page > 0) {
+            page = page - 1;
+        }
+
         CategoryEntity categoryEntity = categoryRepository.findById(id);
 
         Pageable pageable = PageRequest.of(
@@ -67,9 +70,8 @@ public class ItemService {
                 sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending()
         );
 
-        Page<ItemEntity> itemEntities = itemRepository.findByCategoryOrderByName(pageable, categoryEntity);
-        Page<ItemDto> itemsDto = mapper.map(itemEntities, Page.class);
-        return itemsDto;
+        Page<ItemEntity> itemEntities = itemRepository.findByCategory(pageable, categoryEntity);
+        return mapper.map(itemEntities, Page.class);
     }
 
     public ItemDto createItem(ItemCreationDto itemCreationDto) {
@@ -89,11 +91,11 @@ public class ItemService {
         itemEntity.setItemWidth(itemCreationDto.getItemWidth());
 
         ItemEntity createdItem = itemRepository.save(itemEntity);
-        ItemDto itemDto = mapper.map(createdItem, ItemDto.class);
-        return itemDto;
+        return mapper.map(createdItem, ItemDto.class);
     }
 
     public ItemDto updateItem(long id, ItemCreationDto itemCreationDto) {
+
         ItemEntity itemEntity = itemRepository.findById(id);
         CategoryEntity categoryEntity = categoryRepository.findById(itemCreationDto.getCategory());
         BrandEntity brandEntity = brandRepository.findById(itemCreationDto.getBrand());
@@ -110,8 +112,7 @@ public class ItemService {
         itemEntity.setItemWidth(itemCreationDto.getItemWidth());
 
         ItemEntity updatedItem = itemRepository.save(itemEntity);
-        ItemDto itemDto = mapper.map(updatedItem, ItemDto.class);
-        return itemDto;
+        return mapper.map(updatedItem, ItemDto.class);
     }
 
     public void deleteItem(long id) {
@@ -121,8 +122,7 @@ public class ItemService {
 
     public ItemDto getItemById(long id) {
         ItemEntity itemEntity = itemRepository.findById(id);
-        ItemDto itemDto = mapper.map(itemEntity, ItemDto.class);
-        return itemDto;
+        return mapper.map(itemEntity, ItemDto.class);
     }
 
     public Page<ItemDto> getItemsByName(String name, int page, int limit, String sortBy, String sortDir) {
@@ -136,8 +136,21 @@ public class ItemService {
         );
 
         Page<ItemEntity> itemEntities = itemRepository.findByNameContaining(pageable, name);
-        Page<ItemDto> itemsDto = mapper.map(itemEntities, Page.class);
-        return itemsDto;
+        return mapper.map(itemEntities, Page.class);
+    }
+
+    public Page<ItemDto> getItemsByCategoryContaining(long id, String name, int page, int limit, String sortBy, String sortDir) {
+        //CategoryEntity categoryEntity = categoryRepository.findById(id);
+        if (page > 0) {
+            page = page - 1;
+        }
+
+        Pageable pageable = PageRequest.of(
+                page, limit,
+                sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending()
+        );
+        Page<ItemEntity> items = itemRepository.findByCategoryAndNameContaining(pageable, id, name);
+        return mapper.map(items, Page.class);
     }
 
     public void uploadItemImage(long id, MultipartFile file) {
@@ -187,8 +200,7 @@ public class ItemService {
     private ItemEntity getItemOrThrowError(long id) {
         try {
             ItemDto itemDto = getItemById(id);
-            ItemEntity item = mapper.map(itemDto, ItemEntity.class);
-            return item;
+            return mapper.map(itemDto, ItemEntity.class);
         } catch (IllegalStateException ex) {
             throw new IllegalStateException(String.format("Articulo con ID: %s no encontrado.", id));
         }

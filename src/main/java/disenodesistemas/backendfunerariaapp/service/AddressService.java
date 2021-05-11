@@ -41,9 +41,7 @@ public class AddressService {
         addressEntity.setSupplierAddress(supplierEntity);
 
         AddressEntity createdAddress = addressRepository.save(addressEntity);
-
-        AddressDto addressDto = mapper.map(createdAddress, AddressDto.class);
-        return addressDto;
+        return mapper.map(createdAddress, AddressDto.class);
     }
 
     public AddressDto updateAddress(long id, AddressCreationDto addressDto) {
@@ -56,8 +54,7 @@ public class AddressService {
         addressEntity.setCity(cityEntity);
         AddressEntity addressUpdated = addressRepository.save(addressEntity);
 
-        AddressDto addressToReturn = mapper.map(addressUpdated, AddressDto.class);
-        return addressToReturn;
+        return mapper.map(addressUpdated, AddressDto.class);
     }
 
     public void deleteAddress(long id) {

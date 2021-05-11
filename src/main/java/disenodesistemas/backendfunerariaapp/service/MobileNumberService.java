@@ -24,30 +24,19 @@ public class MobileNumberService {
 
     public MobileNumberDto createMobileNumber(MobileNumberCreationDto mobileNumber) {
         SupplierEntity supplierEntity = supplierRepository.findById(mobileNumber.getSupplierNumber());
-
         MobileNumberEntity mobileNumberEntity = new MobileNumberEntity();
-
         mobileNumberEntity.setMobileNumber(mobileNumber.getMobileNumber());
         mobileNumberEntity.setSupplierNumber(supplierEntity);
-
         MobileNumberEntity mobileNumberCreated = mobileNumberRepository.save(mobileNumberEntity);
-
-        MobileNumberDto mobileNumberDto = mapper.map(mobileNumberCreated, MobileNumberDto.class);
-
-        return mobileNumberDto;
+        return mapper.map(mobileNumberCreated, MobileNumberDto.class);
 
     }
 
     public MobileNumberDto updateMobileNumber(long id, MobileNumberDto mobileNumberDto) {
         MobileNumberEntity mobileNumberEntity = mobileNumberRepository.findById(id);
-
         mobileNumberEntity.setMobileNumber(mobileNumberDto.getMobileNumber());
-
         MobileNumberEntity numberUpdated = mobileNumberRepository.save(mobileNumberEntity);
-
-        MobileNumberDto mobileNumberUpdatedDto = mapper.map(numberUpdated, MobileNumberDto.class);
-
-        return mobileNumberUpdatedDto;
+        return mapper.map(numberUpdated, MobileNumberDto.class);
     }
 
     public void deleteMobileNumber(long id) {

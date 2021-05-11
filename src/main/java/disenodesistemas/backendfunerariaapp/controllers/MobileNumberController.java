@@ -6,7 +6,6 @@ import disenodesistemas.backendfunerariaapp.models.requests.MobileNumberCreateMo
 import disenodesistemas.backendfunerariaapp.models.responses.MobileNumberRest;
 import disenodesistemas.backendfunerariaapp.models.responses.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.service.MobileNumberService;
-import disenodesistemas.backendfunerariaapp.service.SupplierService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -21,17 +20,13 @@ public class MobileNumberController {
     MobileNumberService mobileNumberService;
 
     @Autowired
-    SupplierService supplierService;
-
-    @Autowired
     ModelMapper mapper;
 
     @PostMapping
     public MobileNumberRest createMobileNumber(@RequestBody @Valid MobileNumberCreateModel mobileNumberCreateModel) {
         MobileNumberCreationDto mobileNumberDto = mapper.map(mobileNumberCreateModel , MobileNumberCreationDto.class);
         MobileNumberDto createdMobileNumber = mobileNumberService.createMobileNumber(mobileNumberDto);
-        MobileNumberRest mobileNumberToReturn = mapper.map(createdMobileNumber, MobileNumberRest.class);
-        return mobileNumberToReturn;
+        return mapper.map(createdMobileNumber, MobileNumberRest.class);
 
     }
 
@@ -39,8 +34,7 @@ public class MobileNumberController {
     public MobileNumberRest updateMobileNumber(@PathVariable long id, @RequestBody @Valid MobileNumberCreateModel mobileNumberCreateModel) {
         MobileNumberDto mobileNumberDto = mapper.map(mobileNumberCreateModel, MobileNumberDto.class);
         MobileNumberDto updatedMobileNumber = mobileNumberService.updateMobileNumber(id, mobileNumberDto);
-        MobileNumberRest mobileNumberRest = mapper.map(updatedMobileNumber, MobileNumberRest.class);
-        return mobileNumberRest;
+        return mapper.map(updatedMobileNumber, MobileNumberRest.class);
     }
 
     @DeleteMapping(path = "/{id}")

@@ -11,10 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity(name = "items")
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
 @Getter @Setter
 public class ItemEntity implements Serializable {
 
@@ -29,7 +25,7 @@ public class ItemEntity implements Serializable {
 
     private String description;
 
-    @Column(nullable = false, length = 75)
+    @Column(length = 95)
     private String code;
 
     @Column(length = 80)
@@ -47,6 +43,8 @@ public class ItemEntity implements Serializable {
 
     @Digits(integer = 6, fraction = 2)
     private BigDecimal itemWidth;
+
+    private Integer stock;
 
     @ManyToOne
     @JsonIgnoreProperties(value = {"items", "handler","hibernateLazyInitializer"}, allowSetters = true)

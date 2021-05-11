@@ -33,7 +33,6 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
-
         try {
             //De esta manera copiamos todas las propiedades que vienen de la request a la clase UserLoginRequestModel, lo convertimos a un objeto de java
             UserLoginRequestModel userModel = new ObjectMapper()
@@ -50,7 +49,6 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     //Si el logueo es correcto se llama a este metodo y se crea el token y se puede usar el token en los otros endpoints
@@ -63,7 +61,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
         //Le sumamos los milisegundos del dia actual nuestro expiration date, creamos el token que vamos a estar usando como autenticacion del cliente
         String token = Jwts.builder().setSubject(username).setExpiration(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_DATE)).signWith(SignatureAlgorithm.HS512, SecurityConstants.getTokenSecret()).compact();
 
-        //Agregamos el id publico al header. Le implementamos a la clase UserService pero en el metodo la primer letra siempre va con minuscula
+        //Agregamos el id publi co al header. Le implementamos a la clase UserService pero en el metodo la primer letra siempre va con minuscula
         UserServiceInterface userService = (UserServiceInterface) SpringApplicationContext.getBean("userService");
         UserDto userDto = userService.getUser(username); //Con esto tenemos acceso a los datos del usuario
 

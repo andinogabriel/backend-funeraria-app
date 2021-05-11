@@ -21,11 +21,8 @@ public class GenderService implements GenderServiceInterface{
 
     @Override
     public List<GenderDto> getGenders() {
-
         List<GenderEntity> genderEntity = genderRepository.findAll();
-
         List<GenderDto> genders = new ArrayList<>();
-
         for (GenderEntity gender: genderEntity) {
             GenderDto genderDto = mapper.map(gender, GenderDto.class);
             genders.add(genderDto);

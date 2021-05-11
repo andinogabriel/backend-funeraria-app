@@ -38,16 +38,14 @@ public class CategoryController {
     public CategoryRest createCategory(@RequestBody @Valid CategoryCreateRequestModel categoryCreateRequestModel) {
         CategoryDto categoryDto = mapper.map(categoryCreateRequestModel, CategoryDto.class);
         CategoryDto createdCategory = categoryService.createCategory(categoryDto);
-        CategoryRest categoryToReturn = mapper.map(createdCategory, CategoryRest.class);
-        return categoryToReturn;
+        return mapper.map(createdCategory, CategoryRest.class);
     }
 
     @PutMapping("/{id}")
     public CategoryRest updateCategory(@PathVariable long id, @RequestBody @Valid CategoryCreateRequestModel categoryCreateRequestModel) {
         CategoryDto categoryDto = mapper.map(categoryCreateRequestModel, CategoryDto.class);
         CategoryDto updatedCategory = categoryService.updateCategory(id, categoryDto);
-        CategoryRest categoryRest = mapper.map(updatedCategory, CategoryRest.class);
-        return categoryRest;
+        return mapper.map(updatedCategory, CategoryRest.class);
     }
 
     @DeleteMapping("/{id}")

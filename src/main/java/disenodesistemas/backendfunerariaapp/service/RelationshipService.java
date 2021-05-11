@@ -21,9 +21,7 @@ public class RelationshipService implements  RelationshipServiceInterface{
 
     @Override
     public List<RelationshipDto> getRelationships() {
-
         List<RelationshipEntity> relationshipEntities = relationshipRepository.findAll();
-
         List<RelationshipDto> relationshipsDto = new ArrayList<>();
 
         for (RelationshipEntity relationship : relationshipEntities) {

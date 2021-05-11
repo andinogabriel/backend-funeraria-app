@@ -14,10 +14,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.UUID;
 
 @Service
@@ -56,9 +52,6 @@ public class AffiliateService implements AffiliateServiceInterface {
         affiliateEntity.setAffiliateId(UUID.randomUUID().toString());
 
         AffiliateEntity createdAffiliate = affiliateRepository.save(affiliateEntity);
-
-        AffiliateDto affiliateToReturn = mapper.map(createdAffiliate, AffiliateDto.class);
-
-        return affiliateToReturn;
+        return mapper.map(createdAffiliate, AffiliateDto.class);
     }
 }

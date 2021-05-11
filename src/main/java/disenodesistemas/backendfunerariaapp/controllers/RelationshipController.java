@@ -25,9 +25,7 @@ public class RelationshipController {
 
     @GetMapping
     public List<RelationshipRest> getRelationships() {
-
         List<RelationshipDto> relationshipsDto = relationshipService.getRelationships();
-
         List<RelationshipRest> relationshipsRest = new ArrayList<>();
 
         for (RelationshipDto relationship : relationshipsDto) {

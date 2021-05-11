@@ -2,6 +2,7 @@ package disenodesistemas.backendfunerariaapp.models.requests;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
@@ -18,6 +19,8 @@ public class ItemRequestModel {
     private String description;
 
     private long brand;
+
+    private String code;
 
     private String itemImageLink;
 
@@ -39,7 +42,7 @@ public class ItemRequestModel {
     private BigDecimal itemWidth;
 
     @NotNull(message = "La categoria es requerida.")
-    private long itemCategory;
+    private long category;
 
 
 

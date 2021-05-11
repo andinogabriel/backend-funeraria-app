@@ -12,6 +12,7 @@ public class SecurityConstants {
     //Nuestra key secreta con la cual se va a generar los tokens, nuestra firma para generar los JWT
     //  https://randomkeygen.com/
 
+
     public static String getTokenSecret () {
         //Con la SpringApplicationContext podemos acceder a los bean utilizando el contexto
         AppProperties appProperties = (AppProperties) SpringApplicationContext.getBean("AppProperties");

@@ -36,9 +36,7 @@ public class AffiliateController {
         affiliateCreationDto.setUserEmail(email);
         AffiliateDto affiliateDto = affiliateService.createAffiliate(affiliateCreationDto);
 
-        AffiliateRest affiliateToReturn = mapper.map(affiliateDto, AffiliateRest.class);
-
-        return affiliateToReturn;
+        return mapper.map(affiliateDto, AffiliateRest.class);
     }
 
 

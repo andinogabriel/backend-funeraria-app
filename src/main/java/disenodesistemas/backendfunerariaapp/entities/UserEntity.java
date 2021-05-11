@@ -1,21 +1,26 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
+import disenodesistemas.backendfunerariaapp.appuser.AppUserRole;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Entity(name = "users")
 @Table(indexes = { @Index(columnList = "userId", name = "index_userid", unique = true), @Index(columnList = "email", name = "index_email", unique = true) })
 @EntityListeners(AuditingEntityListener.class)
 @Getter @Setter
-public class UserEntity implements Serializable {
+@EqualsAndHashCode
+@NoArgsConstructor
+public class UserEntity implements UserDetails {
 
     private static final long serialVersionUID = 1L;
 
@@ -41,6 +46,14 @@ public class UserEntity implements Serializable {
     @CreatedDate
     private Date startDate;
 
+    @Enumerated(EnumType.STRING)
+    private AppUserRole appUserRole;
+
+    private Boolean locked = false;
+
+    private Boolean enabled = false;
+
+
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "userNumber")
     private List<MobileNumberEntity> mobileNumbers = new ArrayList<>();
 
@@ -56,4 +69,50 @@ public class UserEntity implements Serializable {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "entryUser")
     private List<EntryEntity> entries = new ArrayList<>();
 
+
+    public UserEntity(String firstName, String lastName, String email, String encryptedPassword,AppUserRole appUserRole) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.encryptedPassword = encryptedPassword;
+        this.appUserRole = appUserRole;
+
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        SimpleGrantedAuthority authority =
+                new SimpleGrantedAuthority(appUserRole.name());
+        return Collections.singletonList(authority);
+    }
+
+    @Override
+    public String getPassword() {
+        return encryptedPassword;
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return !locked;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
 }

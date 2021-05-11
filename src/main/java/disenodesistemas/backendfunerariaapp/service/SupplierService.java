@@ -4,7 +4,6 @@ import disenodesistemas.backendfunerariaapp.dto.MobileNumberDto;
 import disenodesistemas.backendfunerariaapp.dto.SupplierDto;
 import disenodesistemas.backendfunerariaapp.entities.MobileNumberEntity;
 import disenodesistemas.backendfunerariaapp.entities.SupplierEntity;
-import disenodesistemas.backendfunerariaapp.repository.AddressRepository;
 import disenodesistemas.backendfunerariaapp.repository.MobileNumberRepository;
 import disenodesistemas.backendfunerariaapp.repository.SupplierRepository;
 import org.modelmapper.ModelMapper;
@@ -25,9 +24,6 @@ public class SupplierService {
     SupplierRepository supplierRepository;
 
     @Autowired
-    AddressRepository addressRepository;
-
-    @Autowired
     MobileNumberRepository mobileNumberRepository;
 
     @Autowired
@@ -42,22 +38,17 @@ public class SupplierService {
         supplierEntity.setWebPage(supplier.getWebPage());
 
         SupplierEntity createdSupplier = supplierRepository.save(supplierEntity);
-
-        SupplierDto supplierDto = mapper.map(createdSupplier, SupplierDto.class);
-
-        return supplierDto;
+        return mapper.map(createdSupplier, SupplierDto.class);
     }
 
     public SupplierDto getSupplierById(long id) {
         SupplierEntity supplierEntity = supplierRepository.findById(id);
-        SupplierDto supplierDto = mapper.map(supplierEntity, SupplierDto.class);
-        return supplierDto;
+        return mapper.map(supplierEntity, SupplierDto.class);
     }
 
 
     public void deleteSupplier(long id) {
         SupplierEntity supplierEntity = supplierRepository.findById(id);
-
         supplierRepository.delete(supplierEntity);
     }
 
@@ -70,10 +61,7 @@ public class SupplierService {
         supplierEntity.setWebPage(supplier.getWebPage());
 
         SupplierEntity updatedSupplier = supplierRepository.save(supplierEntity);
-
-        SupplierDto supplierDto = mapper.map(updatedSupplier, SupplierDto.class);
-
-        return supplierDto;
+        return mapper.map(updatedSupplier, SupplierDto.class);
     }
 
     public List<MobileNumberDto> getSupplierNumbers(long supplierNumber) {
@@ -95,22 +83,13 @@ public class SupplierService {
             page = page - 1;
         }
 
-        List<SupplierDto> suppliersDto = new ArrayList<>();
         Pageable pageable = PageRequest.of(
                 page, limit,
                 sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending()
         );
+
         Page<SupplierEntity> suppliersPage = supplierRepository.findAll(pageable);
-        Page<SupplierDto> pagesDto = mapper.map(suppliersPage, Page.class);
-
-        //List<SupplierEntity> suppliers = suppliersPage.getContent();
-
-        /*
-        for (SupplierEntity supplier : suppliers) {
-            SupplierDto supplierDto = mapper.map(supplier, SupplierDto.class);
-            suppliersDto.add(supplierDto);
-        }*/
-        return pagesDto;
+        return mapper.map(suppliersPage, Page.class);
     }
 
     public Page<SupplierDto> getSuppliersByName(String name, int page, int limit, String sortBy, String sortDir) {
@@ -124,8 +103,7 @@ public class SupplierService {
         );
 
         Page<SupplierEntity> suppliersPage = supplierRepository.findByNameContaining(pageable, name);
-        Page<SupplierDto> pagesDto = mapper.map(suppliersPage, Page.class);
-        return pagesDto;
+        return mapper.map(suppliersPage, Page.class);
     }
 
 }

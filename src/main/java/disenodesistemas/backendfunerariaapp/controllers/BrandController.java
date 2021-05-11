@@ -1,12 +1,15 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
 import disenodesistemas.backendfunerariaapp.dto.BrandDto;
+import disenodesistemas.backendfunerariaapp.dto.ItemDto;
 import disenodesistemas.backendfunerariaapp.models.requests.BrandCreateRequestModel;
 import disenodesistemas.backendfunerariaapp.models.responses.BrandRest;
+import disenodesistemas.backendfunerariaapp.models.responses.ItemRest;
 import disenodesistemas.backendfunerariaapp.models.responses.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.service.BrandService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -34,20 +37,36 @@ public class BrandController {
         return brandesRest;
     }
 
+    @GetMapping(path = "/{id}")
+    public BrandRest getBrandById(@PathVariable long id) {
+        BrandDto brandDto = brandService.getBrandById(id);
+        return mapper.map(brandDto, BrandRest.class);
+    }
+
+    @GetMapping(path = "/paginated")
+    public Page<BrandRest> getBrandsPaginated(@RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "5") int limit, @RequestParam(value = "sortBy", defaultValue = "name") String sortBy, @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
+        Page<BrandDto> brandsDto = brandService.getBrandsPaginated(page, limit, sortBy, sortDir);
+        return mapper.map(brandsDto, Page.class);
+    }
+
+    @GetMapping(path = "/search")
+    public Page<BrandRest> getBrandsByName(@RequestParam(value = "name") String name, @RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "10") int limit, @RequestParam(value = "sortBy", defaultValue = "name") String sortBy, @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
+        Page<BrandDto> brandsDto = brandService.getBrandsByName(name, page, limit, sortBy, sortDir);
+        return mapper.map(brandsDto, Page.class);
+    }
+
     @PostMapping
     public BrandRest createBrand(@RequestBody @Valid BrandCreateRequestModel brandCreateRequestModel) {
         BrandDto brandDto = mapper.map(brandCreateRequestModel, BrandDto.class);
         BrandDto createdBrand = brandService.createBrand(brandDto);
-        BrandRest brandToReturn = mapper.map(createdBrand, BrandRest.class);
-        return brandToReturn;
+        return mapper.map(createdBrand, BrandRest.class);
     }
 
     @PutMapping(path = "/{id}")
     public BrandRest updateBrand(@PathVariable long id, @RequestBody @Valid BrandCreateRequestModel brandCreateRequestModel) {
         BrandDto brandDto = mapper.map(brandCreateRequestModel, BrandDto.class);
         BrandDto updatedBrand = brandService.updateBrand(id, brandDto);
-        BrandRest brandToReturn = mapper.map(updatedBrand, BrandRest.class);
-        return brandToReturn;
+        return mapper.map(updatedBrand, BrandRest.class);
     }
 
     @DeleteMapping(path = "/{id}")

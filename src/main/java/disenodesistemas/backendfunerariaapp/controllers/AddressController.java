@@ -26,16 +26,14 @@ public class AddressController {
     public AddressRest createAddress(@RequestBody @Valid AddressCreateRequestModel addressCreateRequestModel) {
         AddressCreationDto addressCreationDto = mapper.map(addressCreateRequestModel, AddressCreationDto.class);
         AddressDto addressDto = addressService.createAddress(addressCreationDto);
-        AddressRest addressRest = mapper.map(addressDto, AddressRest.class);
-        return addressRest;
+        return mapper.map(addressDto, AddressRest.class);
     }
 
     @PutMapping(path = "/{id}")
     public AddressRest updateAddress(@PathVariable long id, @RequestBody @Valid AddressCreateRequestModel addressCreateRequestModel) {
         AddressCreationDto addressDto = mapper.map(addressCreateRequestModel, AddressCreationDto.class);
         AddressDto addressToUpdate = addressService.updateAddress(id, addressDto);
-        AddressRest addressUpdated = mapper.map(addressToUpdate, AddressRest.class);
-        return addressUpdated;
+        return mapper.map(addressToUpdate, AddressRest.class);
     }
 
     @DeleteMapping(path = "/{id}")

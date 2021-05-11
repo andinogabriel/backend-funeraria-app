@@ -26,8 +26,7 @@ public class CityService {
 
     public CityDto getCityById(long id) {
         CityEntity cityEntity = cityRepository.findById(id);
-        CityDto cityDto = mapper.map(cityEntity, CityDto.class);
-        return cityDto;
+        return mapper.map(cityEntity, CityDto.class);
     }
 
     public List<CityDto> getCitiesByProvinceId(long id) {

@@ -27,48 +27,48 @@ public class ItemController {
     @Autowired
     ModelMapper mapper;
 
-    @GetMapping
-    public Page<ItemRest> getAllItemsPaginated(@RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "5") int limit, @RequestParam(value = "sortBy", defaultValue = "name") String sortBy, @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
+    @GetMapping(path = "/paginated")
+    public Page<ItemRest> getAllItemsPaginated(@RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "5") int limit, @RequestParam(value = "sortBy", defaultValue = "name") String[] sortBy, @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
         Page<ItemDto> itemsDto = itemService.getItemsPaginated(page, limit, sortBy, sortDir);
-        Page<ItemRest> itemsRest = mapper.map(itemsDto, Page.class);
-        return itemsRest;
+        return mapper.map(itemsDto, Page.class);
     }
 
     @GetMapping(path = "/{id}")
     public ItemRest getItemById(@PathVariable long id) {
         ItemDto itemDto = itemService.getItemById(id);
-        ItemRest itemRest = mapper.map(itemDto, ItemRest.class);
-        return itemRest;
+        return mapper.map(itemDto, ItemRest.class);
     }
 
     @GetMapping(path = "/search")
     public Page<ItemRest> getItemsByName(@RequestParam(value = "name") String name, @RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "10") int limit, @RequestParam(value = "sortBy", defaultValue = "name") String sortBy, @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
         Page<ItemDto> itemsDto = itemService.getItemsByName(name, page, limit, sortBy, sortDir);
-        Page<ItemRest> itemsRest = mapper.map(itemsDto, Page.class);
-        return itemsRest;
+        return mapper.map(itemsDto, Page.class);
+    }
+
+    @GetMapping(path = "/search/{id}")
+    public Page<ItemRest> searchItemsByCategoryAndName(@PathVariable long id, @RequestParam(value = "name") String name, @RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "10") int limit, @RequestParam(value = "sortBy", defaultValue = "name") String sortBy, @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
+        Page<ItemDto> itemsDto = itemService.getItemsByCategoryContaining(id, name, page, limit, sortBy, sortDir);
+        return mapper.map(itemsDto, Page.class);
     }
 
     @GetMapping(path = "/category/{id}")
     public Page<ItemRest> getItemsByCategoryId(@PathVariable long id, @RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "10") int limit, @RequestParam(value = "sortBy", defaultValue = "name") String sortBy, @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
         Page<ItemDto> itemsDto = itemService.getItemsByCategoryId(id, page, limit, sortBy, sortDir);
-        Page<ItemRest> itemsRest = mapper.map(itemsDto, Page.class);
-        return itemsRest;
+        return mapper.map(itemsDto, Page.class);
     }
 
     @PostMapping
     public ItemRest createItem(@RequestBody @Valid ItemRequestModel itemRequestModel) {
         ItemCreationDto itemDto = mapper.map(itemRequestModel, ItemCreationDto.class);
         ItemDto createdItem = itemService.createItem(itemDto);
-        ItemRest itemToReturn = mapper.map(createdItem, ItemRest.class);
-        return itemToReturn;
+        return mapper.map(createdItem, ItemRest.class);
     }
 
     @PutMapping(path = "/{id}")
-    public ItemRest updateItem(@PathVariable long id, ItemRequestModel itemRequestModel) {
+    public ItemRest updateItem(@PathVariable long id, @RequestBody @Valid ItemRequestModel itemRequestModel) {
         ItemCreationDto itemCreationDto = mapper.map(itemRequestModel, ItemCreationDto.class);
         ItemDto itemDto = itemService.updateItem(id, itemCreationDto);
-        ItemRest itemRest = mapper.map(itemDto, ItemRest.class);
-        return itemRest;
+        return mapper.map(itemDto, ItemRest.class);
     }
 
     @DeleteMapping(path = "/{id}")

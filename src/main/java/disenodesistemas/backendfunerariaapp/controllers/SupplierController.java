@@ -30,14 +30,9 @@ public class SupplierController {
 
     @PostMapping
     public SupplierRest createSupplier(@RequestBody @Valid SupplierCreateRequestModel supplier)  {
-
         SupplierDto supplierDto = mapper.map(supplier, SupplierDto.class);
-
         SupplierDto createdSupplier = supplierService.createSupplier(supplierDto);
-
-        SupplierRest supplierToReturn = mapper.map(createdSupplier, SupplierRest.class);
-
-        return supplierToReturn;
+        return mapper.map(createdSupplier, SupplierRest.class);
 
     }
 
@@ -45,8 +40,7 @@ public class SupplierController {
     @GetMapping(path = "/{id}")
     public SupplierRest getSupplierById(@PathVariable long id) {
         SupplierDto supplierDto = supplierService.getSupplierById(id);
-        SupplierRest supplierRest = mapper.map(supplierDto, SupplierRest.class);
-        return supplierRest;
+        return mapper.map(supplierDto, SupplierRest.class);
     }
 
     @DeleteMapping(path = "/{id}")
@@ -60,14 +54,9 @@ public class SupplierController {
 
     @PutMapping(path = "/{id}")
     public SupplierRest updateSupplier(@PathVariable long id, @RequestBody @Valid SupplierCreateRequestModel supplier) {
-
         SupplierDto supplierDto = mapper.map(supplier, SupplierDto.class);
-
         SupplierDto updatedSupplier = supplierService.updateSupplier(id, supplierDto);
-
-        SupplierRest supplierRest = mapper.map(updatedSupplier, SupplierRest.class);
-
-        return supplierRest;
+        return mapper.map(updatedSupplier, SupplierRest.class);
 
     }
 
@@ -86,21 +75,13 @@ public class SupplierController {
     @GetMapping(path = "/paginated")
     public Page<SupplierRest> getSuppliersPaginated(@RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "5") int limit, @RequestParam(value = "sortBy", defaultValue = "name") String sortBy, @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
         Page<SupplierDto> suppliersDto = supplierService.getSuppliersPaginated(page, limit, sortBy, sortDir);
-        Page<SupplierRest> suppliersPage = mapper.map(suppliersDto, Page.class);
-        //List<SupplierRest> suppliersRest = new ArrayList<>();
-        /*
-        for (SupplierDto supplier : suppliersDto) {
-            SupplierRest supplierRest = mapper.map(supplier, SupplierRest.class);
-            suppliersRest.add(supplierRest);
-        } */
-        return suppliersPage;
+        return mapper.map(suppliersDto, Page.class);
     }
 
     @GetMapping(path = "/search/{name}")
     public Page<SupplierRest> getSuppliersByName(@PathVariable("name") String name, @RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "10") int limit, @RequestParam(value = "sortBy") String sortBy, @RequestParam(value = "sortDir") String sortDir) {
         Page<SupplierDto> suppliersDto = supplierService.getSuppliersByName(name, page, limit, sortBy, sortDir);
-        Page<SupplierRest> suppliersPage = mapper.map(suppliersDto, Page.class);
-        return suppliersPage;
+        return mapper.map(suppliersDto, Page.class);
     }
 
 }
