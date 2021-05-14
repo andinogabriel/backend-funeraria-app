@@ -13,6 +13,8 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     UserEntity findByEmail(String email);
 
+    UserEntity findById(long id);
+
     @Transactional
     @Modifying
     @Query("UPDATE users a " +
