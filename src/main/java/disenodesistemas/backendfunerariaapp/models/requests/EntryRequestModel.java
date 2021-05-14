@@ -1,23 +1,31 @@
 package disenodesistemas.backendfunerariaapp.models.requests;
 
-import disenodesistemas.backendfunerariaapp.entities.EntryDetailEntity;
-import disenodesistemas.backendfunerariaapp.entities.ReceiptTypeEntity;
-import disenodesistemas.backendfunerariaapp.entities.SupplierEntity;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
-import java.util.List;
 
 @Getter @Setter
 public class EntryRequestModel {
 
+    @NotNull(message = "El numero de recibo es requerido.")
     private Integer receiptNumber;
+
+    @NotNull(message = "El numero de recibo es requerido.")
     private Integer receiptSeries;
+
+    @Digits(integer=8, fraction=2, message = "El impuesto solo debe tener 2 decimales.")
+    @Positive
     private BigDecimal tax;
-    private SupplierEntity supplierEntry;
-    private ReceiptTypeEntity receiptEntry;
 
+    @NotNull(message = "El tipo de recibo es requerido.")
+    private long receiptType;
 
+    @NotNull(message = "El proveedor es requerido.")
+    private long entrySupplier;
+
+    @NotNull(message = "El usuario es requerido.")
+    private long entryUser;
 
 }
