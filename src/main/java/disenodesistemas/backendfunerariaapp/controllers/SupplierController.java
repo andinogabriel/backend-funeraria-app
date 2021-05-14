@@ -33,9 +33,7 @@ public class SupplierController {
         SupplierDto supplierDto = mapper.map(supplier, SupplierDto.class);
         SupplierDto createdSupplier = supplierService.createSupplier(supplierDto);
         return mapper.map(createdSupplier, SupplierRest.class);
-
     }
-
 
     @GetMapping(path = "/{id}")
     public SupplierRest getSupplierById(@PathVariable long id) {
