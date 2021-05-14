@@ -1,6 +1,7 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
 
 import javax.persistence.*;
@@ -31,7 +32,6 @@ public class ItemEntity implements Serializable {
     @Column(length = 80)
     private String itemImageLink;
 
-    @Column(nullable = false)
     @Digits(integer = 6, fraction = 2)
     private BigDecimal price;
 
@@ -57,6 +57,7 @@ public class ItemEntity implements Serializable {
     private BrandEntity brand;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "item")
+    @JsonManagedReference
     private List<EntryDetailEntity> entryDetails = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "itemService")

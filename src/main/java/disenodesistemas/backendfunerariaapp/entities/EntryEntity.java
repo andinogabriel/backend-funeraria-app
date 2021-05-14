@@ -1,5 +1,8 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
@@ -24,9 +27,6 @@ public class EntryEntity implements Serializable {
     @GeneratedValue
     private long id;
 
-    @Column(nullable = false, length = 75)
-    private String entryId;
-
     @Column(nullable = false, length = 20)
     private Integer receiptNumber;
 
@@ -39,23 +39,26 @@ public class EntryEntity implements Serializable {
     @Digits(integer = 2, fraction = 2)
     private BigDecimal tax;
 
-    @Column(nullable = false)
     @Digits(integer = 6, fraction = 2)
     private BigDecimal totalAmount;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonBackReference
     @JoinColumn(name = "receipt_type_id")
     private ReceiptTypeEntity receiptType;
 
     @ManyToOne
+    @JsonBackReference
     @JoinColumn(name = "supplier_id")
     private SupplierEntity entrySupplier;
 
     @ManyToOne
+    @JsonBackReference
     @JoinColumn(name = "user_id")
     private UserEntity entryUser;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "entry")
+    @JsonManagedReference
     private List<EntryDetailEntity> entryDetails = new ArrayList<>();
 
 

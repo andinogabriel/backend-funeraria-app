@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import disenodesistemas.backendfunerariaapp.appuser.AppUserRole;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -67,6 +68,7 @@ public class UserEntity implements UserDetails {
     private List<DeceasedEntity> deceasedList = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "entryUser")
+    @JsonManagedReference
     private List<EntryEntity> entries = new ArrayList<>();
 
 

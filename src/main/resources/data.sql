@@ -45,6 +45,11 @@ INSERT INTO relationships (id, name) VALUES
     (31, 'Bisnieta')
     ON CONFLICT (id) DO NOTHING;
 
+INSERT INTO receipt_types (id, name) VALUES
+    (1, 'Recibo de caja de ingreso'),
+    (2, 'Recibo de caja de egreso'),
+    (3, 'Recibo de depósito en cuenta corriente')
+    ON CONFLICT (id) DO NOTHING;
 
 
 

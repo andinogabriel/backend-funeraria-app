@@ -1,5 +1,7 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -30,10 +32,12 @@ public class EntryDetailEntity implements Serializable {
     private BigDecimal salePrice;
 
     @ManyToOne
+    @JsonBackReference
     @JoinColumn(name = "entry_id")
     private EntryEntity entry;
 
     @ManyToOne
+    @JsonBackReference
     @JoinColumn(name = "item_id")
     private ItemEntity item;
 
