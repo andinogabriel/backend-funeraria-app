@@ -29,6 +29,13 @@ public class SupplierService {
     @Autowired
     ModelMapper mapper;
 
+    public List<SupplierDto> getSuppliers() {
+        List<SupplierEntity> supplierEntities = supplierRepository.findAllByOrderByName();
+        List<SupplierDto> suppliersDto = new ArrayList<>();
+        supplierEntities.forEach(s -> suppliersDto.add(mapper.map(s, SupplierDto.class)));
+        return suppliersDto;
+    }
+
     public SupplierDto createSupplier(SupplierDto supplier) {
         SupplierEntity supplierEntity = new SupplierEntity();
 

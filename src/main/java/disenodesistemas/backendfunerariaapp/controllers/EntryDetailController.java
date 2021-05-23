@@ -1,6 +1,5 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
-import disenodesistemas.backendfunerariaapp.dto.EntryCreationDto;
 import disenodesistemas.backendfunerariaapp.dto.EntryDetailCreationDto;
 import disenodesistemas.backendfunerariaapp.dto.EntryDetailDto;
 import disenodesistemas.backendfunerariaapp.models.requests.EntryDetailRequestModel;
@@ -24,6 +23,7 @@ public class EntryDetailController {
 
     @Autowired
     ModelMapper mapper;
+
 
     @PostMapping
     public EntryDetailRest createEntryDetail(@RequestBody @Valid EntryDetailRequestModel entryDetailRequestModel) {

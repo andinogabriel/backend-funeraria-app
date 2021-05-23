@@ -25,7 +25,4 @@ public class EntryRequestModel {
     @NotNull(message = "El proveedor es requerido.")
     private long entrySupplier;
 
-    @NotNull(message = "El usuario es requerido.")
-    private long entryUser;
-
 }

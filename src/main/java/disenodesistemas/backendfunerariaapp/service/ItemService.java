@@ -58,7 +58,16 @@ public class ItemService {
         return mapper.map(itemEntities, Page.class);
     }
 
-    public Page<ItemDto> getItemsByCategoryId(long id, int page, int limit, String sortBy, String sortDir) {
+    public List<ItemDto> getItemsByCategoryId(long id) {
+        CategoryEntity categoryEntity = categoryRepository.findById(id);
+        List<ItemEntity> itemEntities = itemRepository.findByCategoryOrderByName(categoryEntity);
+        List<ItemDto> itemsDto = new ArrayList<>();
+        itemEntities.forEach(i -> itemsDto.add(mapper.map(i, ItemDto.class)));
+        return itemsDto;
+    }
+
+
+    public Page<ItemDto> getItemsPaginatedByCategoryId(long id, int page, int limit, String sortBy, String sortDir) {
         if (page > 0) {
             page = page - 1;
         }
@@ -73,6 +82,8 @@ public class ItemService {
         Page<ItemEntity> itemEntities = itemRepository.findByCategory(pageable, categoryEntity);
         return mapper.map(itemEntities, Page.class);
     }
+
+
 
     public ItemDto createItem(ItemCreationDto itemCreationDto) {
         ItemEntity itemEntity = new ItemEntity();

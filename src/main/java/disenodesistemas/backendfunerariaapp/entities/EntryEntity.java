@@ -39,7 +39,8 @@ public class EntryEntity implements Serializable {
     @Digits(integer = 2, fraction = 2)
     private BigDecimal tax;
 
-    @Digits(integer = 6, fraction = 2)
+    @Column(columnDefinition = "numeric(8,2) default 0")
+    @Digits(integer = 8, fraction = 2)
     private BigDecimal totalAmount;
 
     @ManyToOne(fetch = FetchType.LAZY)

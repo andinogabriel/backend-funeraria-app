@@ -19,4 +19,6 @@ public interface SupplierRepository extends PagingAndSortingRepository<SupplierE
 
     Page<SupplierEntity> findAll(Pageable pageableRequest);
 
+    List<SupplierEntity> findAllByOrderByName();
+
 }

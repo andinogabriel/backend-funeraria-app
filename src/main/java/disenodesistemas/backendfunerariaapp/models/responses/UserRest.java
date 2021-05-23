@@ -20,7 +20,6 @@ public class UserRest {
     private Date startDate;
     private List<AffiliateRest> affiliates;
     private List<DeceasedRest> deceasedList;
-    private List<EntryRest> userEntries;
     private List<AddressRest> userAddresses;
     private List<MobileNumberRest> userMobileNumbers;
 

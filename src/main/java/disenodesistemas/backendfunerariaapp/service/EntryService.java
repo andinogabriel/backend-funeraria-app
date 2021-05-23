@@ -40,7 +40,7 @@ public class EntryService {
         EntryEntity entryEntity = new EntryEntity();
         ReceiptTypeEntity receiptTypeEntity = receiptTypeRepository.findById(entryCreationDto.getReceiptType());
         SupplierEntity supplierEntity = supplierRepository.findById(entryCreationDto.getEntrySupplier());
-        UserEntity userEntity = userRepository.findById(entryCreationDto.getEntryUser());
+        UserEntity userEntity = userRepository.findByEmail(entryCreationDto.getEntryUser());
 
         entryEntity.setReceiptNumber(entryCreationDto.getReceiptNumber());
         entryEntity.setReceiptSeries(entryCreationDto.getReceiptSeries());
@@ -48,7 +48,6 @@ public class EntryService {
         entryEntity.setReceiptType(receiptTypeEntity);
         entryEntity.setEntrySupplier(supplierEntity);
         entryEntity.setEntryUser(userEntity);
-        //entryEntity.setTotalAmount(entryCreationDto.getTotalAmount());
 
         EntryEntity entryEntitySaved = entryRepository.save(entryEntity);
         return mapper.map(entryEntitySaved, EntryDto.class);

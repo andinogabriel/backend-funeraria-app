@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
+import java.util.ArrayList;
+import java.util.List;
 
 @AllArgsConstructor
 @RestController
@@ -51,9 +53,17 @@ public class ItemController {
         return mapper.map(itemsDto, Page.class);
     }
 
+    @GetMapping
+    public List<ItemRest> getItemsByCategoryId(@RequestParam(value = "categoryId") long categoryId) {
+        List<ItemDto> itemsDto = itemService.getItemsByCategoryId(categoryId);
+        List<ItemRest> itemsRest = new ArrayList<>();
+        itemsDto.forEach(i -> itemsRest.add(mapper.map(i, ItemRest.class)));
+        return itemsRest;
+    }
+
     @GetMapping(path = "/category/{id}")
-    public Page<ItemRest> getItemsByCategoryId(@PathVariable long id, @RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "10") int limit, @RequestParam(value = "sortBy", defaultValue = "name") String sortBy, @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
-        Page<ItemDto> itemsDto = itemService.getItemsByCategoryId(id, page, limit, sortBy, sortDir);
+    public Page<ItemRest> getItemsPaginatedByCategoryId(@PathVariable long id, @RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "10") int limit, @RequestParam(value = "sortBy", defaultValue = "name") String sortBy, @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
+        Page<ItemDto> itemsDto = itemService.getItemsPaginatedByCategoryId(id, page, limit, sortBy, sortDir);
         return mapper.map(itemsDto, Page.class);
     }
 

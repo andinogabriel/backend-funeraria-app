@@ -28,6 +28,14 @@ public class SupplierController {
     @Autowired
     ModelMapper mapper;
 
+    @GetMapping
+    public List<SupplierRest> getSuppliers() {
+        List<SupplierDto> suppliersDto = supplierService.getSuppliers();
+        List<SupplierRest> suppliersRest = new ArrayList<>();
+        suppliersDto.forEach(s -> suppliersRest.add(mapper.map(s, SupplierRest.class)));
+        return suppliersRest;
+    }
+
     @PostMapping
     public SupplierRest createSupplier(@RequestBody @Valid SupplierCreateRequestModel supplier)  {
         SupplierDto supplierDto = mapper.map(supplier, SupplierDto.class);

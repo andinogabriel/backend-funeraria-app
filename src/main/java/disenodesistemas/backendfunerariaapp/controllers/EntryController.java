@@ -8,12 +8,14 @@ import disenodesistemas.backendfunerariaapp.service.EntryService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
 @RestController
-@RequestMapping("/api/v1/entries")
+@RequestMapping("api/v1/entries")
 public class EntryController {
 
     @Autowired
@@ -30,7 +32,10 @@ public class EntryController {
 
     @PostMapping
     public EntryRest createEntry(@RequestBody @Valid EntryRequestModel entryRequestModel) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getPrincipal().toString();
         EntryCreationDto entryCreationDto = mapper.map(entryRequestModel, EntryCreationDto.class);
+        entryCreationDto.setEntryUser(email);
         EntryDto entryDto = entryService.createEntry(entryCreationDto);
         return mapper.map(entryDto, EntryRest.class);
     }

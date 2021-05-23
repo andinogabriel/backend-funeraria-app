@@ -32,10 +32,10 @@ public class ItemEntity implements Serializable {
     @Column(length = 80)
     private String itemImageLink;
 
-    @Digits(integer = 6, fraction = 2)
+    @Digits(integer = 8, fraction = 2)
     private BigDecimal price;
 
-    @Digits(integer = 6, fraction = 2)
+    @Digits(integer = 8, fraction = 2)
     private BigDecimal itemLength;
 
     @Digits(integer = 6, fraction = 2)

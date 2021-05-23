@@ -24,7 +24,7 @@ public class EntryCreationDto implements Serializable {
     private BigDecimal totalAmount;
     private long receiptType;
     private long entrySupplier;
-    private long entryUser;
+    private String entryUser;
     private List<EntryDetailCreationDto> entryDetails = new ArrayList<>();
 
 
