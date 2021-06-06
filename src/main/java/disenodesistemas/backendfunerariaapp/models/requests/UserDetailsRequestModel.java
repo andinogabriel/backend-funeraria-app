@@ -5,12 +5,14 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
+import disenodesistemas.backendfunerariaapp.security.PasswordMatches;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.validator.constraints.Range;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
+@PasswordMatches
 @Getter @Setter
 public class UserDetailsRequestModel {
     //Clase para que el usuario se registre
@@ -30,9 +32,11 @@ public class UserDetailsRequestModel {
 
     @NotEmpty
     @Size(min = 8, max = 30, message = "La contraseña debe tener entre 8 y 30 caracteres") //Size es para strings
-    private String rePassword;
+    private String matchingPassword;
 
-
+    //Por defecto crea un usuario normal
+    //Si quiero un usuario Admin debo pasar este campo roles
+    private Set<String> roles = new HashSet<>();
 
 
 }

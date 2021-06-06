@@ -37,6 +37,11 @@ public class EntryService {
     ModelMapper mapper;
 
     public EntryDto createEntry(EntryCreationDto entryCreationDto) {
+
+        if(entryRepository.findByReceiptNumber(entryCreationDto.getReceiptNumber()) != null) {
+            throw new RuntimeException("El número de recibo ya se encuentra registrado.");
+        }
+
         EntryEntity entryEntity = new EntryEntity();
         ReceiptTypeEntity receiptTypeEntity = receiptTypeRepository.findById(entryCreationDto.getReceiptType());
         SupplierEntity supplierEntity = supplierRepository.findById(entryCreationDto.getEntrySupplier());

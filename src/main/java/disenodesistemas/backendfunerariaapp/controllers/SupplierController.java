@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -28,6 +29,7 @@ public class SupplierController {
     @Autowired
     ModelMapper mapper;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public List<SupplierRest> getSuppliers() {
         List<SupplierDto> suppliersDto = supplierService.getSuppliers();

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        .container {
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h3 th:text="${title}">TITLE</h3>
+    <p>Gracias por registrarte en Funeraria Nuñez y Hnos. Por favor haga click en el enlace de abajo para confirmar su correo electronico.</p>
+    <a th:href="${link}" th:text="${link}">LINK</a>
+</div>
+</body>
+</html>

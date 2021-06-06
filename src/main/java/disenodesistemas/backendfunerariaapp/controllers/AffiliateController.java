@@ -29,8 +29,10 @@ public class AffiliateController {
 
     @PostMapping
     public AffiliateRest createAffiliate(@RequestBody @Valid AffiliateDetailsRequestModel createAffiliate) {
+        //con SecurityContextHolder accedemos al contexto de la parte de la seguridad de la app y obtenemos la autenticacion del user
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getPrincipal().toString();
+        //Del metodo obtenemos el subject name que seria nuestro email
+        String email = authentication.getName();
 
         AffiliateCreationDto affiliateCreationDto = mapper.map(createAffiliate, AffiliateCreationDto.class);
         affiliateCreationDto.setUserEmail(email);

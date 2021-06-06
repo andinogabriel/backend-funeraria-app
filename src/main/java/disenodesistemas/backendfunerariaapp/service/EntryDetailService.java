@@ -50,19 +50,20 @@ public class EntryDetailService {
             }
             itemRepository.save(itemEntity);
 
+            BigDecimal subTotal;
+            BigDecimal addTax;
             //Si el total del ingreso es distinto de null entonces significa que hay detalles de ingreso en el ingreso
             if(entryEntity.getTotalAmount() != null) {
-                BigDecimal subTotal = entryEntity.getTotalAmount().add(BigDecimal.valueOf(entry.getQuantity()).multiply(entry.getPurchasePrice())); //Calculo del subtotal del Ingreso
-                BigDecimal addTax = (entryEntity.getTax().divide(BigDecimal.valueOf(100))).multiply(BigDecimal.valueOf(entry.getQuantity()).multiply(entry.getPurchasePrice())); //Calculamos el impuesto del detalle de ingreso creado
+                subTotal = entryEntity.getTotalAmount().add(BigDecimal.valueOf(entry.getQuantity()).multiply(entry.getPurchasePrice()));
+                addTax = (entryEntity.getTax().divide(BigDecimal.valueOf(100))).multiply(BigDecimal.valueOf(entry.getQuantity()).multiply(entry.getPurchasePrice()));
                 BigDecimal total = subTotal.add(addTax); //Al subtotal se le suma el impuesto del detalle de ingreso creado
                 entryEntity.setTotalAmount(new BigDecimal(total.toPlainString()).setScale(2, RoundingMode.FLOOR)); //Seteamos al ingreso el monto total
             } else {
-                BigDecimal subTotal = BigDecimal.valueOf(entry.getQuantity()).multiply(entry.getPurchasePrice());
-                BigDecimal addTax = (entryEntity.getTax().divide(BigDecimal.valueOf(100))).multiply(subTotal);
+                subTotal = BigDecimal.valueOf(entry.getQuantity()).multiply(entry.getPurchasePrice());
+                addTax = (entryEntity.getTax().divide(BigDecimal.valueOf(100))).multiply(subTotal);
                 BigDecimal total = subTotal.add(addTax);
                 entryEntity.setTotalAmount(new BigDecimal(total.toPlainString()).setScale(2, RoundingMode.FLOOR));
             }
-
             entryRepository.save(entryEntity);
 
         } catch (IllegalArgumentException e) {

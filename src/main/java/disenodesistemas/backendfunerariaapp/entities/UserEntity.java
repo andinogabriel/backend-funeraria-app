@@ -1,36 +1,27 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import disenodesistemas.backendfunerariaapp.appuser.AppUserRole;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
+
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.util.*;
 
 @Entity(name = "users")
-@Table(indexes = { @Index(columnList = "userId", name = "index_userid", unique = true), @Index(columnList = "email", name = "index_email", unique = true) })
+@Table(indexes = { @Index(columnList = "email", name = "index_email", unique = true) })
 @EntityListeners(AuditingEntityListener.class)
-@Getter @Setter
-@EqualsAndHashCode
 @NoArgsConstructor
-public class UserEntity implements UserDetails {
+@Getter @Setter
+public class UserEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue
     private long id;
-
-    @Column(nullable = false)
-    private String userId;
 
     @Column(nullable = false, length = 75)
     private String firstName;
@@ -47,12 +38,17 @@ public class UserEntity implements UserDetails {
     @CreatedDate
     private Date startDate;
 
-    @Enumerated(EnumType.STRING)
-    private AppUserRole appUserRole;
+    @Column
+    private boolean enabled;
 
-    private Boolean locked = false;
-
-    private Boolean enabled = false;
+    @ManyToMany
+    @JoinTable(
+            name = "user_role",
+            joinColumns = @JoinColumn(
+                    name = "user_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(
+                    name = "role_id", referencedColumnName = "id"))
+    private Set<RoleEntity> roles;
 
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "userNumber")
@@ -72,49 +68,13 @@ public class UserEntity implements UserDetails {
     private List<EntryEntity> entries = new ArrayList<>();
 
 
-    public UserEntity(String firstName, String lastName, String email, String encryptedPassword,AppUserRole appUserRole) {
+    public UserEntity(String email, String firstName, String lastName, String encryptedPassword) {
+        this.email = email;
         this.firstName = firstName;
         this.lastName = lastName;
-        this.email = email;
         this.encryptedPassword = encryptedPassword;
-        this.appUserRole = appUserRole;
-
+        this.enabled = false;
     }
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        SimpleGrantedAuthority authority =
-                new SimpleGrantedAuthority(appUserRole.name());
-        return Collections.singletonList(authority);
-    }
 
-    @Override
-    public String getPassword() {
-        return encryptedPassword;
-    }
-
-    @Override
-    public String getUsername() {
-        return email;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return !locked;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return enabled;
-    }
 }

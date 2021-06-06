@@ -32,8 +32,10 @@ public class EntryController {
 
     @PostMapping
     public EntryRest createEntry(@RequestBody @Valid EntryRequestModel entryRequestModel) {
+        //con SecurityContextHolder accedemos al contexto de la parte de la seguridad de la app y obtenemos la autenticacion del user
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getPrincipal().toString();
+        //Del metodo obtenemos el subject name que seria nuestro email
+        String email = authentication.getName();
         EntryCreationDto entryCreationDto = mapper.map(entryRequestModel, EntryCreationDto.class);
         entryCreationDto.setEntryUser(email);
         EntryDto entryDto = entryService.createEntry(entryCreationDto);

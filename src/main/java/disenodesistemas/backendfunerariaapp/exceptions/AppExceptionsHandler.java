@@ -5,6 +5,7 @@ import disenodesistemas.backendfunerariaapp.models.responses.ValidationErrors;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -25,7 +26,13 @@ public class AppExceptionsHandler {
         return new ResponseEntity<>(errorMessage, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    //Excepciones al validar un modelo en el controller
+    @ExceptionHandler(value = UsernameNotFoundException.class)
+    public ResponseEntity<Object> handleUserNameExistsException(UsernameNotFoundException exception, WebRequest webRequest) {
+        ErrorMessage errorMessage = new ErrorMessage(new Date(), exception.getMessage());
+        return new ResponseEntity<>(errorMessage, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    //Excepciones al validar un modelo en el controller, datos que vienen de los modelos request
     @ExceptionHandler(value = {MethodArgumentNotValidException.class})
     public ResponseEntity<Object> handleArgumentNotValid(MethodArgumentNotValidException ex, WebRequest webRequest) {
 
@@ -52,5 +59,8 @@ public class AppExceptionsHandler {
 
         return new ResponseEntity<>(errorMessage, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+
+
 
 }

@@ -1,12 +1,12 @@
 package disenodesistemas.backendfunerariaapp.models.responses;
 
-import disenodesistemas.backendfunerariaapp.models.requests.AddressCreateRequestModel;
-import disenodesistemas.backendfunerariaapp.models.requests.EntryRequestModel;
+import disenodesistemas.backendfunerariaapp.dto.RolesDto;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @Setter @Getter
 public class UserRest {
@@ -18,6 +18,8 @@ public class UserRest {
     private String email;
     private Date birthDate;
     private Date startDate;
+    private boolean enabled;
+    private Set<RolesDto> roles;
     private List<AffiliateRest> affiliates;
     private List<DeceasedRest> deceasedList;
     private List<AddressRest> userAddresses;

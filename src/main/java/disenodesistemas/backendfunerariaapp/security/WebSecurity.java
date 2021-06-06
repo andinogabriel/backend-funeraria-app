@@ -1,56 +1,79 @@
 package disenodesistemas.backendfunerariaapp.security;
 
-import disenodesistemas.backendfunerariaapp.service.UserServiceInterface;
+import disenodesistemas.backendfunerariaapp.security.jwt.JwtEntryPoint;
+import disenodesistemas.backendfunerariaapp.security.jwt.JwtTokenFilter;
+import disenodesistemas.backendfunerariaapp.service.UserDetailsServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+@Configuration
 @EnableWebSecurity
+//con perPostEnabled se usa para indicar a q metodos puede acceder solo el admin
+// Los metodos que no lleven anotación pueden acceder el admin como un generic user
+// @preauthorized solo puede acceder el admin
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurity extends WebSecurityConfigurerAdapter {
 
-    //Reglas de seguridad
+    @Autowired
+    UserDetailsServiceImpl userService;
 
-    private final UserServiceInterface userService;
-    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    //Devuelve el mensaje de no autorizado
+    @Autowired
+    JwtEntryPoint jwtEntryPoint;
 
-    public WebSecurity(UserServiceInterface userService, BCryptPasswordEncoder bCryptPasswordEncoder) {
-        this.userService = userService;
-        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+    @Bean
+    public JwtTokenFilter jwtTokenFilter(){
+        return new JwtTokenFilter();
     }
 
-    //Reglas de seguridad para nuestra app
+    //Encripta el pasword @return pasword ecriptado
+    @Bean
+    public PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
+    }
+
+    @Override
+    public void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(userService).passwordEncoder(passwordEncoder());
+    }
+
+    @Bean
+    @Override
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return super.authenticationManagerBean();
+    }
+
+    @Override
+    protected AuthenticationManager authenticationManager() throws Exception {
+        return super.authenticationManager();
+    }
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        //De esta forma especificamos que la url de /users con el metodo POST va a ser publica pero las demas otra peticiones deben estar autenticadas
-        http.cors().and()
-                .csrf().disable().authorizeRequests()
-                .antMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
-                .anyRequest()
-                .authenticated()
-                .and().addFilter(getAuthenticationFilter()) //Este es el filter que vamos a usar para autenticacion.
-                .addFilter(new AuthorizationFilter(authenticationManager()))
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS); //Con esto cuando se establezca una comunicacion entre el cliente y el servidor, en nuestro servidor NO se va a crear una variable de sesion, ya que usamos JWT y un header para enviar el token para cada peticion.
+        //Desactivamos cookies ya que enviamos un token
+        // cada vez que hacemos una petición
+        http.cors().and().csrf().disable()
+                .authorizeRequests()
+                .antMatchers(HttpMethod.POST, "/api/v1/users", "/api/v1/users/login","/api/v1/users/forgot-password", "/api/v1/users/reset-password").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/v1/users/activation").permitAll()
+                .anyRequest().authenticated()
+                .and()
+                .exceptionHandling().authenticationEntryPoint(jwtEntryPoint)
+                .and()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        http.addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
     }
-
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userService).passwordEncoder(bCryptPasswordEncoder);
-    }
-
-
-    public AuthenticationFilter getAuthenticationFilter() throws Exception {
-        final AuthenticationFilter filter = new AuthenticationFilter(authenticationManager());
-
-        //Especificamos la url para el login
-        filter.setFilterProcessesUrl("/api/v1/users/login");
-
-        return filter;
-    }
-
 
 }

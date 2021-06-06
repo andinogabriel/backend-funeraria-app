@@ -11,6 +11,8 @@ public interface EntryRepository extends PagingAndSortingRepository<EntryEntity,
 
     EntryEntity findById(long id);
 
+    EntryEntity findByReceiptNumber(Integer receiptNumber);
+
     Page<EntryEntity> findAll(Pageable pageable);
 
 }

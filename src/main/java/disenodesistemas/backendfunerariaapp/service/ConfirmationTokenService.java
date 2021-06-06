@@ -1,32 +1,45 @@
 package disenodesistemas.backendfunerariaapp.service;
 
+import disenodesistemas.backendfunerariaapp.entities.UserEntity;
 import disenodesistemas.backendfunerariaapp.repository.ConfirmationTokenRepository;
-import disenodesistemas.backendfunerariaapp.entities.ConfirmationToken;
-import lombok.AllArgsConstructor;
+import disenodesistemas.backendfunerariaapp.entities.ConfirmationTokenEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
+import javax.transaction.Transactional;
+import java.sql.Timestamp;
+import java.util.Calendar;
 
 @Service
-@AllArgsConstructor
 public class ConfirmationTokenService {
 
-    @Autowired
-    private ConfirmationTokenRepository confirmationTokenRepository;
+    private final ConfirmationTokenRepository confirmationTokenRepository;
 
-    public void saveConfirmationToken(ConfirmationToken token) {
-        confirmationTokenRepository.save(token);
+    @Autowired
+    public ConfirmationTokenService(ConfirmationTokenRepository confirmationTokenRepository) {
+        this.confirmationTokenRepository = confirmationTokenRepository;
     }
 
-    public Optional<ConfirmationToken> getToken(String token) {
+    @Transactional
+    public ConfirmationTokenEntity findByToken(String token) {
         return confirmationTokenRepository.findByToken(token);
     }
 
-    public void setConfirmedAt(String token) {
-        confirmationTokenRepository.updateConfirmedAt(
-                token, LocalDateTime.now());
+    @Transactional
+    public ConfirmationTokenEntity findByUser(UserEntity user) {
+        return confirmationTokenRepository.findByUser(user);
+    }
+
+    public void save(UserEntity user, String token) {
+        ConfirmationTokenEntity confirmationTokenEntity = new ConfirmationTokenEntity(user, token);
+        confirmationTokenEntity.setExpiryDate(calculateExpiryDate(24*60)); //24hs
+        confirmationTokenRepository.save(confirmationTokenEntity);
+    }
+
+    public Timestamp calculateExpiryDate(int expiryDateInMinutes) {
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.MINUTE, expiryDateInMinutes);
+        return new Timestamp(cal.getTime().getTime());
     }
 
 }
