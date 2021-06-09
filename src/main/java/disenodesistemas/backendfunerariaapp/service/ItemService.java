@@ -9,7 +9,6 @@ import disenodesistemas.backendfunerariaapp.entities.ItemEntity;
 import disenodesistemas.backendfunerariaapp.repository.BrandRepository;
 import disenodesistemas.backendfunerariaapp.repository.CategoryRepository;
 import disenodesistemas.backendfunerariaapp.repository.ItemRepository;
-import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -24,7 +23,7 @@ import java.util.*;
 
 import static org.apache.http.entity.ContentType.*;
 
-@AllArgsConstructor
+
 @Service
 public class ItemService {
 
@@ -43,6 +42,13 @@ public class ItemService {
 
     @Autowired
     ModelMapper mapper;
+
+    public List<ItemDto> getAllItems() {
+        List<ItemEntity> itemEntities = itemRepository.findAll();
+        List<ItemDto> itemsDto = new ArrayList<>();
+        itemEntities.forEach(i -> itemsDto.add(mapper.map(i, ItemDto.class)));
+        return itemsDto;
+    }
 
     public Page<ItemDto> getItemsPaginated(int page, int limit, String[] sortBy, String sortDir) {
         if (page > 0) {

@@ -13,6 +13,7 @@ public class ItemRest {
     private String description;
     private String code;
     private String itemImageLink;
+    private Integer stock;
     private BigDecimal price;
     private BigDecimal itemLength;
     private BigDecimal itemHeight;

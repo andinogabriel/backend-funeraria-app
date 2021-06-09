@@ -10,8 +10,6 @@ import disenodesistemas.backendfunerariaapp.service.SupplierService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,6 +36,7 @@ public class SupplierController {
         return suppliersRest;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public SupplierRest createSupplier(@RequestBody @Valid SupplierCreateRequestModel supplier)  {
         SupplierDto supplierDto = mapper.map(supplier, SupplierDto.class);
@@ -45,12 +44,14 @@ public class SupplierController {
         return mapper.map(createdSupplier, SupplierRest.class);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping(path = "/{id}")
     public SupplierRest getSupplierById(@PathVariable long id) {
         SupplierDto supplierDto = supplierService.getSupplierById(id);
         return mapper.map(supplierDto, SupplierRest.class);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping(path = "/{id}")
     public OperationStatusModel deleteSupplier(@PathVariable long id) {
         OperationStatusModel operationStatusModel = new OperationStatusModel();
@@ -60,6 +61,7 @@ public class SupplierController {
         return operationStatusModel;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(path = "/{id}")
     public SupplierRest updateSupplier(@PathVariable long id, @RequestBody @Valid SupplierCreateRequestModel supplier) {
         SupplierDto supplierDto = mapper.map(supplier, SupplierDto.class);
@@ -68,6 +70,7 @@ public class SupplierController {
 
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping(path = "/{id}/mobileNumbers")
     public List<MobileNumberRest> getMobileNumbers(@PathVariable long id) {
         List<MobileNumberDto> mobileNumbersDto = supplierService.getSupplierNumbers(id);
@@ -80,12 +83,14 @@ public class SupplierController {
         return mobileNumbersRest;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping(path = "/paginated")
     public Page<SupplierRest> getSuppliersPaginated(@RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "5") int limit, @RequestParam(value = "sortBy", defaultValue = "name") String sortBy, @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
         Page<SupplierDto> suppliersDto = supplierService.getSuppliersPaginated(page, limit, sortBy, sortDir);
         return mapper.map(suppliersDto, Page.class);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping(path = "/search/{name}")
     public Page<SupplierRest> getSuppliersByName(@PathVariable("name") String name, @RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "10") int limit, @RequestParam(value = "sortBy") String sortBy, @RequestParam(value = "sortDir") String sortDir) {
         Page<SupplierDto> suppliersDto = supplierService.getSuppliersByName(name, page, limit, sortBy, sortDir);

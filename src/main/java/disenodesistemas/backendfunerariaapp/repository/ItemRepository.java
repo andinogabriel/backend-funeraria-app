@@ -16,6 +16,8 @@ public interface ItemRepository extends PagingAndSortingRepository<ItemEntity, L
 
     ItemEntity findById(long id);
 
+    List<ItemEntity> findAll();
+
     Page<ItemEntity> findByCategory(Pageable pageableRequest, CategoryEntity categoryEntity);
 
     List<ItemEntity> findByCategoryOrderByName(CategoryEntity categoryEntity);

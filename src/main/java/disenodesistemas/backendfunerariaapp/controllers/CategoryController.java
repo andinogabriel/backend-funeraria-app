@@ -7,6 +7,7 @@ import disenodesistemas.backendfunerariaapp.models.responses.OperationStatusMode
 import disenodesistemas.backendfunerariaapp.service.CategoryService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -34,6 +35,7 @@ public class CategoryController {
         return categoriesRest;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public CategoryRest createCategory(@RequestBody @Valid CategoryCreateRequestModel categoryCreateRequestModel) {
         CategoryDto categoryDto = mapper.map(categoryCreateRequestModel, CategoryDto.class);
@@ -41,6 +43,7 @@ public class CategoryController {
         return mapper.map(createdCategory, CategoryRest.class);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public CategoryRest updateCategory(@PathVariable long id, @RequestBody @Valid CategoryCreateRequestModel categoryCreateRequestModel) {
         CategoryDto categoryDto = mapper.map(categoryCreateRequestModel, CategoryDto.class);
@@ -48,6 +51,7 @@ public class CategoryController {
         return mapper.map(updatedCategory, CategoryRest.class);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public OperationStatusModel deleteCategory(@PathVariable long id) {
         OperationStatusModel operationStatusModel = new OperationStatusModel();

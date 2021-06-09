@@ -10,6 +10,7 @@ import disenodesistemas.backendfunerariaapp.service.BrandService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -55,6 +56,7 @@ public class BrandController {
         return mapper.map(brandsDto, Page.class);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public BrandRest createBrand(@RequestBody @Valid BrandCreateRequestModel brandCreateRequestModel) {
         BrandDto brandDto = mapper.map(brandCreateRequestModel, BrandDto.class);
@@ -62,6 +64,7 @@ public class BrandController {
         return mapper.map(createdBrand, BrandRest.class);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(path = "/{id}")
     public BrandRest updateBrand(@PathVariable long id, @RequestBody @Valid BrandCreateRequestModel brandCreateRequestModel) {
         BrandDto brandDto = mapper.map(brandCreateRequestModel, BrandDto.class);
@@ -69,6 +72,7 @@ public class BrandController {
         return mapper.map(updatedBrand, BrandRest.class);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping(path = "/{id}")
     public OperationStatusModel deleteBrand(@PathVariable long id) {
         OperationStatusModel operationStatusModel = new OperationStatusModel();
