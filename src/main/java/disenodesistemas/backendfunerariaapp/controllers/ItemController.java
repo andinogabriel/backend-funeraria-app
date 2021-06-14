@@ -63,8 +63,8 @@ public class ItemController {
     }
 
     @GetMapping(path = "/category/{id}")
-    public List<ItemRest> getItemsByCategoryId(@RequestParam(value = "categoryId") long categoryId) {
-        List<ItemDto> itemsDto = itemService.getItemsByCategoryId(categoryId);
+    public List<ItemRest> getItemsByCategoryId(@PathVariable long id) {
+        List<ItemDto> itemsDto = itemService.getItemsByCategoryId(id);
         List<ItemRest> itemsRest = new ArrayList<>();
         itemsDto.forEach(i -> itemsRest.add(mapper.map(i, ItemRest.class)));
         return itemsRest;

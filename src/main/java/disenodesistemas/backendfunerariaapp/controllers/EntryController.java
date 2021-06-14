@@ -38,6 +38,12 @@ public class EntryController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping(path = "/{id}")
+    public EntryRest getEntryById(@PathVariable long id) {
+        return mapper.map(entryService.getEntryById(id), EntryRest.class);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/paginated")
     public Page<EntryRest> getEntriesPaginated(@RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "5") int limit, @RequestParam(value = "sortBy", defaultValue = "entryDate") String sortBy, @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
         Page<EntryDto> entriesDto = entryService.getEntriesPaginated(page, limit, sortBy, sortDir);
@@ -58,7 +64,7 @@ public class EntryController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping(path = "/{id}")
+    @PutMapping(path = "/{id}")
     public EntryRest updateEntry(@PathVariable long id ,@Valid @RequestBody EntryRequestModel entryRequestModel) {
         EntryDto entryDto = entryService.updateEntry(id, mapper.map(entryRequestModel, EntryCreationDto.class));
         return mapper.map(entryDto, EntryRest.class);

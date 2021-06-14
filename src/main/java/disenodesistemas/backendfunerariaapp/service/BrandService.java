@@ -55,6 +55,7 @@ public class BrandService {
     public BrandDto createBrand(BrandDto brandDto) {
         BrandEntity brandEntity = new BrandEntity();
         brandEntity.setName(brandDto.getName());
+        brandEntity.setWebPage(brandDto.getWebPage());
         BrandEntity createdBrand = brandRepository.save(brandEntity);
         return mapper.map(createdBrand, BrandDto.class);
     }
@@ -62,6 +63,7 @@ public class BrandService {
     public BrandDto updateBrand(long id, BrandDto brandDto) {
         BrandEntity brandEntity = brandRepository.findById(id);
         brandEntity.setName(brandDto.getName());
+        brandEntity.setWebPage(brandDto.getWebPage());
         BrandEntity updatedBrand = brandRepository.save(brandEntity);
         return mapper.map(updatedBrand, BrandDto.class);
     }

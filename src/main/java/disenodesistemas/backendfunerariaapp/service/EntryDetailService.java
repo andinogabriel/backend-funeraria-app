@@ -46,7 +46,6 @@ public class EntryDetailService {
         itemRepository.save(itemEntity);
 
         entryTotalAmountAccumulator(entry, entryEntity);
-        entryRepository.save(entryEntity);
 
         entryDetailRepository.save(entryDetailEntity);
         return mapper.map(entryDetailEntity, EntryDetailDto.class);
@@ -55,14 +54,9 @@ public class EntryDetailService {
     public EntryDetailDto updateEntryDetail(long id, EntryDetailCreationDto entryDetailCreationDto) {
         EntryDetailEntity entryDetailEntity = getEntryDetailById(id);
         ItemEntity itemEntity = getItemEntity(entryDetailCreationDto.getItem());
-        EntryEntity entryEntity = getEntryEntity(entryDetailCreationDto.getEntry());
 
-        //Antes de actualizar el total amount del ingreso, restamos el subtotal de este entryDetail desactualizado para que no se acumule.
-        BigDecimal outdatedEntryDetail = BigDecimal.valueOf(entryDetailEntity.getQuantity()).multiply(entryDetailEntity.getPurchasePrice());
-        BigDecimal tax = entryEntity.getTax().divide(BigDecimal.valueOf(100)).multiply(outdatedEntryDetail);
-        BigDecimal outdatedEntryDetailSubTotal = outdatedEntryDetail.add(tax);
-        //Le restamos al total amount del ingreso el subtotal de este detalle de ingreso desactualizado para que no haya una acumulacion extra.
-        entryEntity.setTotalAmount(new BigDecimal((entryEntity.getTotalAmount().subtract(outdatedEntryDetailSubTotal)).toPlainString()).setScale(2, RoundingMode.FLOOR)); //Seteamos al ingreso el monto total
+        entryDetailEntity.setPurchasePrice(entryDetailCreationDto.getPurchasePrice());
+        entryDetailEntity.setSalePrice(entryDetailCreationDto.getSalePrice());
 
         //Si el item del detalle de ingreso es el mismo que el de la actualizacion, restamos para que no haya una acumulacion extra con la cantidad anterior (desactualizada)
         if(itemEntity == entryDetailEntity.getItem()) {
@@ -76,12 +70,7 @@ public class EntryDetailService {
         entryDetailEntity.setItem(itemEntity);
         setItemStock(entryDetailCreationDto, itemEntity);
         itemEntity.setPrice(entryDetailCreationDto.getSalePrice());
-        entryDetailEntity.setPurchasePrice(entryDetailCreationDto.getPurchasePrice());
-        entryDetailEntity.setSalePrice(entryDetailCreationDto.getSalePrice());
-
         itemRepository.save(itemEntity);
-        entryTotalAmountAccumulator(entryDetailCreationDto, entryEntity); //Metodo que acumula en el total amount de ingreso el precio por cantidad del item del detalle de ingreso
-        entryRepository.save(entryEntity);
         EntryDetailEntity entryDetailEntityUpdated = entryDetailRepository.save(entryDetailEntity);
 
         return mapper.map(entryDetailEntityUpdated, EntryDetailDto.class);
@@ -127,6 +116,7 @@ public class EntryDetailService {
             BigDecimal total = subTotal.add(addTax);
             entryEntity.setTotalAmount(new BigDecimal(total.toPlainString()).setScale(2, RoundingMode.FLOOR));
         }
+        entryRepository.save(entryEntity);
     }
 
     private void setItemStock(EntryDetailCreationDto entry, ItemEntity itemEntity) {

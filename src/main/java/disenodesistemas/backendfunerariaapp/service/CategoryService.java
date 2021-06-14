@@ -39,7 +39,7 @@ public class CategoryService {
     }
 
     public CategoryDto updateCategory(long id, CategoryDto categoryDto) {
-        CategoryEntity categoryEntity = categoryRepository.findById(id);
+        CategoryEntity categoryEntity = findCategoryById(id);
         categoryEntity.setName(categoryDto.getName());
         categoryEntity.setDescription(categoryDto.getDescription());
         CategoryEntity updatedCategory = categoryRepository.save(categoryEntity);
@@ -47,8 +47,18 @@ public class CategoryService {
     }
 
     public void deleteCategory(long id) {
-        CategoryEntity categoryEntity = categoryRepository.findById(id);
+        CategoryEntity categoryEntity = findCategoryById(id);
         categoryRepository.delete(categoryEntity);
+    }
+
+    public CategoryDto getCategoryById(long id) {
+        return mapper.map(findCategoryById(id), CategoryDto.class);
+    }
+
+    private CategoryEntity findCategoryById(long id) {
+        CategoryEntity categoryEntity = categoryRepository.findById(id);
+        if (categoryEntity == null) throw new RuntimeException("No existe categoría con el ID especificado.");
+        return categoryEntity;
     }
 
 

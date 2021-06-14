@@ -35,6 +35,11 @@ public class CategoryController {
         return categoriesRest;
     }
 
+    @GetMapping(path = "/{id}")
+    public CategoryRest getCategoryById(@PathVariable long id) {
+        return mapper.map(categoryService.getCategoryById(id), CategoryRest.class);
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public CategoryRest createCategory(@RequestBody @Valid CategoryCreateRequestModel categoryCreateRequestModel) {

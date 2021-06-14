@@ -65,7 +65,7 @@ public class ItemService {
     }
 
     public List<ItemDto> getItemsByCategoryId(long id) {
-        CategoryEntity categoryEntity = categoryRepository.findById(id);
+        CategoryEntity categoryEntity = getCategoryById(id);
         List<ItemEntity> itemEntities = itemRepository.findByCategoryOrderByName(categoryEntity);
         List<ItemDto> itemsDto = new ArrayList<>();
         itemEntities.forEach(i -> itemsDto.add(mapper.map(i, ItemDto.class)));
@@ -196,6 +196,12 @@ public class ItemService {
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    private CategoryEntity getCategoryById(long id) {
+        CategoryEntity categoryEntity = categoryRepository.findById(id);
+        if (categoryEntity == null) throw new RuntimeException("No existe una categoria con el ID especifiado.");
+        return categoryEntity;
     }
 
     public byte[] downloadItemImage(long id) {

@@ -2,10 +2,7 @@ package disenodesistemas.backendfunerariaapp.service;
 
 import disenodesistemas.backendfunerariaapp.dto.EntryCreationDto;
 import disenodesistemas.backendfunerariaapp.dto.EntryDto;
-import disenodesistemas.backendfunerariaapp.entities.EntryEntity;
-import disenodesistemas.backendfunerariaapp.entities.ReceiptTypeEntity;
-import disenodesistemas.backendfunerariaapp.entities.SupplierEntity;
-import disenodesistemas.backendfunerariaapp.entities.UserEntity;
+import disenodesistemas.backendfunerariaapp.entities.*;
 import disenodesistemas.backendfunerariaapp.repository.EntryRepository;
 import disenodesistemas.backendfunerariaapp.repository.ReceiptTypeRepository;
 import disenodesistemas.backendfunerariaapp.repository.SupplierRepository;
@@ -18,8 +15,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 @Service
 public class EntryService {
@@ -40,10 +40,8 @@ public class EntryService {
     ModelMapper mapper;
 
     public EntryDto createEntry(EntryCreationDto entryCreationDto) {
-        SupplierEntity supplierEntity = supplierRepository.findById(entryCreationDto.getEntrySupplier());
-        if (supplierEntity == null) throw new RuntimeException("No existe proveedor con el id especificado.");
-        ReceiptTypeEntity receiptTypeEntity = receiptTypeRepository.findById(entryCreationDto.getReceiptType());
-        if (receiptTypeEntity == null) throw new RuntimeException("No existe un tipo de recibo con el id especificado.");
+        SupplierEntity supplierEntity = getSupplierEntity(entryCreationDto.getEntrySupplier());
+        ReceiptTypeEntity receiptTypeEntity = getReceiptTypeEntity(entryCreationDto.getReceiptType());
         UserEntity userEntity = userRepository.findByEmail(entryCreationDto.getEntryUser());
 
         if(entryRepository.findByReceiptNumber(entryCreationDto.getReceiptNumber()) != null) throw new RuntimeException("El número de recibo ya se encuentra registrado.");
@@ -69,26 +67,32 @@ public class EntryService {
     }
 
     public EntryDto updateEntry(long id, EntryCreationDto entryCreationDto) {
-        EntryEntity entryEntity = entryRepository.findById(id);
-        if (entryEntity == null) throw new RuntimeException("No existe ingreso con el ID especeficado.");
-        SupplierEntity supplierEntity = supplierRepository.findById(entryCreationDto.getEntrySupplier());
-        if (supplierEntity == null) throw new RuntimeException("No existe proveedor con el id especificado.");
-        ReceiptTypeEntity receiptTypeEntity = receiptTypeRepository.findById(entryCreationDto.getReceiptType());
-        if (receiptTypeEntity == null) throw new RuntimeException("No existe un tipo de recibo con el id especificado.");
+        EntryEntity entryEntity = getEntryById(id);
+        SupplierEntity supplierEntity = getSupplierEntity(entryCreationDto.getEntrySupplier());
+        ReceiptTypeEntity receiptTypeEntity = getReceiptTypeEntity(entryCreationDto.getReceiptType());
 
-        if(entryRepository.findByReceiptNumber(entryCreationDto.getReceiptNumber()) != null) throw new RuntimeException("El número de recibo ya se encuentra registrado.");
-
+        if(entryRepository.findByReceiptNumber(entryCreationDto.getReceiptNumber()) != null && entryRepository.findByReceiptNumber(entryCreationDto.getReceiptNumber()) != entryEntity) {
+            throw new RuntimeException("El número de recibo ya se encuentra registrado.");
+        }
         entryEntity.setEntrySupplier(supplierEntity);
+        entryEntity.setReceiptType(receiptTypeEntity);
         entryEntity.setTax(entryCreationDto.getTax());
         entryEntity.setReceiptNumber(entryCreationDto.getReceiptNumber());
         entryEntity.setReceiptSeries(entryCreationDto.getReceiptSeries());
 
-        return mapper.map(entryEntity, EntryDto.class);
+        //Cantidad × precio de compra de todos los detalles de ingreso y luego le sumamos el impuesto para obtener el monto total
+        BigDecimal subTotal = entryEntity.getEntryDetails().stream()
+                .map(e -> e.getPurchasePrice().multiply(BigDecimal.valueOf(e.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal total = subTotal.add(subTotal.multiply(entryEntity.getTax().divide(BigDecimal.valueOf(100))));
+        entryEntity.setTotalAmount(new BigDecimal(total.toPlainString()).setScale(2, RoundingMode.FLOOR));
+
+        EntryEntity entryUpdated = entryRepository.save(entryEntity);
+        return mapper.map(entryUpdated, EntryDto.class);
     }
 
     public void deleteEntry(long id) {
-        EntryEntity entryEntity = entryRepository.findById(id);
-        if (entryEntity == null) throw new RuntimeException("No existe ingreso con el ID especeficado.");
+        EntryEntity entryEntity = getEntryById(id);
         entryRepository.delete(entryEntity);
     }
 
@@ -104,5 +108,25 @@ public class EntryService {
         Page<EntryEntity> entriesEntity = entryRepository.findAll(pageable);
         return mapper.map(entriesEntity, Page.class);
     }
+
+    public EntryEntity getEntryById(long id) {
+        EntryEntity entryEntity = entryRepository.findById(id);
+        if (entryEntity == null) throw new RuntimeException("No existe ingreso con el ID especeficado.");
+        return entryEntity;
+    }
+
+    private ReceiptTypeEntity getReceiptTypeEntity(long id) {
+        ReceiptTypeEntity receiptTypeEntity = receiptTypeRepository.findById(id);
+        if (receiptTypeEntity == null) throw new RuntimeException("No existe un tipo de recibo con el id especificado.");
+        return receiptTypeEntity;
+    }
+
+
+    private SupplierEntity getSupplierEntity(long id) {
+        SupplierEntity supplierEntity = supplierRepository.findById(id);
+        if (supplierEntity == null) throw new RuntimeException("No existe proveedor con el id especificado.");
+        return supplierEntity;
+    }
+
 
 }

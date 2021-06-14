@@ -12,6 +12,7 @@ public class BrandDto implements Serializable {
 
     private long id;
     private String name;
+    private String webPage;
     private List<ItemDto> brandItems;
 
 }

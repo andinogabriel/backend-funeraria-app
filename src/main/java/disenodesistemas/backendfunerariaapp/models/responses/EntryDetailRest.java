@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 @Getter @Setter
 public class EntryDetailRest {
 
+    private Long id;
     private Integer quantity;
     private BigDecimal purchasePrice;
     private BigDecimal salePrice;

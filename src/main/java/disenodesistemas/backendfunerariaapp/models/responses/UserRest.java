@@ -25,5 +25,4 @@ public class UserRest {
     private List<AddressRest> userAddresses;
     private List<MobileNumberRest> userMobileNumbers;
 
-
 }

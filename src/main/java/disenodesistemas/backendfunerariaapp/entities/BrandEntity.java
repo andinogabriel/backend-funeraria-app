@@ -18,6 +18,9 @@ public class BrandEntity implements Serializable {
     @Column(nullable = false, length = 95)
     private String name;
 
+    @Column(length = 95)
+    private String webPage;
+
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "brand")
     private List<ItemEntity> brandItems;
 

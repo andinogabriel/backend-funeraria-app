@@ -64,7 +64,6 @@ public class UserEntity implements Serializable {
     private List<DeceasedEntity> deceasedList = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "entryUser")
-    @JsonManagedReference
     private List<EntryEntity> entries = new ArrayList<>();
 
 

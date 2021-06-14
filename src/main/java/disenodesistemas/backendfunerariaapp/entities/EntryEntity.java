@@ -49,12 +49,12 @@ public class EntryEntity implements Serializable {
     private ReceiptTypeEntity receiptType;
 
     @ManyToOne
-    @JsonBackReference
+    @JsonIgnoreProperties(value = {"entries", "handler","hibernateLazyInitializer"}, allowSetters = true)
     @JoinColumn(name = "supplier_id")
     private SupplierEntity entrySupplier;
 
     @ManyToOne
-    @JsonBackReference
+    @JsonIgnoreProperties(value = {"entries", "handler","hibernateLazyInitializer"}, allowSetters = true)
     @JoinColumn(name = "user_id")
     private UserEntity entryUser;
 
