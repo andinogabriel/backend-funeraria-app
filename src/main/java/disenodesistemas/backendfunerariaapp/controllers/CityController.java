@@ -1,40 +1,30 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
-import disenodesistemas.backendfunerariaapp.dto.CityDto;
-import disenodesistemas.backendfunerariaapp.models.responses.CityRest;
-import disenodesistemas.backendfunerariaapp.service.CityService;
-import org.modelmapper.ModelMapper;
+import disenodesistemas.backendfunerariaapp.dto.response.CityResponseDto;
+import disenodesistemas.backendfunerariaapp.service.Interface.ICity;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/cities")
+@AllArgsConstructor
 public class CityController {
 
     @Autowired
-    CityService cityService;
+    private final ICity cityService;
 
-    @Autowired
-    ModelMapper mapper;
 
     @GetMapping(path = "/{id}")
-    public CityRest getCityById(@PathVariable long id) {
-        CityDto cityDto = cityService.getCityById(id);
-        return mapper.map(cityDto, CityRest.class);
+    public CityResponseDto getCityById(@PathVariable long id) {
+        return cityService.getCityById(id);
     }
 
     @GetMapping
-    public List<CityRest> getCitiesByProvinceId(@RequestParam(value = "province_id") long id) {
-        List<CityDto> citiesDto = cityService.getCitiesByProvinceId(id);
-        List<CityRest> citiesRest = new ArrayList<>();
-        for (CityDto city : citiesDto) {
-            CityRest cityRest = mapper.map(city, CityRest.class);
-            citiesRest.add(cityRest);
-        }
-        return citiesRest;
+    public List<CityResponseDto> getCitiesByProvinceId(@RequestParam(value = "province_id") long id) {
+        return cityService.getCitiesByProvinceId(id);
     }
 
 }

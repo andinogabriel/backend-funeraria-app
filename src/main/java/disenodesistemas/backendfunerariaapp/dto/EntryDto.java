@@ -24,6 +24,6 @@ public class EntryDto implements Serializable {
     private ReceiptTypeDto receiptType;
     private SupplierDto entrySupplier;
     private UserDto entryUser;
-    private List<EntryDetailDto> entryDetails = new ArrayList<>();
+    private List<EntryDetailDto> entryDetails;
 
 }

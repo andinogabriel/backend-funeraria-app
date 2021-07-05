@@ -1,7 +1,6 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -10,20 +9,16 @@ import java.io.Serializable;
 import java.util.Date;
 
 @Entity(name = "affiliates")
-@Table(indexes = { @Index(columnList = "affiliateId", name = "affiliate_id", unique = true), @Index(columnList = "dni", name = "index_dni", unique = true) })
-
-@Getter @Setter
+@Table(indexes = { @Index(columnList = "dni", name = "index_dni", unique = true) })
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 @EntityListeners(AuditingEntityListener.class)
 public class AffiliateEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
-
-    @Column(nullable = false)
-    private String affiliateId;
 
     @Column(nullable = false, length = 70)
     private String lastName;
@@ -40,17 +35,16 @@ public class AffiliateEntity implements Serializable {
     @CreatedDate
     private Date startDate;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gender_id")
     private GenderEntity affiliateGender;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private UserEntity user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "relationship_id")
     private RelationshipEntity affiliateRelationship;
-
 
 }

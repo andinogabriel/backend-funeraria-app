@@ -3,19 +3,20 @@ package disenodesistemas.backendfunerariaapp.entities;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity(name = "addresses")
-@Getter @Setter
+@Getter @Setter @NoArgsConstructor
 public class AddressEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
     @Column(nullable = false, length = 90)
@@ -29,31 +30,19 @@ public class AddressEntity implements Serializable {
     @Column(length = 90)
     private String flat; //Piso del departamento
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = {"addresses", "handler","hibernateLazyInitializer"}, allowSetters = true)
     @JoinColumn(name = "city_id")
     private CityEntity city;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private UserEntity userAddress;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonBackReference
     @JoinColumn(name = "supplier_id")
     private SupplierEntity supplierAddress;
 
-    @Override
-    public String toString() {
-        return "AddressEntity{" +
-                "id=" + id +
-                ", streetName='" + streetName + '\'' +
-                ", blockStreet=" + blockStreet +
-                ", apartment='" + apartment + '\'' +
-                ", flat='" + flat + '\'' +
-                ", city=" + city +
-                ", userAddress=" + userAddress +
-                ", supplierAddress=" + supplierAddress +
-                '}';
-    }
+
 }

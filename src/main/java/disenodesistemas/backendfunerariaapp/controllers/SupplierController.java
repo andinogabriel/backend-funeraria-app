@@ -1,54 +1,47 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
-import disenodesistemas.backendfunerariaapp.dto.MobileNumberDto;
-import disenodesistemas.backendfunerariaapp.dto.SupplierDto;
-import disenodesistemas.backendfunerariaapp.models.requests.SupplierCreateRequestModel;
-import disenodesistemas.backendfunerariaapp.models.responses.MobileNumberRest;
-import disenodesistemas.backendfunerariaapp.models.responses.OperationStatusModel;
-import disenodesistemas.backendfunerariaapp.models.responses.SupplierRest;
-import disenodesistemas.backendfunerariaapp.service.SupplierService;
-import org.modelmapper.ModelMapper;
+import disenodesistemas.backendfunerariaapp.dto.request.SupplierCreationDto;
+import disenodesistemas.backendfunerariaapp.dto.response.SupplierResponseDto;
+import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
+import disenodesistemas.backendfunerariaapp.service.Interface.ISupplier;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
+import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/suppliers")
 public class SupplierController {
 
-    @Autowired
-    SupplierService supplierService;
+    private final ISupplier supplierService;
+    private final ProjectionFactory projectionFactory;
 
     @Autowired
-    ModelMapper mapper;
+    public SupplierController(ISupplier supplierService, ProjectionFactory projectionFactory) {
+        this.supplierService = supplierService;
+        this.projectionFactory = projectionFactory;
+    }
+
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public List<SupplierRest> getSuppliers() {
-        List<SupplierDto> suppliersDto = supplierService.getSuppliers();
-        List<SupplierRest> suppliersRest = new ArrayList<>();
-        suppliersDto.forEach(s -> suppliersRest.add(mapper.map(s, SupplierRest.class)));
-        return suppliersRest;
+    public List<SupplierResponseDto> getSuppliers() {
+        return supplierService.getSuppliers();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public SupplierRest createSupplier(@RequestBody @Valid SupplierCreateRequestModel supplier)  {
-        SupplierDto supplierDto = mapper.map(supplier, SupplierDto.class);
-        SupplierDto createdSupplier = supplierService.createSupplier(supplierDto);
-        return mapper.map(createdSupplier, SupplierRest.class);
+    public SupplierResponseDto createSupplier(@RequestBody @Valid SupplierCreationDto supplier)  {
+        return supplierService.createSupplier(supplier);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping(path = "/{id}")
-    public SupplierRest getSupplierById(@PathVariable long id) {
-        SupplierDto supplierDto = supplierService.getSupplierById(id);
-        return mapper.map(supplierDto, SupplierRest.class);
+    public SupplierResponseDto getSupplierById(@PathVariable long id) {
+        return projectionFactory.createProjection(SupplierResponseDto.class, supplierService.getSupplierById(id));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -63,38 +56,8 @@ public class SupplierController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(path = "/{id}")
-    public SupplierRest updateSupplier(@PathVariable long id, @RequestBody @Valid SupplierCreateRequestModel supplier) {
-        SupplierDto supplierDto = mapper.map(supplier, SupplierDto.class);
-        SupplierDto updatedSupplier = supplierService.updateSupplier(id, supplierDto);
-        return mapper.map(updatedSupplier, SupplierRest.class);
-
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping(path = "/{id}/mobileNumbers")
-    public List<MobileNumberRest> getMobileNumbers(@PathVariable long id) {
-        List<MobileNumberDto> mobileNumbersDto = supplierService.getSupplierNumbers(id);
-        List<MobileNumberRest> mobileNumbersRest = new ArrayList<>();
-
-        for (MobileNumberDto mobileNumber : mobileNumbersDto) {
-            MobileNumberRest mobileNumberRest = mapper.map(mobileNumber, MobileNumberRest.class);
-            mobileNumbersRest.add(mobileNumberRest);
-        }
-        return mobileNumbersRest;
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping(path = "/paginated")
-    public Page<SupplierRest> getSuppliersPaginated(@RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "5") int limit, @RequestParam(value = "sortBy", defaultValue = "name") String sortBy, @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
-        Page<SupplierDto> suppliersDto = supplierService.getSuppliersPaginated(page, limit, sortBy, sortDir);
-        return mapper.map(suppliersDto, Page.class);
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping(path = "/search/{name}")
-    public Page<SupplierRest> getSuppliersByName(@PathVariable("name") String name, @RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "10") int limit, @RequestParam(value = "sortBy") String sortBy, @RequestParam(value = "sortDir") String sortDir) {
-        Page<SupplierDto> suppliersDto = supplierService.getSuppliersByName(name, page, limit, sortBy, sortDir);
-        return mapper.map(suppliersDto, Page.class);
+    public SupplierResponseDto updateSupplier(@PathVariable long id, @RequestBody @Valid SupplierCreationDto supplierCreationDto) {
+        return supplierService.updateSupplier(id, supplierCreationDto);
     }
 
 }

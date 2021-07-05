@@ -1,14 +1,15 @@
 package disenodesistemas.backendfunerariaapp;
 
-import disenodesistemas.backendfunerariaapp.dto.*;
-import disenodesistemas.backendfunerariaapp.models.responses.*;
 import disenodesistemas.backendfunerariaapp.security.AppProperties;
 import org.modelmapper.ModelMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 
 @SpringBootApplication
 @EnableJpaAuditing
@@ -35,14 +36,17 @@ public class BackendFunerariaAppApplication {
 		return new AppProperties();
 	}
 
+	@Bean
+	public ProjectionFactory projectionFactory() {
+		return new SpelAwareProxyProjectionFactory();
+	}
+
+
+
 	//Para tener una instancia ModelMapper global para no estar instanciando cada rato
 	@Bean
 	public ModelMapper modelMapper() {
 		ModelMapper mapper = new ModelMapper();
-
-		//Cuando mapee de UserDto a la clase UserRest no queremos que traigan los afiliados de UserRest
-		mapper.typeMap(UserDto.class, UserRest.class).addMappings(m -> m.skip(UserRest::setAffiliates));
-		mapper.typeMap(SupplierDto.class, SupplierRest.class).addMappings(m -> m.skip(SupplierRest::setEntries));
 		return mapper;
 	}
 

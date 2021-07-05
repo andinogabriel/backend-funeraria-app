@@ -18,11 +18,13 @@ public class ConfirmationTokenEntity implements Serializable {
     @GeneratedValue
     private Long id;
 
+    @Column(nullable = false, length = 100)
     private String token;
 
     private Timestamp expiryDate;
 
-    @OneToOne(targetEntity = UserEntity.class, fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnoreProperties(value = {"confirmationTokens", "handler","hibernateLazyInitializer"}, allowSetters = true)
     @JoinColumn(nullable = false, name = "user_id")
     private UserEntity user;
 

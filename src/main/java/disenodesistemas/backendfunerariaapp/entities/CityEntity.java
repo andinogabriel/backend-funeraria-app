@@ -25,10 +25,10 @@ public class CityEntity implements Serializable {
     @JoinColumn(name = "province_id")
     private ProvinceEntity province;
 
-    @Column(nullable = false, length = 90)
+    @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false, length = 15)
+    @Column(nullable = false, length = 10)
     private String zipCode;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "city")

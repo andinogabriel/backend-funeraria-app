@@ -1,12 +1,9 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
-import disenodesistemas.backendfunerariaapp.dto.AddressCreationDto;
-import disenodesistemas.backendfunerariaapp.dto.AddressDto;
-import disenodesistemas.backendfunerariaapp.models.requests.AddressCreateRequestModel;
-import disenodesistemas.backendfunerariaapp.models.responses.AddressRest;
-import disenodesistemas.backendfunerariaapp.models.responses.OperationStatusModel;
-import disenodesistemas.backendfunerariaapp.service.AddressService;
-import org.modelmapper.ModelMapper;
+import disenodesistemas.backendfunerariaapp.dto.request.AddressCreationDto;
+import disenodesistemas.backendfunerariaapp.dto.response.AddressResponseDto;
+import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
+import disenodesistemas.backendfunerariaapp.service.Interface.IAddress;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,24 +13,22 @@ import javax.validation.Valid;
 @RequestMapping("api/v1/addresses")
 public class AddressController {
 
-    @Autowired
-    AddressService addressService;
+    private final IAddress addressService;
 
     @Autowired
-    ModelMapper mapper;
+    public AddressController(IAddress addressService) {
+        this.addressService = addressService;
+    }
+
 
     @PostMapping
-    public AddressRest createAddress(@RequestBody @Valid AddressCreateRequestModel addressCreateRequestModel) {
-        AddressCreationDto addressCreationDto = mapper.map(addressCreateRequestModel, AddressCreationDto.class);
-        AddressDto addressDto = addressService.createAddress(addressCreationDto);
-        return mapper.map(addressDto, AddressRest.class);
+    public AddressResponseDto createAddress(@RequestBody @Valid AddressCreationDto addressCreationDto) {
+        return addressService.createAddress(addressCreationDto);
     }
 
     @PutMapping(path = "/{id}")
-    public AddressRest updateAddress(@PathVariable long id, @RequestBody @Valid AddressCreateRequestModel addressCreateRequestModel) {
-        AddressCreationDto addressDto = mapper.map(addressCreateRequestModel, AddressCreationDto.class);
-        AddressDto addressToUpdate = addressService.updateAddress(id, addressDto);
-        return mapper.map(addressToUpdate, AddressRest.class);
+    public AddressResponseDto updateAddress(@PathVariable long id, @RequestBody @Valid AddressCreationDto addressCreationDto) {
+        return addressService.updateAddress(id, addressCreationDto);
     }
 
     @DeleteMapping(path = "/{id}")

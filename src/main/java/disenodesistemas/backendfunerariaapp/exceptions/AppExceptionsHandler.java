@@ -1,7 +1,7 @@
 package disenodesistemas.backendfunerariaapp.exceptions;
 
-import disenodesistemas.backendfunerariaapp.models.responses.ErrorMessage;
-import disenodesistemas.backendfunerariaapp.models.responses.ValidationErrors;
+import disenodesistemas.backendfunerariaapp.utils.ErrorMessage;
+import disenodesistemas.backendfunerariaapp.utils.ValidationErrors;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

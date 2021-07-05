@@ -1,7 +1,7 @@
 package disenodesistemas.backendfunerariaapp.security.jwt;
 
 import disenodesistemas.backendfunerariaapp.security.SecurityConstants;
-import disenodesistemas.backendfunerariaapp.service.UserDetailsServiceImpl;
+import disenodesistemas.backendfunerariaapp.service.Interface.IUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,12 +25,11 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
     private final static Logger logger = LoggerFactory.getLogger(JwtTokenFilter.class);
 
+    @Autowired
+    private JwtProvider jwtProvider;
 
     @Autowired
-    JwtProvider jwtProvider;
-
-    @Autowired
-    UserDetailsServiceImpl userService;
+    private IUser userService;
 
     // El token esta formado por:
     // cabecera --> Authorization: Bearer token

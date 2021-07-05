@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity(name = "items")
-@Getter @Setter
+@Getter @Setter @NoArgsConstructor
 public class ItemEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -63,5 +63,16 @@ public class ItemEntity implements Serializable {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "itemService")
     private List<ServiceDetailEntity> serviceDetails = new ArrayList<>();
 
-
+    @Builder
+    public ItemEntity(String name, String description, String code, BigDecimal price, BigDecimal itemLength, BigDecimal itemHeight, BigDecimal itemWidth, CategoryEntity category, BrandEntity brand) {
+        this.name = name;
+        this.description = description;
+        this.code = code;
+        this.price = price;
+        this.itemLength = itemLength;
+        this.itemHeight = itemHeight;
+        this.itemWidth = itemWidth;
+        this.category = category;
+        this.brand = brand;
+    }
 }

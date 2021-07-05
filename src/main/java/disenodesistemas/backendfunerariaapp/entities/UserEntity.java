@@ -1,6 +1,5 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -23,10 +22,10 @@ public class UserEntity implements Serializable {
     @GeneratedValue
     private long id;
 
-    @Column(nullable = false, length = 75)
+    @Column(nullable = false, length = 90)
     private String firstName;
 
-    @Column(nullable = false, length = 75)
+    @Column(nullable = false, length = 90)
     private String lastName;
 
     @Column(nullable = false, length = 150)
@@ -41,7 +40,7 @@ public class UserEntity implements Serializable {
     @Column
     private boolean enabled;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_role",
             joinColumns = @JoinColumn(
@@ -65,6 +64,9 @@ public class UserEntity implements Serializable {
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "entryUser")
     private List<EntryEntity> entries = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
+    private List<ConfirmationTokenEntity> confirmationTokens = new ArrayList<>();
 
 
     public UserEntity(String email, String firstName, String lastName, String encryptedPassword) {

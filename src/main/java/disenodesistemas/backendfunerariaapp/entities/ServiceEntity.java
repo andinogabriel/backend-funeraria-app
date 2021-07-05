@@ -21,10 +21,7 @@ public class ServiceEntity implements Serializable {
     @Id
     @GeneratedValue
     private long id;
-
-    @Column(nullable = false, length = 75)
-    private String serviceId;
-
+    
     @Column(nullable = false)
     private Date serviceDate;
 

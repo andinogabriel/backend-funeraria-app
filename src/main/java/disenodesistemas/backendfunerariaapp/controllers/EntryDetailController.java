@@ -1,12 +1,9 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
-import disenodesistemas.backendfunerariaapp.dto.EntryDetailCreationDto;
-import disenodesistemas.backendfunerariaapp.dto.EntryDetailDto;
-import disenodesistemas.backendfunerariaapp.models.requests.EntryDetailRequestModel;
-import disenodesistemas.backendfunerariaapp.models.responses.EntryDetailRest;
-import disenodesistemas.backendfunerariaapp.models.responses.OperationStatusModel;
-import disenodesistemas.backendfunerariaapp.service.EntryDetailService;
-import org.modelmapper.ModelMapper;
+import disenodesistemas.backendfunerariaapp.dto.request.EntryDetailCreationDto;
+import disenodesistemas.backendfunerariaapp.dto.response.EntryDetailResponseDto;
+import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
+import disenodesistemas.backendfunerariaapp.service.Interface.IEntryDetail;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -17,26 +14,24 @@ import javax.validation.Valid;
 @RequestMapping("api/v1/entryDetails")
 public class EntryDetailController {
 
-    @Autowired
-    EntryDetailService entryDetailService;
+    private final IEntryDetail entryDetailService;
 
     @Autowired
-    ModelMapper mapper;
+    public EntryDetailController(IEntryDetail entryDetailService) {
+        this.entryDetailService = entryDetailService;
+    }
 
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public EntryDetailRest createEntryDetail(@RequestBody @Valid EntryDetailRequestModel entryDetailRequestModel) {
-        EntryDetailCreationDto entryDetailCreationDto = mapper.map(entryDetailRequestModel, EntryDetailCreationDto.class);
-        EntryDetailDto entryDetailDto = entryDetailService.createEntryDetail(entryDetailCreationDto);
-        return mapper.map(entryDetailDto, EntryDetailRest.class);
+    public EntryDetailResponseDto createEntryDetail(@RequestBody @Valid EntryDetailCreationDto entryDetailCreationDto) {
+       return entryDetailService.createEntryDetail(entryDetailCreationDto);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(path = "/{id}")
-    public EntryDetailRest updateEntryDetail(@PathVariable long id, @Valid @RequestBody EntryDetailRequestModel entryDetailRequestModel) {
-        EntryDetailDto entryDetailDto = entryDetailService.updateEntryDetail(id, mapper.map(entryDetailRequestModel, EntryDetailCreationDto.class));
-        return mapper.map(entryDetailDto, EntryDetailRest.class);
+    public EntryDetailResponseDto updateEntryDetail(@PathVariable long id, @Valid @RequestBody EntryDetailCreationDto entryDetailCreationDto) {
+        return entryDetailService.updateEntryDetail(id, entryDetailCreationDto);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

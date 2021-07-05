@@ -1,12 +1,9 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
-import disenodesistemas.backendfunerariaapp.dto.EntryCreationDto;
-import disenodesistemas.backendfunerariaapp.dto.EntryDto;
-import disenodesistemas.backendfunerariaapp.models.requests.EntryRequestModel;
-import disenodesistemas.backendfunerariaapp.models.responses.EntryRest;
-import disenodesistemas.backendfunerariaapp.models.responses.OperationStatusModel;
-import disenodesistemas.backendfunerariaapp.service.EntryService;
-import org.modelmapper.ModelMapper;
+import disenodesistemas.backendfunerariaapp.dto.request.EntryCreationDto;
+import disenodesistemas.backendfunerariaapp.dto.response.EntryResponseDto;
+import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
+import disenodesistemas.backendfunerariaapp.service.Interface.IEntry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,59 +12,53 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/entries")
 public class EntryController {
 
-    @Autowired
-    EntryService entryService;
+    private final IEntry entryService;
 
     @Autowired
-    ModelMapper mapper;
+    public EntryController(IEntry entryService) {
+        this.entryService = entryService;
+    }
+
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public List<EntryRest> getEntries() {
-        List<EntryDto> entriesDto = entryService.getAllEntries();
-        List<EntryRest> entriesRest = new ArrayList<>();
-        entriesDto.forEach(e -> entriesRest.add(mapper.map(e, EntryRest.class)));
-        return entriesRest;
+    public List<EntryResponseDto> getEntries() {
+        return entryService.getAllEntries();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping(path = "/{id}")
-    public EntryRest getEntryById(@PathVariable long id) {
-        return mapper.map(entryService.getEntryById(id), EntryRest.class);
+    public EntryResponseDto getEntryById(@PathVariable long id) {
+        return entryService.getProjectedEntryById(id);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/paginated")
-    public Page<EntryRest> getEntriesPaginated(@RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "5") int limit, @RequestParam(value = "sortBy", defaultValue = "entryDate") String sortBy, @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
-        Page<EntryDto> entriesDto = entryService.getEntriesPaginated(page, limit, sortBy, sortDir);
-        return mapper.map(entriesDto, Page.class);
+    public Page<EntryResponseDto> getEntriesPaginated(@RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value="limit", defaultValue = "5") int limit, @RequestParam(value = "sortBy", defaultValue = "entryDate") String sortBy, @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir) {
+        return entryService.getEntriesPaginated(page, limit, sortBy, sortDir);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public EntryRest createEntry(@RequestBody @Valid EntryRequestModel entryRequestModel) {
+    public EntryResponseDto createEntry(@RequestBody @Valid EntryCreationDto entryCreationDto) {
         //con SecurityContextHolder accedemos al contexto de la parte de la seguridad de la app y obtenemos la autenticacion del user
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         //Del metodo obtenemos el subject name que seria nuestro email
         String email = authentication.getName();
-        EntryCreationDto entryCreationDto = mapper.map(entryRequestModel, EntryCreationDto.class);
         entryCreationDto.setEntryUser(email);
-        EntryDto entryDto = entryService.createEntry(entryCreationDto);
-        return mapper.map(entryDto, EntryRest.class);
+        return entryService.createEntry(entryCreationDto);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(path = "/{id}")
-    public EntryRest updateEntry(@PathVariable long id ,@Valid @RequestBody EntryRequestModel entryRequestModel) {
-        EntryDto entryDto = entryService.updateEntry(id, mapper.map(entryRequestModel, EntryCreationDto.class));
-        return mapper.map(entryDto, EntryRest.class);
+    public EntryResponseDto updateEntry(@PathVariable long id ,@Valid @RequestBody EntryCreationDto entryCreationDto) {
+        return entryService.updateEntry(id, entryCreationDto);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

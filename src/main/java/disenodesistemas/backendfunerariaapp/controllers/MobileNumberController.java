@@ -1,13 +1,11 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
-import disenodesistemas.backendfunerariaapp.dto.MobileNumberCreationDto;
-import disenodesistemas.backendfunerariaapp.dto.MobileNumberDto;
-import disenodesistemas.backendfunerariaapp.models.requests.MobileNumberCreateModel;
-import disenodesistemas.backendfunerariaapp.models.responses.MobileNumberRest;
-import disenodesistemas.backendfunerariaapp.models.responses.OperationStatusModel;
-import disenodesistemas.backendfunerariaapp.service.MobileNumberService;
-import org.modelmapper.ModelMapper;
+import disenodesistemas.backendfunerariaapp.dto.request.MobileNumberCreationDto;
+import disenodesistemas.backendfunerariaapp.dto.response.MobileNumberResponseDto;
+import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
+import disenodesistemas.backendfunerariaapp.service.Interface.IMobileNumber;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -16,27 +14,27 @@ import javax.validation.Valid;
 @RequestMapping("api/v1/mobileNumbers")
 public class MobileNumberController {
 
-    @Autowired
-    MobileNumberService mobileNumberService;
+    private final IMobileNumber mobileNumberService;
 
     @Autowired
-    ModelMapper mapper;
+    public MobileNumberController(IMobileNumber mobileNumberService) {
+        this.mobileNumberService = mobileNumberService;
+    }
 
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @PostMapping
-    public MobileNumberRest createMobileNumber(@RequestBody @Valid MobileNumberCreateModel mobileNumberCreateModel) {
-        MobileNumberCreationDto mobileNumberDto = mapper.map(mobileNumberCreateModel , MobileNumberCreationDto.class);
-        MobileNumberDto createdMobileNumber = mobileNumberService.createMobileNumber(mobileNumberDto);
-        return mapper.map(createdMobileNumber, MobileNumberRest.class);
-
+    public MobileNumberResponseDto createMobileNumber(@RequestBody @Valid MobileNumberCreationDto mobileNumberCreationDto) {
+        return mobileNumberService.createMobileNumber(mobileNumberCreationDto);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @PutMapping(path = "/{id}")
-    public MobileNumberRest updateMobileNumber(@PathVariable long id, @RequestBody @Valid MobileNumberCreateModel mobileNumberCreateModel) {
-        MobileNumberDto mobileNumberDto = mapper.map(mobileNumberCreateModel, MobileNumberDto.class);
-        MobileNumberDto updatedMobileNumber = mobileNumberService.updateMobileNumber(id, mobileNumberDto);
-        return mapper.map(updatedMobileNumber, MobileNumberRest.class);
+    public MobileNumberResponseDto updateMobileNumber(@PathVariable long id, @RequestBody @Valid MobileNumberCreationDto mobileNumberCreationDto) {
+        return mobileNumberService.updateMobileNumber(id, mobileNumberCreationDto);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @DeleteMapping(path = "/{id}")
     public OperationStatusModel deleteMobileNumber(@PathVariable long id) {
         OperationStatusModel operationStatusModel = new OperationStatusModel();

@@ -2,7 +2,7 @@ package disenodesistemas.backendfunerariaapp.security;
 
 import disenodesistemas.backendfunerariaapp.security.jwt.JwtEntryPoint;
 import disenodesistemas.backendfunerariaapp.security.jwt.JwtTokenFilter;
-import disenodesistemas.backendfunerariaapp.service.UserDetailsServiceImpl;
+import disenodesistemas.backendfunerariaapp.service.Interface.IUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,11 +27,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class WebSecurity extends WebSecurityConfigurerAdapter {
 
     @Autowired
-    UserDetailsServiceImpl userService;
+    private IUser userService;
 
-    //Devuelve el mensaje de no autorizado
     @Autowired
-    JwtEntryPoint jwtEntryPoint;
+    private JwtEntryPoint jwtEntryPoint;
+
 
     @Bean
     public JwtTokenFilter jwtTokenFilter(){

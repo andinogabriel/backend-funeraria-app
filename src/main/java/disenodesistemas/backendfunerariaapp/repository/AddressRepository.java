@@ -5,11 +5,12 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface AddressRepository extends PagingAndSortingRepository<AddressEntity, Long> {
 
-    AddressEntity findById(long id);
+    Optional<AddressEntity> findById(long id);
 
     List<AddressEntity> findBySupplierAddress(long id);
 

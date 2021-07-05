@@ -20,9 +20,6 @@ public class DeceasedEntity implements Serializable {
     @GeneratedValue
     private long id;
 
-    @Column(nullable = false)
-    private String deceasedId;
-
     @Column(nullable = false, length = 80)
     private String lastName;
 

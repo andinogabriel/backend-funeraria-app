@@ -12,7 +12,7 @@ import java.util.List;
 public class BrandEntity implements Serializable {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
     @Column(nullable = false, length = 95)
@@ -21,7 +21,7 @@ public class BrandEntity implements Serializable {
     @Column(length = 95)
     private String webPage;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "brand")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "brand", orphanRemoval = true)
     private List<ItemEntity> brandItems;
 
 }

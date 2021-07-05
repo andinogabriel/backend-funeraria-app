@@ -15,7 +15,6 @@
 	<description>Backend para el sistema de una funeraria</description>
 	<properties>
 		<java.version>11</java.version>
-		<blaze-persistence.version>1.6.0</blaze-persistence.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -123,22 +122,6 @@
 			<artifactId>aws-java-sdk-core</artifactId>
 			<version>1.11.1009</version>
 		</dependency>
-
-		<dependency>
-			<groupId>com.blazebit</groupId>
-			<artifactId>blaze-persistence-bom</artifactId>
-			<version>${blaze-persistence.version}</version>
-			<type>pom</type>
-			<scope>import</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>com.blazebit</groupId>
-			<artifactId>blaze-persistence-integration-spring-data-2.3</artifactId>
-			<version>${blaze-persistence.version}</version>
-			<scope>compile</scope>
-		</dependency>
-
 
 	</dependencies>
 

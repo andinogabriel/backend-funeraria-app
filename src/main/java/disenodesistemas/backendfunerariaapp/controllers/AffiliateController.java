@@ -1,11 +1,8 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
-import disenodesistemas.backendfunerariaapp.dto.AffiliateCreationDto;
-import disenodesistemas.backendfunerariaapp.dto.AffiliateDto;
-import disenodesistemas.backendfunerariaapp.models.requests.AffiliateDetailsRequestModel;
-import disenodesistemas.backendfunerariaapp.models.responses.AffiliateRest;
-import disenodesistemas.backendfunerariaapp.service.AffiliateService;
-import org.modelmapper.ModelMapper;
+import disenodesistemas.backendfunerariaapp.dto.request.AffiliateCreationDto;
+import disenodesistemas.backendfunerariaapp.dto.response.AffiliateResponseDto;
+import disenodesistemas.backendfunerariaapp.service.Interface.IAffiliate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,25 +17,21 @@ import javax.validation.Valid;
 @RequestMapping("api/v1/affiliates")
 public class AffiliateController {
 
-    @Autowired
-    AffiliateService affiliateService;
+    private final IAffiliate affiliateService;
 
     @Autowired
-    ModelMapper mapper;
-
+    public AffiliateController(IAffiliate affiliateService) {
+        this.affiliateService = affiliateService;
+    }
 
     @PostMapping
-    public AffiliateRest createAffiliate(@RequestBody @Valid AffiliateDetailsRequestModel createAffiliate) {
+    public AffiliateResponseDto createAffiliate(@RequestBody @Valid AffiliateCreationDto affiliateCreationDto) {
         //con SecurityContextHolder accedemos al contexto de la parte de la seguridad de la app y obtenemos la autenticacion del user
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         //Del metodo obtenemos el subject name que seria nuestro email
         String email = authentication.getName();
-
-        AffiliateCreationDto affiliateCreationDto = mapper.map(createAffiliate, AffiliateCreationDto.class);
         affiliateCreationDto.setUserEmail(email);
-        AffiliateDto affiliateDto = affiliateService.createAffiliate(affiliateCreationDto);
-
-        return mapper.map(affiliateDto, AffiliateRest.class);
+        return affiliateService.createAffiliate(affiliateCreationDto);
     }
 
 
