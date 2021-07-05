@@ -1,6 +1,5 @@
 package disenodesistemas.backendfunerariaapp.service.Interface;
 
-import disenodesistemas.backendfunerariaapp.dto.AddressDto;
 import disenodesistemas.backendfunerariaapp.dto.request.AddressCreationDto;
 import disenodesistemas.backendfunerariaapp.dto.response.AddressResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.AddressEntity;

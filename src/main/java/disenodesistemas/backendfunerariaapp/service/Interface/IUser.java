@@ -1,14 +1,12 @@
 package disenodesistemas.backendfunerariaapp.service.Interface;
 
 import disenodesistemas.backendfunerariaapp.dto.JwtDto;
-import disenodesistemas.backendfunerariaapp.dto.UserDto;
 import disenodesistemas.backendfunerariaapp.dto.request.PasswordResetDto;
 import disenodesistemas.backendfunerariaapp.dto.request.UserLoginDto;
 import disenodesistemas.backendfunerariaapp.dto.request.UserRegisterDto;
 import disenodesistemas.backendfunerariaapp.dto.response.UserResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.UserEntity;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

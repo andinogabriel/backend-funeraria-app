@@ -1,6 +1,5 @@
 package disenodesistemas.backendfunerariaapp.service.Interface;
 
-import disenodesistemas.backendfunerariaapp.dto.SupplierDto;
 import disenodesistemas.backendfunerariaapp.dto.request.SupplierCreationDto;
 import disenodesistemas.backendfunerariaapp.dto.response.SupplierResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.SupplierEntity;

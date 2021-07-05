@@ -1,9 +1,7 @@
 package disenodesistemas.backendfunerariaapp.service.Interface;
 
-import disenodesistemas.backendfunerariaapp.dto.EntryDetailDto;
 import disenodesistemas.backendfunerariaapp.dto.request.EntryDetailCreationDto;
 import disenodesistemas.backendfunerariaapp.dto.response.EntryDetailResponseDto;
-import disenodesistemas.backendfunerariaapp.dto.response.EntryResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.EntryDetailEntity;
 import disenodesistemas.backendfunerariaapp.entities.EntryEntity;
 import disenodesistemas.backendfunerariaapp.entities.ItemEntity;

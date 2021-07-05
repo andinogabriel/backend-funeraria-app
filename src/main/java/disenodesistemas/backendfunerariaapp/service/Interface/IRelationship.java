@@ -1,6 +1,5 @@
 package disenodesistemas.backendfunerariaapp.service.Interface;
 
-import disenodesistemas.backendfunerariaapp.dto.RelationshipDto;
 import disenodesistemas.backendfunerariaapp.dto.response.RelationshipResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.RelationshipEntity;
 

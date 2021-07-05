@@ -1,6 +1,5 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
-import disenodesistemas.backendfunerariaapp.dto.MobileNumberDto;
 import disenodesistemas.backendfunerariaapp.dto.request.MobileNumberCreationDto;
 import disenodesistemas.backendfunerariaapp.dto.response.MobileNumberResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.MobileNumberEntity;
