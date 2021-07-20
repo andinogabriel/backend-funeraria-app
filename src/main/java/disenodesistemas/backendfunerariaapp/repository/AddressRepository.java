@@ -10,8 +10,6 @@ import java.util.Optional;
 @Repository
 public interface AddressRepository extends PagingAndSortingRepository<AddressEntity, Long> {
 
-    Optional<AddressEntity> findById(long id);
-
-    List<AddressEntity> findBySupplierAddress(long id);
+    Optional<AddressEntity> findById(Long id);
 
 }

@@ -32,7 +32,7 @@ public class CategoryController {
     }
 
     @GetMapping(path = "/{id}")
-    public CategoryResponseDto getCategoryById(@PathVariable long id) {
+    public CategoryResponseDto getCategoryById(@PathVariable Long id) {
         return projectionFactory.createProjection(CategoryResponseDto.class, categoryService.findCategoryById(id));
     }
 
@@ -44,13 +44,13 @@ public class CategoryController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public CategoryResponseDto updateCategory(@PathVariable long id, @RequestBody @Valid CategoryCreationDto categoryCreationDto) {
+    public CategoryResponseDto updateCategory(@PathVariable Long id, @RequestBody @Valid CategoryCreationDto categoryCreationDto) {
         return categoryService.updateCategory(id, categoryCreationDto);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public OperationStatusModel deleteCategory(@PathVariable long id) {
+    public OperationStatusModel deleteCategory(@PathVariable Long id) {
         OperationStatusModel operationStatusModel = new OperationStatusModel();
         operationStatusModel.setName("DELETE");
         categoryService.deleteCategory(id);

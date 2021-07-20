@@ -22,12 +22,10 @@ public class AddressCreationDto implements Serializable {
     private String streetName;
 
     @NotNull(message = "{address.error.city.blank}")
-    private long city;
+    private Long city;
 
-    private long supplierAddress;
+    private Long supplierAddress;
 
-    private long userAddress;
-
-
+    private Long userAddress;
 
 }

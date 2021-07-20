@@ -6,11 +6,12 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProvinceRepository extends PagingAndSortingRepository<ProvinceEntity, Long> {
 
-    ProvinceEntity findById(long id);
+    Optional<ProvinceEntity> findById(Long id);
 
     List<ProvinceResponseDto> findAllByOrderByName();
 }

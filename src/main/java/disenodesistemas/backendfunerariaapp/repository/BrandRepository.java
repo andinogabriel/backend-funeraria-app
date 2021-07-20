@@ -13,7 +13,7 @@ import java.util.Optional;
 @Repository
 public interface BrandRepository extends CrudRepository<BrandEntity, Long> {
 
-    Optional<BrandEntity> findById(long id);
+    Optional<BrandEntity> findById(Long id);
 
     List<BrandResponseDto> findAllByOrderByName();
 

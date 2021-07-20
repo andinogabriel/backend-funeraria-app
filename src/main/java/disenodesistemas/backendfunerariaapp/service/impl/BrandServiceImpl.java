@@ -3,14 +3,15 @@ package disenodesistemas.backendfunerariaapp.service.impl;
 import disenodesistemas.backendfunerariaapp.dto.request.BrandCreationDto;
 import disenodesistemas.backendfunerariaapp.dto.response.BrandResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.BrandEntity;
+import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.BrandRepository;
 import disenodesistemas.backendfunerariaapp.service.Interface.IBrand;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Locale;
 
@@ -35,10 +36,12 @@ public class BrandServiceImpl implements IBrand {
     }
 
     @Override
-    public BrandEntity getBrandById(long id) {
+    public BrandEntity getBrandById(Long id) {
         return brandRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException(
-                        messageSource.getMessage("brand.error.not.found", null, Locale.getDefault())
+                () -> new AppException(
+                        messageSource.getMessage("brand.error.not.found", null, Locale.getDefault()),
+                        HttpStatus.NOT_FOUND
+
                 )
         );
     }
@@ -53,7 +56,7 @@ public class BrandServiceImpl implements IBrand {
     }
 
     @Override
-    public BrandResponseDto updateBrand(long id, BrandCreationDto brandDto) {
+    public BrandResponseDto updateBrand(Long id, BrandCreationDto brandDto) {
         BrandEntity brandEntity = getBrandById(id);
         brandEntity.setName(brandDto.getName());
         brandEntity.setWebPage(brandDto.getWebPage());
@@ -62,7 +65,7 @@ public class BrandServiceImpl implements IBrand {
     }
 
     @Override
-    public void deleteBrand(long id) {
+    public void deleteBrand(Long id) {
         BrandEntity brandEntity = getBrandById(id);
         brandRepository.delete(brandEntity);
     }

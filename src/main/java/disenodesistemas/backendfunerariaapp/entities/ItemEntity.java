@@ -19,7 +19,7 @@ public class ItemEntity implements Serializable {
 
     @Id
     @GeneratedValue
-    private long id;
+    private Long id;
 
     @Column(nullable = false, length = 85)
     private String name;
@@ -29,7 +29,6 @@ public class ItemEntity implements Serializable {
     @Column(length = 95)
     private String code;
 
-    @Column(length = 80)
     private String itemImageLink;
 
     @Digits(integer = 8, fraction = 2)

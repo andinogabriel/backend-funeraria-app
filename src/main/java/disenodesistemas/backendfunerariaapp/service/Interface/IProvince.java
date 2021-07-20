@@ -1,11 +1,14 @@
 package disenodesistemas.backendfunerariaapp.service.Interface;
 
 import disenodesistemas.backendfunerariaapp.dto.response.ProvinceResponseDto;
+import disenodesistemas.backendfunerariaapp.entities.ProvinceEntity;
 
 import java.util.List;
 
 public interface IProvince {
 
     List<ProvinceResponseDto> getAllProvinces();
+
+    ProvinceEntity getProvinceById(Long id);
 
 }

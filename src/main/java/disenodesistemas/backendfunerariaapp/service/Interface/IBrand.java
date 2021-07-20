@@ -10,12 +10,12 @@ public interface IBrand {
 
     List<BrandResponseDto> getAllBrands();
 
-    BrandEntity getBrandById(long id);
+    BrandEntity getBrandById(Long id);
 
     BrandResponseDto createBrand(BrandCreationDto brandDto);
 
-    BrandResponseDto updateBrand(long id, BrandCreationDto brandDto);
+    BrandResponseDto updateBrand(Long id, BrandCreationDto brandDto);
 
-    void deleteBrand(long id);
+    void deleteBrand(Long id);
 
 }

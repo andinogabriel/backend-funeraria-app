@@ -14,7 +14,7 @@ import java.util.Optional;
 @Repository
 public interface AffiliateRepository extends PagingAndSortingRepository<AffiliateEntity, Long> {
 
-    Optional<AffiliateEntity> findById(long id);
+    Optional<AffiliateEntity> findById(Long id);
 
     List<AffiliateResponseDto> findByUserOrderByStartDateDesc(UserEntity userEntity);
 

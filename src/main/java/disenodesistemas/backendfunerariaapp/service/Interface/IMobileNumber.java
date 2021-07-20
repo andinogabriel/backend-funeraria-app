@@ -8,10 +8,10 @@ public interface IMobileNumber {
 
     MobileNumberResponseDto createMobileNumber(MobileNumberCreationDto mobileNumber);
 
-    MobileNumberResponseDto updateMobileNumber(long id, MobileNumberCreationDto mobileNumberDto);
+    MobileNumberResponseDto updateMobileNumber(Long id, MobileNumberCreationDto mobileNumberDto);
 
-    void deleteMobileNumber(long id);
+    void deleteMobileNumber(Long id);
 
-    MobileNumberEntity getMobileNumberById(long id);
+    MobileNumberEntity getMobileNumberById(Long id);
 
 }

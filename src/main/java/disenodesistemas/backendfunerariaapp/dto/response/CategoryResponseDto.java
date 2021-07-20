@@ -1,9 +1,10 @@
 package disenodesistemas.backendfunerariaapp.dto.response;
 
-public interface CategoryResponseDto {
+import com.fasterxml.jackson.annotation.JsonInclude;
 
-    long getId();
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+public interface CategoryResponseDto {
+    Long getId();
     String getName();
     String getDescription();
-
 }

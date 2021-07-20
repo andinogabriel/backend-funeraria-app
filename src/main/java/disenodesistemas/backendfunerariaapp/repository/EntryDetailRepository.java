@@ -9,6 +9,6 @@ import java.util.Optional;
 @Repository
 public interface EntryDetailRepository extends PagingAndSortingRepository<EntryDetailEntity, Long> {
 
-    Optional<EntryDetailEntity> findById(long id);
+    Optional<EntryDetailEntity> findById(Long id);
 
 }

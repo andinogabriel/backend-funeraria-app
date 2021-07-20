@@ -16,17 +16,17 @@ public interface IEntry {
 
     List<EntryResponseDto> getAllEntries();
 
-    EntryResponseDto updateEntry(long id, EntryCreationDto entryCreationDto);
+    EntryResponseDto updateEntry(Long id, EntryCreationDto entryCreationDto);
 
-    void deleteEntry(long id);
+    void deleteEntry(Long id);
 
     Page<EntryResponseDto> getEntriesPaginated(int page, int limit, String sortBy, String sortDir);
 
-    EntryEntity getEntryById(long id);
+    EntryEntity getEntryById(Long id);
 
-    EntryResponseDto getProjectedEntryById(long id);
+    EntryResponseDto getProjectedEntryById(Long id);
 
-    ReceiptTypeEntity getReceiptTypeEntity(long id);
+    ReceiptTypeEntity getReceiptTypeEntity(Long id);
 
     default void totalAmountCalculator(EntryEntity entryEntity, EntryCreationDto entryCreationDto) {
         entryEntity.setTotalAmount(BigDecimal.valueOf(0));

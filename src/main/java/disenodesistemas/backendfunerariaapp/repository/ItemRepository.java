@@ -12,7 +12,7 @@ import java.util.Optional;
 @Repository
 public interface ItemRepository extends PagingAndSortingRepository<ItemEntity, Long> {
 
-    Optional<ItemEntity> findById(long id);
+    Optional<ItemEntity> findById(Long id);
 
     List<ItemResponseDto> findAllProjectedBy();
 

@@ -13,6 +13,6 @@ public interface ReceiptTypeRepository extends JpaRepository<ReceiptTypeEntity, 
 
     List<ReceiptTypeResponseDto> findAllByOrderByName();
 
-    Optional<ReceiptTypeEntity> findById(long id);
+    Optional<ReceiptTypeEntity> findById(Long id);
 
 }

@@ -11,6 +11,7 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.context.request.WebRequest;
 
 import java.util.Date;
@@ -22,13 +23,13 @@ public class AppExceptionsHandler {
 
     @ExceptionHandler(value = EmailExistsException.class)
     public ResponseEntity<Object> handleEmailExistsException(EmailExistsException ex, WebRequest webRequest) {
-        ErrorMessage errorMessage = new ErrorMessage(new Date(), ex.getMessage());
+        ErrorMessage errorMessage = new ErrorMessage(ex.getMessage());
         return new ResponseEntity<>(errorMessage, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(value = UsernameNotFoundException.class)
     public ResponseEntity<Object> handleUserNameExistsException(UsernameNotFoundException exception, WebRequest webRequest) {
-        ErrorMessage errorMessage = new ErrorMessage(new Date(), exception.getMessage());
+        ErrorMessage errorMessage = new ErrorMessage(exception.getMessage());
         return new ResponseEntity<>(errorMessage, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -51,11 +52,20 @@ public class AppExceptionsHandler {
         return new ResponseEntity<>(validationErrors, new HttpHeaders(), HttpStatus.BAD_REQUEST);
     }
 
+
+    @ExceptionHandler(value = { AppException.class })
+    @ResponseBody
+    public ResponseEntity<ErrorMessage> handleException(AppException ex) {
+        return ResponseEntity
+                .status(ex.getStatus())
+                .body(new ErrorMessage(ex.getMessage()));
+    }
+
     //Control de expeciones generico
     @ExceptionHandler(value = Exception.class)
     public ResponseEntity<Object> handleExceptionCustom(Exception ex, WebRequest webRequest) {
 
-        ErrorMessage errorMessage = new ErrorMessage(new Date(), ex.getMessage());
+        ErrorMessage errorMessage = new ErrorMessage(ex.getMessage());
 
         return new ResponseEntity<>(errorMessage, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
     }

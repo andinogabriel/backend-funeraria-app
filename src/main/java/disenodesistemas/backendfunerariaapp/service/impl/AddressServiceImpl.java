@@ -6,6 +6,7 @@ import disenodesistemas.backendfunerariaapp.entities.AddressEntity;
 import disenodesistemas.backendfunerariaapp.entities.CityEntity;
 import disenodesistemas.backendfunerariaapp.entities.SupplierEntity;
 import disenodesistemas.backendfunerariaapp.entities.UserEntity;
+import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.AddressRepository;
 import disenodesistemas.backendfunerariaapp.service.Interface.IAddress;
 import disenodesistemas.backendfunerariaapp.service.Interface.ICity;
@@ -14,9 +15,9 @@ import disenodesistemas.backendfunerariaapp.service.Interface.IUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.Locale;
 
 @Service
@@ -44,31 +45,29 @@ public class AddressServiceImpl implements IAddress {
     public AddressResponseDto createAddress(AddressCreationDto addressCreationDto) {
         SupplierEntity supplierEntity = null;
         UserEntity userEntity = null;
-        if(Long.valueOf(addressCreationDto.getSupplierAddress()) != null) {
+        CityEntity cityEntity = cityService.findCityById(addressCreationDto.getCity());
+
+        if(addressCreationDto.getSupplierAddress() != null) {
             supplierEntity = supplierService.getSupplierById(addressCreationDto.getSupplierAddress());
         } else {
             userEntity = userService.getUserById(addressCreationDto.getUserAddress());
         }
 
-        CityEntity cityEntity = cityService.findCityById(addressCreationDto.getCity());
-        AddressEntity addressEntity = new AddressEntity();
-        addressEntity.setStreetName(addressCreationDto.getStreetName());
-        addressEntity.setBlockStreet(addressCreationDto.getBlockStreet());
-        addressEntity.setApartment(addressCreationDto.getApartment());
-        addressEntity.setFlat(addressCreationDto.getFlat());
-        addressEntity.setCity(cityEntity);
-        if(Long.valueOf(addressCreationDto.getSupplierAddress()) != null) {
-            addressEntity.setSupplierAddress(supplierEntity);
-        } else {
-            addressEntity.setUserAddress(userEntity);
-        }
+        AddressEntity addressEntity = AddressEntity.builder()
+                .apartment(addressCreationDto.getApartment())
+                .blockStreet(addressCreationDto.getBlockStreet())
+                .flat(addressCreationDto.getFlat())
+                .city(cityEntity)
+                .supplierAddress(supplierEntity)
+                .userAddress(userEntity)
+                .build();
 
         AddressEntity createdAddress = addressRepository.save(addressEntity);
         return projectionFactory.createProjection(AddressResponseDto.class, createdAddress);
     }
 
     @Override
-    public AddressResponseDto updateAddress(long id, AddressCreationDto addressDto) {
+    public AddressResponseDto updateAddress(Long id, AddressCreationDto addressDto) {
         AddressEntity addressEntity = getAddressById(id);
         addressEntity.setStreetName(addressDto.getStreetName());
         addressEntity.setBlockStreet(addressDto.getBlockStreet());
@@ -82,16 +81,17 @@ public class AddressServiceImpl implements IAddress {
     }
 
     @Override
-    public void deleteAddress(long id) {
+    public void deleteAddress(Long id) {
         AddressEntity addressEntity = getAddressById(id);
         addressRepository.delete(addressEntity);
     }
 
     @Override
-    public AddressEntity getAddressById(long id) {
+    public AddressEntity getAddressById(Long id) {
         return addressRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException(
-                        messageSource.getMessage("address.error.not.found", null, Locale.getDefault())
+                () -> new AppException(
+                        messageSource.getMessage("address.error.not.found", null, Locale.getDefault()),
+                        HttpStatus.NOT_FOUND
                 )
         );
     }

@@ -40,13 +40,13 @@ public class SupplierController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping(path = "/{id}")
-    public SupplierResponseDto getSupplierById(@PathVariable long id) {
+    public SupplierResponseDto getSupplierById(@PathVariable Long id) {
         return projectionFactory.createProjection(SupplierResponseDto.class, supplierService.getSupplierById(id));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping(path = "/{id}")
-    public OperationStatusModel deleteSupplier(@PathVariable long id) {
+    public OperationStatusModel deleteSupplier(@PathVariable Long id) {
         OperationStatusModel operationStatusModel = new OperationStatusModel();
         operationStatusModel.setName("DELETE");
         supplierService.deleteSupplier(id);
@@ -56,7 +56,7 @@ public class SupplierController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(path = "/{id}")
-    public SupplierResponseDto updateSupplier(@PathVariable long id, @RequestBody @Valid SupplierCreationDto supplierCreationDto) {
+    public SupplierResponseDto updateSupplier(@PathVariable Long id, @RequestBody @Valid SupplierCreationDto supplierCreationDto) {
         return supplierService.updateSupplier(id, supplierCreationDto);
     }
 

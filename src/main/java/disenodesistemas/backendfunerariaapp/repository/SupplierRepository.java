@@ -11,7 +11,7 @@ import java.util.Optional;
 @Repository
 public interface SupplierRepository extends PagingAndSortingRepository<SupplierEntity, Long> {
 
-    Optional<SupplierEntity> findById(long id);
+    Optional<SupplierEntity> findById(Long id);
 
     List<SupplierResponseDto> findAllProjectedBy();
 

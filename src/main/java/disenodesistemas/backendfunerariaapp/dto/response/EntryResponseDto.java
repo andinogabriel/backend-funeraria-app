@@ -3,6 +3,7 @@ package disenodesistemas.backendfunerariaapp.dto.response;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -13,11 +14,13 @@ public interface EntryResponseDto {
     Integer getReceiptNumber();
     Integer getReceiptSeries();
     Date getEntryDate();
+    LocalDateTime getLastModifiedDate();
     BigDecimal getTax();
     BigDecimal getTotalAmount();
     ReceiptTypeResponseDto getReceiptType();
     SupplierEntity getEntrySupplier();
     UserEntity getEntryUser();
+    UserEntity getLastModifiedBy();
     List<EntryDetailResponseDto> getEntryDetails();
 
     interface SupplierEntity {

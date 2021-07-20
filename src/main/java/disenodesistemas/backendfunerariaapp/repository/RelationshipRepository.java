@@ -12,7 +12,7 @@ import java.util.Optional;
 @Repository
 public interface RelationshipRepository extends PagingAndSortingRepository<RelationshipEntity, Long> {
 
-    Optional<RelationshipEntity> findById(long id);
+    Optional<RelationshipEntity> findById(Long id);
 
     List<RelationshipResponseDto> findAllByOrderByName();
 }

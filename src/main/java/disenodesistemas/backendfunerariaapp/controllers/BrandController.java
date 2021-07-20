@@ -32,7 +32,7 @@ public class BrandController {
     }
 
     @GetMapping(path = "/{id}")
-    public BrandResponseDto getBrandById(@PathVariable long id) {
+    public BrandResponseDto getBrandById(@PathVariable Long id) {
         return projectionFactory.createProjection(
                 BrandResponseDto.class,
                 brandService.getBrandById(id)
@@ -47,13 +47,13 @@ public class BrandController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(path = "/{id}")
-    public BrandResponseDto updateBrand(@PathVariable long id, @RequestBody @Valid BrandCreationDto brandCreationDto) {
+    public BrandResponseDto updateBrand(@PathVariable Long id, @RequestBody @Valid BrandCreationDto brandCreationDto) {
         return brandService.updateBrand(id, brandCreationDto);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping(path = "/{id}")
-    public OperationStatusModel deleteBrand(@PathVariable long id) {
+    public OperationStatusModel deleteBrand(@PathVariable Long id) {
         OperationStatusModel operationStatusModel = new OperationStatusModel();
         operationStatusModel.setName("DELETE");
         brandService.deleteBrand(id);

@@ -18,7 +18,7 @@ public class DeceasedEntity implements Serializable {
 
     @Id
     @GeneratedValue
-    private long id;
+    private Long id;
 
     @Column(nullable = false, length = 80)
     private String lastName;

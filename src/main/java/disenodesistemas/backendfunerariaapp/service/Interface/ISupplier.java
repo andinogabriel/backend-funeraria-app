@@ -12,11 +12,11 @@ public interface ISupplier {
 
     SupplierResponseDto createSupplier(SupplierCreationDto supplier);
 
-    SupplierEntity getSupplierById(long id);
+    SupplierEntity getSupplierById(Long id);
 
-    void deleteSupplier(long id);
+    void deleteSupplier(Long id);
 
-    SupplierResponseDto updateSupplier(long id, SupplierCreationDto supplier);
+    SupplierResponseDto updateSupplier(Long id, SupplierCreationDto supplier);
 
 
 

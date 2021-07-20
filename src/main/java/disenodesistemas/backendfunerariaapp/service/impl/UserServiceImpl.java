@@ -5,6 +5,7 @@ import disenodesistemas.backendfunerariaapp.dto.request.UserRegisterDto;
 import disenodesistemas.backendfunerariaapp.dto.response.UserResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.*;
 import disenodesistemas.backendfunerariaapp.enums.RoleName;
+import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.exceptions.EmailExistsException;
 import disenodesistemas.backendfunerariaapp.dto.request.PasswordResetDto;
 import disenodesistemas.backendfunerariaapp.dto.request.UserLoginDto;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -30,8 +32,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-
-import javax.persistence.EntityNotFoundException;
 import javax.transaction.Transactional;
 import java.sql.Timestamp;
 import java.util.*;
@@ -119,10 +119,11 @@ public class UserServiceImpl implements IUser {
     }
 
     @Override
-    public UserEntity getUserById(long id) {
+    public UserEntity getUserById(Long id) {
         return userRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException(
-                        messageSource.getMessage("user.error.id.not.found", null, Locale.getDefault())
+                () -> new AppException(
+                        messageSource.getMessage("user.error.id.not.found", null, Locale.getDefault()),
+                        HttpStatus.NOT_FOUND
                 )
         );
     }
@@ -130,8 +131,9 @@ public class UserServiceImpl implements IUser {
     @Override
     public UserEntity getUserByEmail(String email) {
         return userRepository.findByEmail(email).orElseThrow(
-                () -> new UsernameNotFoundException(
-                        messageSource.getMessage("user.error.email.not.registered", null, Locale.getDefault())
+                () -> new AppException(
+                        messageSource.getMessage("user.error.email.not.registered", null, Locale.getDefault()),
+                        HttpStatus.NOT_FOUND
                 )
         );
     }

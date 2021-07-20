@@ -16,7 +16,7 @@ public class RelationshipEntity implements Serializable {
 
     @Id
     @GeneratedValue
-    private long id;
+    private Long id;
 
     @Column(nullable = false, length = 60)
     private String name;

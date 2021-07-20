@@ -3,14 +3,15 @@ package disenodesistemas.backendfunerariaapp.service.impl;
 import disenodesistemas.backendfunerariaapp.dto.request.CategoryCreationDto;
 import disenodesistemas.backendfunerariaapp.dto.response.CategoryResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.CategoryEntity;
+import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.CategoryRepository;
 import disenodesistemas.backendfunerariaapp.service.Interface.ICategory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Locale;
 
@@ -41,7 +42,7 @@ public class CategoryServiceImpl implements ICategory {
     }
 
     @Override
-    public CategoryResponseDto updateCategory(long id, CategoryCreationDto categoryDto) {
+    public CategoryResponseDto updateCategory(Long id, CategoryCreationDto categoryDto) {
         CategoryEntity categoryEntity = findCategoryById(id);
         categoryEntity.setName(categoryDto.getName());
         categoryEntity.setDescription(categoryDto.getDescription());
@@ -50,16 +51,17 @@ public class CategoryServiceImpl implements ICategory {
     }
 
     @Override
-    public void deleteCategory(long id) {
+    public void deleteCategory(Long id) {
         CategoryEntity categoryEntity = findCategoryById(id);
         categoryRepository.delete(categoryEntity);
     }
 
     @Override
-    public CategoryEntity findCategoryById(long id) {
+    public CategoryEntity findCategoryById(Long id) {
         return categoryRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException(
-                        messageSource.getMessage("category.error.not.found", null, Locale.getDefault())
+                () -> new AppException(
+                        messageSource.getMessage("category.error.not.found", null, Locale.getDefault()),
+                        HttpStatus.NOT_FOUND
                 )
         );
     }

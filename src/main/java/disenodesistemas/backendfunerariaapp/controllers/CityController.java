@@ -18,7 +18,7 @@ public class CityController {
 
 
     @GetMapping(path = "/{id}")
-    public CityResponseDto getCityById(@PathVariable long id) {
+    public CityResponseDto getCityById(@PathVariable Long id) {
         return cityService.getCityById(id);
     }
 

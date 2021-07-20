@@ -2,13 +2,14 @@ package disenodesistemas.backendfunerariaapp.service.impl;
 
 import disenodesistemas.backendfunerariaapp.dto.response.GenderResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.GenderEntity;
+import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.GenderRepository;
 import disenodesistemas.backendfunerariaapp.service.Interface.IGender;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Locale;
 
@@ -31,10 +32,11 @@ public class GenderServiceImpl implements IGender {
     }
 
     @Override
-    public GenderEntity getGenderById(long id) {
+    public GenderEntity getGenderById(Long id) {
         return genderRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException(
-                        messageSource.getMessage("gender.error.not.found", null, Locale.getDefault())
+                () -> new AppException(
+                        messageSource.getMessage("gender.error.not.found", null, Locale.getDefault()),
+                        HttpStatus.NOT_FOUND
                 )
         );
     }

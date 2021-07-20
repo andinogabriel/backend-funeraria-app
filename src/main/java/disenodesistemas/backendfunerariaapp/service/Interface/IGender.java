@@ -9,6 +9,6 @@ public interface IGender {
 
     List<GenderResponseDto> getGenders();
 
-    GenderEntity getGenderById(long id);
+    GenderEntity getGenderById(Long id);
 
 }

@@ -13,9 +13,9 @@ import java.util.Optional;
 @Repository
 public interface EntryRepository extends PagingAndSortingRepository<EntryEntity, Long> {
 
-    Optional<EntryEntity> findById(long id);
+    Optional<EntryEntity> findById(Long id);
 
-    Optional<EntryResponseDto> getById(long id);
+    Optional<EntryResponseDto> getById(Long id);
 
     Optional<EntryEntity> findByReceiptNumber(Integer receiptNumber);
 

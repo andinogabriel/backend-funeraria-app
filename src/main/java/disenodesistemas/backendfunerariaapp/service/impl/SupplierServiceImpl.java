@@ -3,14 +3,15 @@ package disenodesistemas.backendfunerariaapp.service.impl;
 import disenodesistemas.backendfunerariaapp.dto.request.SupplierCreationDto;
 import disenodesistemas.backendfunerariaapp.dto.response.SupplierResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.SupplierEntity;
+import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.SupplierRepository;
 import disenodesistemas.backendfunerariaapp.service.Interface.ISupplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Locale;
 
@@ -46,22 +47,23 @@ public class SupplierServiceImpl implements ISupplier {
     }
 
     @Override
-    public SupplierEntity getSupplierById(long id) {
+    public SupplierEntity getSupplierById(Long id) {
         return supplierRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException(
-                        messageSource.getMessage("supplier.error.not.found", null, Locale.getDefault())
+                () -> new AppException(
+                        messageSource.getMessage("supplier.error.not.found", null, Locale.getDefault()),
+                        HttpStatus.NOT_FOUND
                 )
         );
     }
 
     @Override
-    public void deleteSupplier(long id) {
+    public void deleteSupplier(Long id) {
         SupplierEntity supplierEntity = getSupplierById(id);
         supplierRepository.delete(supplierEntity);
     }
 
     @Override
-    public SupplierResponseDto updateSupplier(long id, SupplierCreationDto supplier) {
+    public SupplierResponseDto updateSupplier(Long id, SupplierCreationDto supplier) {
         SupplierEntity supplierEntity = getSupplierById(id);
 
         supplierEntity.setName(supplier.getName());

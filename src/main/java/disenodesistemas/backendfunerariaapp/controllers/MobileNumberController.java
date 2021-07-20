@@ -30,13 +30,13 @@ public class MobileNumberController {
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @PutMapping(path = "/{id}")
-    public MobileNumberResponseDto updateMobileNumber(@PathVariable long id, @RequestBody @Valid MobileNumberCreationDto mobileNumberCreationDto) {
+    public MobileNumberResponseDto updateMobileNumber(@PathVariable Long id, @RequestBody @Valid MobileNumberCreationDto mobileNumberCreationDto) {
         return mobileNumberService.updateMobileNumber(id, mobileNumberCreationDto);
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @DeleteMapping(path = "/{id}")
-    public OperationStatusModel deleteMobileNumber(@PathVariable long id) {
+    public OperationStatusModel deleteMobileNumber(@PathVariable Long id) {
         OperationStatusModel operationStatusModel = new OperationStatusModel();
         operationStatusModel.setName("DELETE");
         mobileNumberService.deleteMobileNumber(id);

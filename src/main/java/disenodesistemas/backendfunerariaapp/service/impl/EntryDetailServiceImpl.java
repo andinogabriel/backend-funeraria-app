@@ -5,6 +5,7 @@ import disenodesistemas.backendfunerariaapp.dto.response.EntryDetailResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.EntryDetailEntity;
 import disenodesistemas.backendfunerariaapp.entities.EntryEntity;
 import disenodesistemas.backendfunerariaapp.entities.ItemEntity;
+import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.EntryDetailRepository;
 import disenodesistemas.backendfunerariaapp.repository.EntryRepository;
 import disenodesistemas.backendfunerariaapp.repository.ItemRepository;
@@ -14,9 +15,9 @@ import disenodesistemas.backendfunerariaapp.service.Interface.IItem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.Locale;
 
 @Service
@@ -65,7 +66,7 @@ public class EntryDetailServiceImpl implements IEntryDetail {
     }
 
     @Override
-    public EntryDetailResponseDto updateEntryDetail(long id, EntryDetailCreationDto entryDetailCreationDto) {
+    public EntryDetailResponseDto updateEntryDetail(Long id, EntryDetailCreationDto entryDetailCreationDto) {
         EntryDetailEntity entryDetailEntity = getEntryDetailById(id);
         ItemEntity itemEntity = itemService.getItemById(entryDetailCreationDto.getItem());
 
@@ -91,7 +92,7 @@ public class EntryDetailServiceImpl implements IEntryDetail {
     }
 
     @Override
-    public void deleteEntryDetail(long id) {
+    public void deleteEntryDetail(Long id) {
         EntryDetailEntity entryDetailEntity = getEntryDetailById(id);
         entryDetailEntity.getItem().setStock(entryDetailEntity.getItem().getStock() - entryDetailEntity.getQuantity());
         itemRepository.save(entryDetailEntity.getItem());
@@ -99,10 +100,11 @@ public class EntryDetailServiceImpl implements IEntryDetail {
     }
 
     @Override
-    public EntryDetailEntity getEntryDetailById(long id) {
+    public EntryDetailEntity getEntryDetailById(Long id) {
         return entryDetailRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException(
-                        messageSource.getMessage("entryDetail.error.not.found", null, Locale.getDefault())
+                () -> new AppException(
+                        messageSource.getMessage("entryDetail.error.not.found", null, Locale.getDefault()),
+                        HttpStatus.NOT_FOUND
                 )
         );
     }

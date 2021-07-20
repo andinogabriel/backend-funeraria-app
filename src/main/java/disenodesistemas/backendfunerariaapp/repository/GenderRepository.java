@@ -11,7 +11,7 @@ import java.util.Optional;
 @Repository
 public interface GenderRepository extends PagingAndSortingRepository<GenderEntity, Long> {
 
-    Optional<GenderEntity> findById(long id);
+    Optional<GenderEntity> findById(Long id);
 
     List<GenderResponseDto> findAllProjectedBy();
 

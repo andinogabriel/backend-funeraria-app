@@ -11,7 +11,7 @@ import java.util.Optional;
 @Repository
 public interface CategoryRepository extends PagingAndSortingRepository<CategoryEntity, Long> {
 
-    Optional<CategoryEntity> findById(long id);
+    Optional<CategoryEntity> findById(Long id);
 
     List<CategoryResponseDto> findAllByOrderByName();
 

@@ -14,7 +14,7 @@ public interface CityRepository extends PagingAndSortingRepository<CityEntity, L
 
     List<CityResponseDto> findByProvinceOrderByName(ProvinceEntity provinceEntity);
 
-    Optional<CityEntity> findById(long id);
+    Optional<CityEntity> findById(Long id);
 
-    Optional<CityResponseDto> getById(long id);
+    Optional<CityResponseDto> getById(Long id);
 }

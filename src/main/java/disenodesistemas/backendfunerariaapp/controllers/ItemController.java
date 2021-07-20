@@ -36,13 +36,13 @@ public class ItemController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping(path = "/{id}")
-    public ItemResponseDto getItemById(@PathVariable long id) {
+    public ItemResponseDto getItemById(@PathVariable Long id) {
         return projectionFactory.createProjection(ItemResponseDto.class, itemService.getItemById(id));
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(path = "/category/{id}")
-    public List<ItemResponseDto> getItemsByCategoryId(@PathVariable long id) {
+    public List<ItemResponseDto> getItemsByCategoryId(@PathVariable Long id) {
         return itemService.getItemsByCategoryId(id);
     }
 
@@ -55,13 +55,13 @@ public class ItemController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(path = "/{id}")
-    public ItemResponseDto updateItem(@PathVariable long id, @RequestBody @Valid ItemCreationDto itemRequestModel) {
+    public ItemResponseDto updateItem(@PathVariable Long id, @RequestBody @Valid ItemCreationDto itemRequestModel) {
         return itemService.updateItem(id, itemRequestModel);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping(path = "/{id}")
-    public OperationStatusModel deleteItem(@PathVariable long id) {
+    public OperationStatusModel deleteItem(@PathVariable Long id) {
         OperationStatusModel operationStatusModel = new OperationStatusModel();
         operationStatusModel.setName("DELETE");
         itemService.deleteItem(id);
@@ -71,7 +71,7 @@ public class ItemController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(path = "{id}/image/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void uploadItemImage(@PathVariable("id") long id, @RequestParam("file")MultipartFile file) {
+    public void uploadItemImage(@PathVariable("id") Long id, @RequestParam("file")MultipartFile file) {
         itemService.uploadItemImage(id, file);
     }
 

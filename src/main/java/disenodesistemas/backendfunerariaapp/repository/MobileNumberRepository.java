@@ -9,6 +9,6 @@ import java.util.Optional;
 @Repository
 public interface MobileNumberRepository extends PagingAndSortingRepository<MobileNumberEntity, Long> {
 
-    Optional<MobileNumberEntity> findById(long id);
+    Optional<MobileNumberEntity> findById(Long id);
 
 }

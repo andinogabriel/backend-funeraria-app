@@ -18,7 +18,7 @@ public class EntryDetailEntity implements Serializable {
 
     @Id
     @GeneratedValue
-    private long id;
+    private Long id;
 
     @Column(nullable = false)
     private Integer quantity;

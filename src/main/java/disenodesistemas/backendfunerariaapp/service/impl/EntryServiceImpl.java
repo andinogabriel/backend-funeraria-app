@@ -3,12 +3,12 @@ package disenodesistemas.backendfunerariaapp.service.impl;
 import disenodesistemas.backendfunerariaapp.dto.request.EntryCreationDto;
 import disenodesistemas.backendfunerariaapp.dto.response.EntryResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.*;
+import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.EntryRepository;
 import disenodesistemas.backendfunerariaapp.repository.ReceiptTypeRepository;
 import disenodesistemas.backendfunerariaapp.service.Interface.IEntry;
 import disenodesistemas.backendfunerariaapp.service.Interface.ISupplier;
 import disenodesistemas.backendfunerariaapp.service.Interface.IUser;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
@@ -16,9 +16,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Locale;
 
@@ -29,21 +31,18 @@ public class EntryServiceImpl implements IEntry {
     private final ReceiptTypeRepository receiptTypeRepository;
     private final ISupplier supplierService;
     private final IUser userService;
-    private final ModelMapper mapper;
     private final MessageSource messageSource;
     private final ProjectionFactory projectionFactory;
 
     @Autowired
-    public EntryServiceImpl(EntryRepository entryRepository, ReceiptTypeRepository receiptTypeRepository, ISupplier supplierService, IUser userService, ModelMapper mapper, MessageSource messageSource, ProjectionFactory projectionFactory) {
+    public EntryServiceImpl(EntryRepository entryRepository, ReceiptTypeRepository receiptTypeRepository, ISupplier supplierService, IUser userService, MessageSource messageSource, ProjectionFactory projectionFactory) {
         this.entryRepository = entryRepository;
         this.receiptTypeRepository = receiptTypeRepository;
         this.supplierService = supplierService;
         this.userService = userService;
-        this.mapper = mapper;
         this.messageSource = messageSource;
         this.projectionFactory = projectionFactory;
     }
-
 
     @Override
     public EntryResponseDto createEntry(EntryCreationDto entryCreationDto) {
@@ -52,8 +51,9 @@ public class EntryServiceImpl implements IEntry {
         UserEntity userEntity = userService.getUserByEmail(entryCreationDto.getEntryUser());
 
         if(entryRepository.findByReceiptNumber(entryCreationDto.getReceiptNumber()).isPresent())
-            throw new RuntimeException(
-                    messageSource.getMessage("entry.error.receiptNumber.already.registered", null, Locale.getDefault())
+            throw new AppException(
+                    messageSource.getMessage("entry.error.receiptNumber.already.registered", null, Locale.getDefault()),
+                    HttpStatus.CONFLICT
             );
 
         EntryEntity entryEntity = new EntryEntity();
@@ -75,14 +75,15 @@ public class EntryServiceImpl implements IEntry {
     }
 
     @Override
-    public EntryResponseDto updateEntry(long id, EntryCreationDto entryCreationDto) {
+    public EntryResponseDto updateEntry(Long id, EntryCreationDto entryCreationDto) {
         EntryEntity entryEntity = getEntryById(id);
         SupplierEntity supplierEntity = supplierService.getSupplierById(entryCreationDto.getEntrySupplier());
         ReceiptTypeEntity receiptTypeEntity = getReceiptTypeEntity(entryCreationDto.getReceiptType());
 
         if(entryRepository.findByReceiptNumber(entryCreationDto.getReceiptNumber()).isPresent() && entryRepository.findByReceiptNumber(entryCreationDto.getReceiptNumber()).get() != entryEntity) {
-            throw new RuntimeException(
-                    messageSource.getMessage("entry.error.receiptNumber.already.registered", null, Locale.getDefault())
+            throw new AppException(
+                    messageSource.getMessage("entry.error.receiptNumber.already.registered", null, Locale.getDefault()),
+                    HttpStatus.CONFLICT
             );
         }
         entryEntity.setEntrySupplier(supplierEntity);
@@ -93,13 +94,21 @@ public class EntryServiceImpl implements IEntry {
 
         totalAmountCalculator(entryEntity, entryCreationDto);
 
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        entryEntity.setLastModifiedBy(userService.getUserByEmail(email));
+
         EntryEntity entryUpdated = entryRepository.save(entryEntity);
         return projectionFactory.createProjection(EntryResponseDto.class, entryUpdated);
     }
 
     @Override
-    public void deleteEntry(long id) {
+    public void deleteEntry(Long id) {
         EntryEntity entryEntity = getEntryById(id);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        entryEntity.setLastModifiedBy(userService.getUserByEmail(email));
+        entryRepository.save(entryEntity);
         entryRepository.delete(entryEntity);
     }
 
@@ -117,28 +126,31 @@ public class EntryServiceImpl implements IEntry {
     }
 
     @Override
-    public EntryEntity getEntryById(long id) {
+    public EntryEntity getEntryById(Long id) {
         return entryRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException(
-                        messageSource.getMessage("entry.error.not.found", null, Locale.getDefault())
+                () -> new AppException(
+                        messageSource.getMessage("entry.error.not.found", null, Locale.getDefault()),
+                        HttpStatus.NOT_FOUND
                 )
         );
     }
 
     @Override
-    public EntryResponseDto getProjectedEntryById(long id) {
+    public EntryResponseDto getProjectedEntryById(Long id) {
         return entryRepository.getById(id).orElseThrow(
-                () -> new EntityNotFoundException(
-                        messageSource.getMessage("entry.error.not.found", null, Locale.getDefault())
+                () -> new AppException(
+                        messageSource.getMessage("entry.error.not.found", null, Locale.getDefault()),
+                        HttpStatus.NOT_FOUND
                 )
         );
     }
 
     @Override
-    public ReceiptTypeEntity getReceiptTypeEntity(long id) {
+    public ReceiptTypeEntity getReceiptTypeEntity(Long id) {
         return receiptTypeRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException(
-                        messageSource.getMessage("receiptType.error.not.found", null, Locale.getDefault())
+                () -> new AppException(
+                        messageSource.getMessage("receiptType.error.not.found", null, Locale.getDefault()),
+                        HttpStatus.NOT_FOUND
                 )
         );
     }

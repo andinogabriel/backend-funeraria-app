@@ -15,11 +15,11 @@ public interface IEntryDetail {
 
     EntryDetailResponseDto createEntryDetail(EntryDetailCreationDto entry);
 
-    EntryDetailResponseDto updateEntryDetail(long id, EntryDetailCreationDto entryDetailCreationDto);
+    EntryDetailResponseDto updateEntryDetail(Long id, EntryDetailCreationDto entryDetailCreationDto);
 
-    void deleteEntryDetail(long id);
+    void deleteEntryDetail(Long id);
 
-    EntryDetailEntity getEntryDetailById(long id);
+    EntryDetailEntity getEntryDetailById(Long id);
 
     default void entryTotalAmountAccumulator(EntryDetailCreationDto entry, EntryEntity entryEntity) {
         BigDecimal subTotal;

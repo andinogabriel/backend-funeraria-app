@@ -16,7 +16,7 @@ public class ProvinceEntity implements Serializable {
 
     @Id
     @GeneratedValue
-    private long id;
+    private Long id;
 
     @Column(nullable = false, length = 5)
     private String code31662;

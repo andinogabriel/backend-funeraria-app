@@ -12,10 +12,10 @@ public interface ICategory {
 
     CategoryResponseDto createCategory(CategoryCreationDto category);
 
-    CategoryResponseDto updateCategory(long id, CategoryCreationDto categoryDto);
+    CategoryResponseDto updateCategory(Long id, CategoryCreationDto categoryDto);
 
-    void deleteCategory(long id);
+    void deleteCategory(Long id);
 
-    CategoryEntity findCategoryById(long id);
+    CategoryEntity findCategoryById(Long id);
 
 }

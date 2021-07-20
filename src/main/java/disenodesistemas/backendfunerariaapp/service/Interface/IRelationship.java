@@ -9,6 +9,6 @@ public interface IRelationship {
 
     List<RelationshipResponseDto> getRelationships();
 
-    RelationshipEntity getRelationshipById(long id);
+    RelationshipEntity getRelationshipById(Long id);
 
 }

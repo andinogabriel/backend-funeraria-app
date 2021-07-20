@@ -11,16 +11,16 @@ public interface IItem {
 
     List<ItemResponseDto> getAllItems();
 
-    List<ItemResponseDto> getItemsByCategoryId(long id);
+    List<ItemResponseDto> getItemsByCategoryId(Long id);
 
     ItemResponseDto createItem(ItemCreationDto itemCreationDto);
 
-    ItemResponseDto updateItem(long id, ItemCreationDto itemCreationDto);
+    ItemResponseDto updateItem(Long id, ItemCreationDto itemCreationDto);
 
-    void deleteItem(long id);
+    void deleteItem(Long id);
 
-    ItemEntity getItemById(long id);
+    ItemEntity getItemById(Long id);
 
-    void uploadItemImage(long id, MultipartFile file);
+    void uploadItemImage(Long id, MultipartFile file);
 
 }

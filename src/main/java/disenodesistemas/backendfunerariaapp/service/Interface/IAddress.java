@@ -8,10 +8,10 @@ public interface IAddress {
 
     AddressResponseDto createAddress(AddressCreationDto addressCreationDto);
 
-    AddressResponseDto updateAddress(long id, AddressCreationDto addressDto);
+    AddressResponseDto updateAddress(Long id, AddressCreationDto addressDto);
 
-    void deleteAddress(long id);
+    void deleteAddress(Long id);
 
-    AddressEntity getAddressById(long id);
+    AddressEntity getAddressById(Long id);
 
 }

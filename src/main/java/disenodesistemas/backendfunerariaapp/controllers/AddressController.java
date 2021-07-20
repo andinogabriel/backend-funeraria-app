@@ -27,12 +27,12 @@ public class AddressController {
     }
 
     @PutMapping(path = "/{id}")
-    public AddressResponseDto updateAddress(@PathVariable long id, @RequestBody @Valid AddressCreationDto addressCreationDto) {
+    public AddressResponseDto updateAddress(@PathVariable Long id, @RequestBody @Valid AddressCreationDto addressCreationDto) {
         return addressService.updateAddress(id, addressCreationDto);
     }
 
     @DeleteMapping(path = "/{id}")
-    public OperationStatusModel deleteAddress(@PathVariable long id) {
+    public OperationStatusModel deleteAddress(@PathVariable Long id) {
         OperationStatusModel operationStatusModel = new OperationStatusModel();
         operationStatusModel.setName("DELETE");
         addressService.deleteAddress(id);

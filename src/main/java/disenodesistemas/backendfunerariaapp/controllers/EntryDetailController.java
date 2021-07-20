@@ -30,13 +30,13 @@ public class EntryDetailController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(path = "/{id}")
-    public EntryDetailResponseDto updateEntryDetail(@PathVariable long id, @Valid @RequestBody EntryDetailCreationDto entryDetailCreationDto) {
+    public EntryDetailResponseDto updateEntryDetail(@PathVariable Long id, @Valid @RequestBody EntryDetailCreationDto entryDetailCreationDto) {
         return entryDetailService.updateEntryDetail(id, entryDetailCreationDto);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping(path = "/{id}")
-    public OperationStatusModel deleteEntryDetail(@PathVariable long id) {
+    public OperationStatusModel deleteEntryDetail(@PathVariable Long id) {
         OperationStatusModel operationStatusModel = new OperationStatusModel();
         operationStatusModel.setName("DELETE");
         entryDetailService.deleteEntryDetail(id);

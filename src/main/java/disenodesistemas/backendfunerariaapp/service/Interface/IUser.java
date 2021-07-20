@@ -19,7 +19,7 @@ public interface IUser extends UserDetailsService {
 
     JwtDto login(UserLoginDto loginUser);
 
-    UserEntity getUserById(long id);
+    UserEntity getUserById(Long id);
 
     UserEntity getUserByEmail(String email);
 

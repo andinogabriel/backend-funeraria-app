@@ -5,6 +5,7 @@ import disenodesistemas.backendfunerariaapp.dto.response.MobileNumberResponseDto
 import disenodesistemas.backendfunerariaapp.entities.MobileNumberEntity;
 import disenodesistemas.backendfunerariaapp.entities.SupplierEntity;
 import disenodesistemas.backendfunerariaapp.entities.UserEntity;
+import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.MobileNumberRepository;
 import disenodesistemas.backendfunerariaapp.service.Interface.IMobileNumber;
 import disenodesistemas.backendfunerariaapp.service.Interface.ISupplier;
@@ -12,9 +13,9 @@ import disenodesistemas.backendfunerariaapp.service.Interface.IUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.Locale;
 
 @Service
@@ -39,7 +40,7 @@ public class MobileNumberServiceImpl implements IMobileNumber {
     public MobileNumberResponseDto createMobileNumber(MobileNumberCreationDto mobileNumber) {
         MobileNumberEntity mobileNumberEntity = new MobileNumberEntity();
         mobileNumberEntity.setMobileNumber(mobileNumber.getMobileNumber());
-        if(Long.valueOf(mobileNumber.getMobileNumber()) != null) {
+        if(mobileNumber.getMobileNumber() != null) {
             UserEntity userEntity = userService.getUserById(mobileNumber.getUserNumber());
             mobileNumberEntity.setUserNumber(userEntity);
         } else {
@@ -52,7 +53,7 @@ public class MobileNumberServiceImpl implements IMobileNumber {
     }
 
     @Override
-    public MobileNumberResponseDto updateMobileNumber(long id, MobileNumberCreationDto mobileNumberDto) {
+    public MobileNumberResponseDto updateMobileNumber(Long id, MobileNumberCreationDto mobileNumberDto) {
         MobileNumberEntity mobileNumberEntity = getMobileNumberById(id);
         mobileNumberEntity.setMobileNumber(mobileNumberDto.getMobileNumber());
         MobileNumberEntity numberUpdated = mobileNumberRepository.save(mobileNumberEntity);
@@ -60,16 +61,17 @@ public class MobileNumberServiceImpl implements IMobileNumber {
     }
 
     @Override
-    public void deleteMobileNumber(long id) {
+    public void deleteMobileNumber(Long id) {
         MobileNumberEntity mobileNumberEntity = getMobileNumberById(id);
         mobileNumberRepository.delete(mobileNumberEntity);
     }
 
     @Override
-    public MobileNumberEntity getMobileNumberById(long id) {
+    public MobileNumberEntity getMobileNumberById(Long id) {
         return mobileNumberRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException(
-                        messageSource.getMessage("mobileNumber.error.not.found", null, Locale.getDefault())
+                () -> new AppException(
+                        messageSource.getMessage("mobileNumber.error.not.found", null, Locale.getDefault()),
+                        HttpStatus.NOT_FOUND
                 )
         );
     }

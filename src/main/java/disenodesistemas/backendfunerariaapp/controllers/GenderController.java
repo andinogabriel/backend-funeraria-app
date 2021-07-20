@@ -4,6 +4,7 @@ import disenodesistemas.backendfunerariaapp.dto.response.GenderResponseDto;
 import disenodesistemas.backendfunerariaapp.service.impl.GenderServiceImpl;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,6 +22,7 @@ public class GenderController {
         this.genderService = genderService;
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping
     public List<GenderResponseDto> getGenders() {
         return genderService.getGenders();

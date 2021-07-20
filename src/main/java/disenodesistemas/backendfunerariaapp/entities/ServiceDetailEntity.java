@@ -14,7 +14,7 @@ public class ServiceDetailEntity implements Serializable {
 
     @Id
     @GeneratedValue
-    private long id;
+    private Long id;
 
     @Column(nullable = false)
     private String serviceDetailId;

@@ -20,7 +20,7 @@ public class ServiceEntity implements Serializable {
 
     @Id
     @GeneratedValue
-    private long id;
+    private Long id;
     
     @Column(nullable = false)
     private Date serviceDate;

@@ -16,7 +16,7 @@ public class GenderEntity implements Serializable {
 
     @Id
     @GeneratedValue
-    private long id;
+    private Long id;
 
     @Column(nullable = false, length = 75)
     private String name;

@@ -7,10 +7,10 @@ import java.util.List;
 
 public interface ICity {
 
-    CityResponseDto getCityById(long id);
+    CityResponseDto getCityById(Long id);
 
-    CityEntity findCityById(long id);
+    CityEntity findCityById(Long id);
 
-    List<CityResponseDto> getCitiesByProvinceId(long id);
+    List<CityResponseDto> getCitiesByProvinceId(Long id);
 
 }
