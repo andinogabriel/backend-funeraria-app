@@ -5,6 +5,7 @@ import disenodesistemas.backendfunerariaapp.dto.response.MobileNumberResponseDto
 import disenodesistemas.backendfunerariaapp.entities.MobileNumberEntity;
 import disenodesistemas.backendfunerariaapp.entities.SupplierEntity;
 import disenodesistemas.backendfunerariaapp.entities.UserEntity;
+import disenodesistemas.backendfunerariaapp.enums.RoleName;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.MobileNumberRepository;
 import disenodesistemas.backendfunerariaapp.service.Interface.IMobileNumber;
@@ -14,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Locale;
@@ -63,6 +66,12 @@ public class MobileNumberServiceImpl implements IMobileNumber {
     @Override
     public void deleteMobileNumber(Long id) {
         MobileNumberEntity mobileNumberEntity = getMobileNumberById(id);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if(!mobileNumberEntity.getUserNumber().getEmail().equals(authentication.getName())
+                && authentication.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals(RoleName.ROLE_ADMIN.toString())))
+            throw new AppException(messageSource.getMessage("user.error.invalid.operation", null, Locale.getDefault()), HttpStatus.UNAUTHORIZED);
+
         mobileNumberRepository.delete(mobileNumberEntity);
     }
 

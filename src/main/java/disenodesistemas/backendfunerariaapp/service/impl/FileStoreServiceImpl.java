@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.Locale;
+import java.util.Objects;
 
 @Service
 public class FileStoreServiceImpl implements IFileStore {
@@ -25,6 +27,9 @@ public class FileStoreServiceImpl implements IFileStore {
     @Value("${aws.s3.bucket.name}")
     private String bucketName;
 
+    @Value("${aws.s3.bucket.url}")
+    private String bucketUrl;
+
     @Autowired
     public FileStoreServiceImpl(AmazonS3 s3, MessageSource messageSource) {
         this.s3 = s3;
@@ -33,25 +38,28 @@ public class FileStoreServiceImpl implements IFileStore {
 
 
     @Override
-    public void save(String path, String fileName, MultipartFile file) {
-        //Validate if the file is empty - Chequear si la imagen no esta vacia
+    public String save(Object object, MultipartFile file) {
         fileIsEmpty(file);
-        //Validate if the file corresponds to an image - Chequear si el archivo es una imagen valida
         isAnImage(file);
 
         ObjectMetadata metadata = new ObjectMetadata();
         //Metadata extraction from the file - Grabar metadata del archivo
         extractMetadata(file).ifPresent(map -> {
-            if (!map.isEmpty()) {
+            if(!map.isEmpty()) {
                 map.forEach(metadata::addUserMetadata);
             }
         });
 
+        String folderName = getFolderName(object);
+
         try {
-            s3.putObject(path, fileName, file.getInputStream(), metadata);
-        } catch (AmazonServiceException | IOException ex) {
+            String path = String.format("%s/%s", bucketName, folderName);
+            String filename = String.format("%s", Objects.requireNonNull(file.getOriginalFilename()).replaceAll("\\s+", SEPARATOR));
+            s3.putObject(path, filename, file.getInputStream(), metadata);
+            return bucketUrl + folderName + "/" + filename;
+        } catch (AmazonServiceException | IOException | IllegalStateException ex) {
             throw new IllegalStateException(messageSource.getMessage(
-                    "s3bucket.error.upload.file" + " " + ex, null, Locale.getDefault()
+                    "s3bucket.error.upload.file" + " " + ex.getMessage(), null, Locale.getDefault()
             ));
         }
     }
@@ -67,13 +75,14 @@ public class FileStoreServiceImpl implements IFileStore {
     }
 
     @Override
-    public void deleteFilesFromS3Bucket(String fileUrl) {
+    public void deleteFilesFromS3Bucket(Object object) {
+        String folderName = getFolderName(object);
         try {
-            for(S3ObjectSummary file : s3.listObjects(bucketName, fileUrl).getObjectSummaries()) {
+            for(S3ObjectSummary file : s3.listObjects(bucketName, folderName).getObjectSummaries()) {
                 s3.deleteObject(bucketName, file.getKey());
             }
         } catch (SdkClientException e) {
-            e.printStackTrace();
+            e.getMessage();
         }
     }
 }

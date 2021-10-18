@@ -66,7 +66,7 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
         // cada vez que hacemos una petición
         http.cors().and().csrf().disable()
                 .authorizeRequests()
-                .antMatchers(HttpMethod.POST, "/api/v1/users", "/api/v1/users/login","/api/v1/users/forgot-password", "/api/v1/users/reset-password").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/v1/users", "/api/v1/users/login","/api/v1/users/forgot-password", "/api/v1/users/reset-password", "/api/v1/addresses").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/v1/users/activation").permitAll()
                 .anyRequest().authenticated()
                 .and()

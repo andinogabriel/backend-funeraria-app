@@ -21,6 +21,6 @@ public interface IItem {
 
     ItemEntity getItemById(Long id);
 
-    void uploadItemImage(Long id, MultipartFile file);
+    void uploadItemImage(Long id, MultipartFile image);
 
 }

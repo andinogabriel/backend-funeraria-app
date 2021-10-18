@@ -3,6 +3,7 @@ package disenodesistemas.backendfunerariaapp.dto.request;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.*;
 import java.io.Serializable;
@@ -23,8 +24,6 @@ public class ItemCreationDto implements Serializable {
     private long brand;
 
     private String code;
-
-    private String itemImageLink;
 
     @Digits(integer=8, fraction=2, message = "{item.error.digits.price}")
     @DecimalMin(value = "0.00", inclusive = false, message = "{item.error.min.price}")

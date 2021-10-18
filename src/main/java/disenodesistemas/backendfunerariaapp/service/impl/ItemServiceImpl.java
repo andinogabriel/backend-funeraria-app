@@ -11,6 +11,7 @@ import disenodesistemas.backendfunerariaapp.service.Interface.IBrand;
 import disenodesistemas.backendfunerariaapp.service.Interface.ICategory;
 import disenodesistemas.backendfunerariaapp.service.Interface.IFileStore;
 import disenodesistemas.backendfunerariaapp.service.Interface.IItem;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
@@ -22,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class ItemServiceImpl implements IItem {
 
     private final ItemRepository itemRepository;
@@ -30,21 +32,6 @@ public class ItemServiceImpl implements IItem {
     private final IFileStore fileStoreService;
     private final ProjectionFactory projectionFactory;
     private final MessageSource messageSource;
-    @Value("${aws.s3.bucket.name}")
-    private String bucketName;
-    @Value("${aws.s3.bucket.url}")
-    private String bucketUrl;
-
-
-    @Autowired
-    public ItemServiceImpl(ItemRepository itemRepository, ICategory categoryService, IBrand brandService, IFileStore fileStoreService, ProjectionFactory projectionFactory, MessageSource messageSource) {
-        this.itemRepository = itemRepository;
-        this.categoryService = categoryService;
-        this.brandService = brandService;
-        this.fileStoreService = fileStoreService;
-        this.projectionFactory = projectionFactory;
-        this.messageSource = messageSource;
-    }
 
 
     @Override
@@ -76,7 +63,7 @@ public class ItemServiceImpl implements IItem {
                 .build();
 
         ItemEntity createdItem = itemRepository.save(itemEntity);
-        return projectionFactory.createProjection(ItemResponseDto.class, createdItem);
+        return projectionFactory.createProjection(ItemResponseDto.class, itemRepository.save(createdItem));
     }
 
     @Override
@@ -91,7 +78,6 @@ public class ItemServiceImpl implements IItem {
         itemEntity.setCategory(categoryEntity);
         itemEntity.setCode(itemCreationDto.getCode());
         itemEntity.setDescription(itemCreationDto.getDescription());
-        //itemEntity.setItemImageLink(itemCreationDto.getItemImageLink());
         itemEntity.setBrand(brandEntity);
         itemEntity.setItemLength(itemCreationDto.getItemLength());
         itemEntity.setItemHeight(itemCreationDto.getItemHeight());
@@ -103,9 +89,7 @@ public class ItemServiceImpl implements IItem {
 
     public void deleteItem(Long id) {
         ItemEntity itemEntity = getItemById(id);
-        //Para eliminar las imagenes almacenadas en el s3 bucket le debo pasar el nombre del directorio donde estan las n imagenes
-        //No es que tiene n images, sino que al poner otra imagen esta se almacena en el mismo directorio por ende al eliminar el articulo eliminamos todas las imagenes que tuvo
-        fileStoreService.deleteFilesFromS3Bucket(itemEntity.getId() + "-" + itemEntity.getName().replaceAll("\\s", "-"));
+        fileStoreService.deleteFilesFromS3Bucket(itemEntity);
         itemRepository.delete(itemEntity);
     }
 
@@ -120,18 +104,10 @@ public class ItemServiceImpl implements IItem {
     }
 
     @Override
-    public void uploadItemImage(Long id, MultipartFile file) {
-        ItemEntity item = getItemById(id);
-        // Almacenar la imagen en s3 y actualizar la db (itemImageLink) con el link de la imagen en s3
-        //El campo imagen sera: el nombre del actual bucket/el id del articulo-nombre-del-articulo    <-- Asi quedara formado el directorio/folder del file
-        String path = String.format("%s/%s", bucketName, item.getId() + "-" + item.getName().replaceAll("\\s", "-"));
-        //El nombre de la imagen quedara formado por el nombre original-UUID random
-        String filename = String.format("%s", file.getOriginalFilename());
-
-        fileStoreService.save(path, filename, file);
-        String itemImageLink  = bucketUrl + item.getId() + "-" + item.getName().replaceAll("\\s", "-") + "/" + filename;
-        item.setItemImageLink(itemImageLink); //Seteo el nuevo link de la imagen
-        itemRepository.save(item);
+    public void uploadItemImage(Long id, MultipartFile image) {
+        ItemEntity itemEntity = getItemById(id);
+        if(image != null)
+            itemEntity.setItemImageLink(fileStoreService.save(itemEntity, image));
     }
 
 }

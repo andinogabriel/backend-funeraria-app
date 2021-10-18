@@ -1,31 +1,43 @@
 package disenodesistemas.backendfunerariaapp.security.jwt;
 
-import disenodesistemas.backendfunerariaapp.entities.UserMain;
 import disenodesistemas.backendfunerariaapp.security.SecurityConstants;
 import io.jsonwebtoken.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.stream.Collectors;
+
+import static disenodesistemas.backendfunerariaapp.security.jwt.JwtTokenFilter.AUTHORITIES;
 
 //Clase que genera el token y valida que este bien formado y no este expirado.
 @Component
 public class JwtProvider {
 
     private final static Logger logger = LoggerFactory.getLogger(JwtProvider.class);
+    private final String HEADER = "Authorization";
+    private final String PREFIX = "Bearer ";
+
+    @Value("${tokenSecret}")
+    private String SECRET_KEY;
 
 
      //setIssuedAt --> Asigna fecha de creción del token
      //setExpiration --> Asigna fecha de expiración
      //signWith --> Firma
-    public String generateToken(Authentication authentication){
-        UserMain userMain = (UserMain) authentication.getPrincipal();
-        return Jwts.builder().setSubject(userMain.getUsername())
+    public String generateToken(Authentication authentication) {
+        final String authorities = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(","));
+        return Jwts.builder().setSubject(authentication.getName())
+                .claim(AUTHORITIES, authorities)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(new Date().getTime() + SecurityConstants.EXPIRATION_DATE))
-                .signWith(SignatureAlgorithm.HS512, SecurityConstants.getTokenSecret())
+                .signWith(SignatureAlgorithm.HS512, SECRET_KEY)
                 .compact();
     }
 

@@ -14,8 +14,12 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.validation.Valid;
 import java.util.List;
 
+import static disenodesistemas.backendfunerariaapp.utils.ApiConstants.*;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
+
 @RestController
-@RequestMapping("api/v1/items")
+@RequestMapping(VERSION + ITEMS)
 public class ItemController {
 
     private final IItem itemService;
@@ -49,8 +53,8 @@ public class ItemController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ItemResponseDto createItem(@RequestBody @Valid ItemCreationDto itemCreationDto) {
-        return itemService.createItem(itemCreationDto);
+    public ItemResponseDto createItem(@RequestBody @Valid ItemCreationDto itemRequestModel) {
+        return itemService.createItem(itemRequestModel);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -70,10 +74,8 @@ public class ItemController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping(path = "{id}/image/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void uploadItemImage(@PathVariable("id") Long id, @RequestParam("file")MultipartFile file) {
+    @PostMapping(path = "{id}/image/upload", consumes = MULTIPART_FORM_DATA_VALUE, produces = APPLICATION_JSON_VALUE)
+    public void uploadItemImage(@PathVariable("id") Long id, @RequestParam("file") MultipartFile file) {
         itemService.uploadItemImage(id, file);
     }
-
-
 }

@@ -1,11 +1,13 @@
 package disenodesistemas.backendfunerariaapp.exceptions;
 
+import disenodesistemas.backendfunerariaapp.utils.CustomFieldError;
 import disenodesistemas.backendfunerariaapp.utils.ErrorMessage;
 import disenodesistemas.backendfunerariaapp.utils.ValidationErrors;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -14,9 +16,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.context.request.WebRequest;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @ControllerAdvice
 public class AppExceptionsHandler {
@@ -59,6 +59,22 @@ public class AppExceptionsHandler {
         return ResponseEntity
                 .status(ex.getStatus())
                 .body(new ErrorMessage(ex.getMessage()));
+    }
+
+    @ExceptionHandler(value = {BindException.class})
+    public ResponseEntity<Object> handleBindException(BindException ex, WebRequest webRequest) {
+
+        final List<FieldError> fieldErrors = ex.getBindingResult().getFieldErrors();
+        final List<CustomFieldError> customFieldErrors = new ArrayList<>();
+
+        for (FieldError fieldError : fieldErrors) {
+            final String field = fieldError.getField();
+            final String message = fieldError.getDefaultMessage();
+            final CustomFieldError customFieldError = CustomFieldError.builder().field(field).message(message).build();
+            customFieldErrors.add(customFieldError);
+        }
+
+        return ResponseEntity.badRequest().body(customFieldErrors);
     }
 
     //Control de expeciones generico

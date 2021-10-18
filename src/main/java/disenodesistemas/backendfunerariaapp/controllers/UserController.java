@@ -10,6 +10,7 @@ import disenodesistemas.backendfunerariaapp.service.Interface.IUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -33,8 +34,6 @@ public class UserController {
         this.projectionFactory = projectionFactory;
     }
 
-
-    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(path = "/me")
     public UserResponseDto getUser() {
         //con SecurityContextHolder accedemos al contexto de la parte de la seguridad de la app y obtenemos la autenticacion del user
@@ -53,8 +52,8 @@ public class UserController {
 
 
     @PostMapping
-    public UserResponseDto createUser(@RequestBody @Valid UserRegisterDto userRegisterDto) {
-        return userService.createUser(userRegisterDto);
+    public ResponseEntity<UserResponseDto> createUser(@RequestBody @Valid UserRegisterDto userRegisterDto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(userRegisterDto));
     }
 
     @PostMapping(path = "/login")

@@ -1,9 +1,11 @@
 package disenodesistemas.backendfunerariaapp.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import disenodesistemas.backendfunerariaapp.entities.UserEntity;
 
 import java.util.Date;
 
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public interface DeceasedResponseDto {
 
     long getId();

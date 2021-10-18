@@ -54,6 +54,7 @@ public class AddressServiceImpl implements IAddress {
         }
 
         AddressEntity addressEntity = AddressEntity.builder()
+                .streetName(addressCreationDto.getStreetName())
                 .apartment(addressCreationDto.getApartment())
                 .blockStreet(addressCreationDto.getBlockStreet())
                 .flat(addressCreationDto.getFlat())

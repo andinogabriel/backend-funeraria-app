@@ -18,7 +18,7 @@ public class MobileNumberEntity implements Serializable {
     private Long id;
 
     @Column(nullable = false)
-    private Integer mobileNumber;
+    private String mobileNumber;
 
     @ManyToOne
     @JoinColumn(name = "user_id")

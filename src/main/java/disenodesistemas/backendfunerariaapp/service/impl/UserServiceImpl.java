@@ -26,6 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -104,18 +105,25 @@ public class UserServiceImpl implements IUser {
     @Override
     public JwtDto login(UserLoginDto loginUser) {
 
-        if(!userRepository.findByEmail(loginUser.getEmail()).isPresent()) throw new UsernameNotFoundException(
-                messageSource.getMessage("user.error.email.not.registered", null, Locale.getDefault())
+        if(userRepository.findByEmail(loginUser.getEmail()).isEmpty()) throw new AppException(
+                messageSource.getMessage("user.error.email.not.registered", null, Locale.getDefault()),
+                HttpStatus.UNAUTHORIZED
         );
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginUser.getEmail(),
-                        loginUser.getPassword()));
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtProvider.generateToken(authentication);
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        return new JwtDto(jwt, userDetails.getUsername(), userDetails.getAuthorities());
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginUser.getEmail(),
+                            loginUser.getPassword()));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String jwt = jwtProvider.generateToken(authentication);
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            return new JwtDto(jwt, userDetails.getUsername(), userDetails.getAuthorities());
+        } catch (Exception e) {
+            throw new AppException(
+                    messageSource.getMessage("AbstractUserDetailsAuthenticationProvider.badCredentials", null, Locale.getDefault()),
+                    HttpStatus.UNAUTHORIZED
+            );
+        }
     }
 
     @Override
@@ -174,8 +182,9 @@ public class UserServiceImpl implements IUser {
             //Password successfully reset. You can now log in with the new credentials.
             message = messageSource.getMessage("confirmationToken.successful.reset.password", null, Locale.getDefault());
         } else {
-            throw new RuntimeException(
-                    messageSource.getMessage("confirmationToken.error.invalid.link", null, Locale.getDefault())
+            throw new AppException(
+                    messageSource.getMessage("confirmationToken.error.invalid.link", null, Locale.getDefault()),
+                    HttpStatus.GONE
             );
         }
         return message;

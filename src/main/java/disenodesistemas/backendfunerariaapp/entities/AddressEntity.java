@@ -1,6 +1,5 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 
@@ -14,7 +13,7 @@ public class AddressEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     private Long id;
 
     @Column(nullable = false, length = 90)
@@ -38,7 +37,6 @@ public class AddressEntity implements Serializable {
     private UserEntity userAddress;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonBackReference
     @JoinColumn(name = "supplier_id")
     private SupplierEntity supplierAddress;
 

@@ -2,6 +2,7 @@ package disenodesistemas.backendfunerariaapp.service.Interface;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,7 +12,9 @@ import static org.apache.http.entity.ContentType.*;
 
 public interface IFileStore {
 
-    void save(String path, String fileName, MultipartFile file);
+    String SEPARATOR = "-";
+
+    String save(Object object, MultipartFile file);
 
     byte[] download(String path, String key);
 
@@ -34,6 +37,20 @@ public interface IFileStore {
         }
     }
 
-    void deleteFilesFromS3Bucket(String fileUrl);
+    void deleteFilesFromS3Bucket(Object object);
+
+    default String getFolderName(Object object) {
+        String objectName = object.getClass().getSimpleName();
+        Field privateObjectId = null;
+        Long objectId = null;
+        try {
+            privateObjectId = object.getClass().getDeclaredField("id");
+            privateObjectId.setAccessible(true);
+            objectId = (Long) privateObjectId.get(object);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.getMessage();
+        }
+        return objectName + SEPARATOR + objectId;
+    }
 
 }

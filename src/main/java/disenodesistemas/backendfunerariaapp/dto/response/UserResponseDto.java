@@ -1,11 +1,13 @@
 package disenodesistemas.backendfunerariaapp.dto.response;
 
-import disenodesistemas.backendfunerariaapp.entities.RoleEntity;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import disenodesistemas.backendfunerariaapp.enums.RoleName;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public interface UserResponseDto {
 
     long getId();
@@ -14,8 +16,8 @@ public interface UserResponseDto {
     String getEmail();
     Date getStartDate();
     boolean getEnabled();
-    MobileNumberResponseDto getMobileNumbers();
-    AddressResponseDto getAddresses();
+    List<MobileNumberResponseDto> getMobileNumbers();
+    List<AddressResponseDto> getAddresses();
     Set<RoleEntity> getRoles();
 
     interface RoleEntity {
