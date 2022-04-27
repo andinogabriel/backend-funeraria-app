@@ -13,6 +13,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Locale;
@@ -32,9 +33,7 @@ public class SlideImageServiceImpl implements ISlideImage {
                 slideImageRequestDto.getTitle(),
                 slideImageRequestDto.getDescription()
         );
-        SlideImageEntity slideImageCreated = slideImageRepository.save(slideImageEntity);
-        slideImageCreated.setImageLink(fileStore.save(slideImageCreated, slideImageRequestDto.getImage()));
-        return projectionFactory.createProjection(SlideImageResponseDto.class, slideImageRepository.save(slideImageCreated));
+        return projectionFactory.createProjection(SlideImageResponseDto.class, slideImageRepository.save(slideImageEntity));
     }
 
     @Override
@@ -52,9 +51,6 @@ public class SlideImageServiceImpl implements ISlideImage {
         SlideImageEntity slideImageToUpdate = getImageSlideById(id);
         slideImageToUpdate.setTitle(slideImageRequestDto.getTitle());
         slideImageToUpdate.setDescription(slideImageRequestDto.getDescription());
-        if(slideImageRequestDto.getImage() != null) {
-            slideImageToUpdate.setImageLink(fileStore.save(slideImageToUpdate, slideImageRequestDto.getImage()));
-        }
         return projectionFactory.createProjection(SlideImageResponseDto.class, slideImageRepository.save(slideImageToUpdate));
     }
 
@@ -68,5 +64,12 @@ public class SlideImageServiceImpl implements ISlideImage {
     @Override
     public List<SlideImageResponseDto> getAllSlideImages() {
         return slideImageRepository.findAllProjectedBy();
+    }
+
+    @Override
+    public void uploadImage(Long id, MultipartFile image) {
+        SlideImageEntity slideImage = getImageSlideById(id);
+        slideImage.setImageLink(fileStore.save(slideImage, image));
+        slideImageRepository.save(slideImage);
     }
 }

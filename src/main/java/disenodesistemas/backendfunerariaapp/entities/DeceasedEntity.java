@@ -35,6 +35,8 @@ public class DeceasedEntity implements Serializable {
     @Column(nullable = false)
     private Date deathDate;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "address_id")
     private AddressEntity placeOfDeath;
 
     @CreatedDate

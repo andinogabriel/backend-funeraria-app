@@ -19,7 +19,4 @@ public class SlideImageRequestDto implements Serializable {
     @NotBlank(message = "{slideImage.error.blank.description}")
     private String description;
 
-    @NotNull(message = "{slideImage.error.null.image}")
-    private MultipartFile image;
-
 }

@@ -7,13 +7,10 @@ import disenodesistemas.backendfunerariaapp.entities.CategoryEntity;
 import disenodesistemas.backendfunerariaapp.entities.ItemEntity;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.ItemRepository;
-import disenodesistemas.backendfunerariaapp.service.Interface.IBrand;
 import disenodesistemas.backendfunerariaapp.service.Interface.ICategory;
 import disenodesistemas.backendfunerariaapp.service.Interface.IFileStore;
 import disenodesistemas.backendfunerariaapp.service.Interface.IItem;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.http.HttpStatus;
@@ -28,11 +25,9 @@ public class ItemServiceImpl implements IItem {
 
     private final ItemRepository itemRepository;
     private final ICategory categoryService;
-    private final IBrand brandService;
     private final IFileStore fileStoreService;
     private final ProjectionFactory projectionFactory;
     private final MessageSource messageSource;
-
 
     @Override
     public List<ItemResponseDto> getAllItems() {
@@ -47,8 +42,13 @@ public class ItemServiceImpl implements IItem {
 
     @Override
     public ItemResponseDto createItem(ItemCreationDto itemCreationDto) {
-        CategoryEntity categoryEntity = categoryService.findCategoryById(itemCreationDto.getCategory());
-        BrandEntity brandEntity = brandService.getBrandById(itemCreationDto.getBrand());
+
+        BrandEntity brandEntity = new BrandEntity();
+        brandEntity.setId(itemCreationDto.getBrand().getId());
+        brandEntity.setName(itemCreationDto.getBrand().getName());
+        CategoryEntity categoryEntity = new CategoryEntity();
+        categoryEntity.setId(itemCreationDto.getCategory().getId());
+        categoryEntity.setName(itemCreationDto.getCategory().getName());
 
         ItemEntity itemEntity = ItemEntity.builder()
                 .brand(brandEntity)
@@ -70,19 +70,23 @@ public class ItemServiceImpl implements IItem {
     public ItemResponseDto updateItem(Long id, ItemCreationDto itemCreationDto) {
 
         ItemEntity itemEntity = getItemById(id);
-        CategoryEntity categoryEntity = categoryService.findCategoryById(itemCreationDto.getCategory());
-        BrandEntity brandEntity = brandService.getBrandById(itemCreationDto.getBrand());
+        BrandEntity brandEntity = new BrandEntity();
+        brandEntity.setId(itemCreationDto.getBrand().getId());
+        brandEntity.setName(itemCreationDto.getBrand().getName());
+        CategoryEntity categoryEntity = new CategoryEntity();
+        categoryEntity.setId(itemCreationDto.getCategory().getId());
+        categoryEntity.setName(itemCreationDto.getCategory().getName());
 
+        itemEntity.setCategory(categoryEntity);
+        itemEntity.setBrand(brandEntity);
         itemEntity.setName(itemCreationDto.getName());
         itemEntity.setPrice(itemCreationDto.getPrice());
-        itemEntity.setCategory(categoryEntity);
         itemEntity.setCode(itemCreationDto.getCode());
         itemEntity.setDescription(itemCreationDto.getDescription());
-        itemEntity.setBrand(brandEntity);
         itemEntity.setItemLength(itemCreationDto.getItemLength());
         itemEntity.setItemHeight(itemCreationDto.getItemHeight());
         itemEntity.setItemWidth(itemCreationDto.getItemWidth());
-
+        
         ItemEntity updatedItem = itemRepository.save(itemEntity);
         return projectionFactory.createProjection(ItemResponseDto.class, updatedItem);
     }

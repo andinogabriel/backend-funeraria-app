@@ -14,7 +14,7 @@ public class CategoryEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     private Long id;
 
     @Column(nullable = false, length = 75)
@@ -23,10 +23,11 @@ public class CategoryEntity implements Serializable {
     private String description;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "category", orphanRemoval = true)
-    private List<ItemEntity> items = new ArrayList<>();
+    private List<ItemEntity> items;
 
     public CategoryEntity(String name, String description) {
         this.name = name;
         this.description = description;
+        this.items = new ArrayList<>();
     }
 }

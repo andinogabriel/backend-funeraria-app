@@ -2,8 +2,6 @@ package disenodesistemas.backendfunerariaapp.dto.request;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.*;
 import java.io.Serializable;
@@ -20,8 +18,7 @@ public class ItemCreationDto implements Serializable {
     private String description;
 
     @NotNull(message = "{item.error.empty.brand}")
-    @Positive(message = "{item.error.positive.brand}")
-    private long brand;
+    private BrandCreationDto brand;
 
     private String code;
 
@@ -42,7 +39,6 @@ public class ItemCreationDto implements Serializable {
     private BigDecimal itemWidth;
 
     @NotNull(message = "{item.error.empty.category}")
-    @Positive(message = "{item.error.positive.category}")
-    private long category;
+    private CategoryCreationDto category;
 
 }

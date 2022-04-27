@@ -3,6 +3,7 @@ package disenodesistemas.backendfunerariaapp.service.Interface;
 import disenodesistemas.backendfunerariaapp.dto.request.SlideImageRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.SlideImageResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.SlideImageEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -17,5 +18,7 @@ public interface ISlideImage {
     void deleteSlideImage(Long id);
 
     List<SlideImageResponseDto> getAllSlideImages();
+
+    void uploadImage(Long id, MultipartFile image);
 
 }
