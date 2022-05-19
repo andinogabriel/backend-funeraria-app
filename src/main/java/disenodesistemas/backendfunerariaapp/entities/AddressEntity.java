@@ -40,5 +40,14 @@ public class AddressEntity implements Serializable {
     @JoinColumn(name = "supplier_id")
     private SupplierEntity supplierAddress;
 
+    @Override
+    public boolean equals(Object obj) {
+        if(this == obj) return true;
+        if(!(obj instanceof AddressEntity)) return false;
+        AddressEntity a = (AddressEntity) obj;
+
+        return this.getCity().equals(a.getCity()) && this.getStreetName().equals(a.getStreetName()) && this.getBlockStreet().equals(a.getBlockStreet());
+    }
+
 
 }

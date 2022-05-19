@@ -6,9 +6,9 @@ import disenodesistemas.backendfunerariaapp.entities.AddressEntity;
 
 public interface IAddress {
 
-    AddressResponseDto createAddress(AddressCreationDto addressCreationDto);
+    //AddressResponseDto createAddress(AddressCreationDto addressCreationDto);
 
-    AddressResponseDto updateAddress(Long id, AddressCreationDto addressDto);
+    //AddressResponseDto updateAddress(Long id, AddressCreationDto addressDto);
 
     void deleteAddress(Long id);
 

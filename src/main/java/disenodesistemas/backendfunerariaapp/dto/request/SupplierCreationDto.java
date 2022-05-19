@@ -1,13 +1,15 @@
 package disenodesistemas.backendfunerariaapp.dto.request;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.util.List;
 
-@Getter @Setter
+@Getter @Setter @EqualsAndHashCode
 public class SupplierCreationDto implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -24,5 +26,8 @@ public class SupplierCreationDto implements Serializable {
     @Email(message = "{supplier.error.invalid.email}")
     private String email;
 
+    private List<MobileNumberCreationDto> mobileNumbers;
+
+    private List<AddressCreationDto> addresses;
 
 }

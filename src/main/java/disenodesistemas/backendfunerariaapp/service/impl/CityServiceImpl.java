@@ -52,7 +52,9 @@ public class CityServiceImpl implements ICity {
 
     @Override
     public List<CityResponseDto> getCitiesByProvinceId(Long id) {
-        ProvinceEntity provinceEntity = provinceService.getProvinceById(id);
+        //ProvinceEntity provinceEntity = provinceService.getProvinceById(id);
+        ProvinceEntity provinceEntity = new ProvinceEntity();
+        provinceEntity.setId(id);
         return cityRepository.findByProvinceOrderByName(provinceEntity);
     }
 }

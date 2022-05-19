@@ -41,15 +41,16 @@ public class MobileNumberServiceImpl implements IMobileNumber {
 
     @Override
     public MobileNumberResponseDto createMobileNumber(MobileNumberCreationDto mobileNumber) {
-        MobileNumberEntity mobileNumberEntity = new MobileNumberEntity();
-        mobileNumberEntity.setMobileNumber(mobileNumber.getMobileNumber());
+        MobileNumberEntity mobileNumberEntity = new MobileNumberEntity(mobileNumber.getMobileNumber());
+
+        /*
         if(mobileNumber.getMobileNumber() != null) {
             UserEntity userEntity = userService.getUserById(mobileNumber.getUserNumber());
             mobileNumberEntity.setUserNumber(userEntity);
         } else {
             SupplierEntity supplierEntity = supplierService.getSupplierById(mobileNumber.getSupplierNumber());
             mobileNumberEntity.setSupplierNumber(supplierEntity);
-        }
+        }*/
         MobileNumberEntity mobileNumberCreated = mobileNumberRepository.save(mobileNumberEntity);
         return projectionFactory.createProjection(MobileNumberResponseDto.class, mobileNumberCreated);
 

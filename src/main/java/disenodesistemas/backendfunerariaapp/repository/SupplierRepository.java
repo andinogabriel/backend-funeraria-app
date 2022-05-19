@@ -13,6 +13,6 @@ public interface SupplierRepository extends PagingAndSortingRepository<SupplierE
 
     Optional<SupplierEntity> findById(Long id);
 
-    List<SupplierResponseDto> findAllProjectedBy();
+    List<SupplierResponseDto> findAllProjectedByOrderByIdDesc();
 
 }

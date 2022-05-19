@@ -40,7 +40,7 @@ public class AddressServiceImpl implements IAddress {
         this.projectionFactory = projectionFactory;
     }
 
-
+    /*
     @Override
     public AddressResponseDto createAddress(AddressCreationDto addressCreationDto) {
         SupplierEntity supplierEntity = null;
@@ -65,8 +65,9 @@ public class AddressServiceImpl implements IAddress {
 
         AddressEntity createdAddress = addressRepository.save(addressEntity);
         return projectionFactory.createProjection(AddressResponseDto.class, createdAddress);
-    }
+    }*/
 
+    /*
     @Override
     public AddressResponseDto updateAddress(Long id, AddressCreationDto addressDto) {
         AddressEntity addressEntity = getAddressById(id);
@@ -79,7 +80,7 @@ public class AddressServiceImpl implements IAddress {
         AddressEntity addressUpdated = addressRepository.save(addressEntity);
 
         return projectionFactory.createProjection(AddressResponseDto.class, addressUpdated);
-    }
+    }*/
 
     @Override
     public void deleteAddress(Long id) {

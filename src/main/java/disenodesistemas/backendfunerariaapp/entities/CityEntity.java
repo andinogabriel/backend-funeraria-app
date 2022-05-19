@@ -1,14 +1,13 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.Hibernate;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
 
 @Entity(name = "cities")
 @Getter @Setter
@@ -31,7 +30,16 @@ public class CityEntity implements Serializable {
     @Column(nullable = false, length = 10)
     private String zipCode;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "city")
-    private List<AddressEntity> addresses = new ArrayList<>();
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        CityEntity that = (CityEntity) o;
+        return id != null && Objects.equals(id, that.id);
+    }
 
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

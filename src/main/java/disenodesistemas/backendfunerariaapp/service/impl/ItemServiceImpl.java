@@ -86,7 +86,7 @@ public class ItemServiceImpl implements IItem {
         itemEntity.setItemLength(itemCreationDto.getItemLength());
         itemEntity.setItemHeight(itemCreationDto.getItemHeight());
         itemEntity.setItemWidth(itemCreationDto.getItemWidth());
-        
+
         ItemEntity updatedItem = itemRepository.save(itemEntity);
         return projectionFactory.createProjection(ItemResponseDto.class, updatedItem);
     }
