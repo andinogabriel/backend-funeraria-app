@@ -10,12 +10,12 @@ public class SpringApplicationContext implements ApplicationContextAware {
 
     //Ponemos en nuestra constante el app context
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+    public void setApplicationContext(final ApplicationContext applicationContext) throws BeansException {
         CONTEXT = applicationContext;
     }
 
     //Hacemos esto porque en algunas clases no podemos usar beans ni autoWired
-    public static Object getBean(String beanName ) {
+    public static Object getBean(final String beanName ) {
         return CONTEXT.getBean(beanName);
     }
 }

@@ -1,11 +1,15 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
-import disenodesistemas.backendfunerariaapp.enums.RoleName;
+import disenodesistemas.backendfunerariaapp.enums.Role;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import java.io.Serializable;
 
 @Entity(name = "roles")
@@ -19,10 +23,10 @@ public class RoleEntity implements Serializable {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    private RoleName name;
+    private Role name;
 
-    public RoleEntity(RoleName roleName) {
-        this.name = roleName;
+    public RoleEntity(final Role role) {
+        this.name = role;
     }
 
 }

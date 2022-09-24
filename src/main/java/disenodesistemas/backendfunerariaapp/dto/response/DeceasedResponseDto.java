@@ -22,7 +22,6 @@ public interface DeceasedResponseDto {
     DeathCauseResponseDto getDeceasedDeathCause();
 
     interface UserEntity {
-        long getId();
         String getFirstName();
         String getLastName();
         String getEmail();

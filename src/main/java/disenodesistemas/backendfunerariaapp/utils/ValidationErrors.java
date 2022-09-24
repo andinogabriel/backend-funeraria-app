@@ -1,32 +1,19 @@
 package disenodesistemas.backendfunerariaapp.utils;
 
-import java.util.Date;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Builder;
+import lombok.Value;
+import lombok.extern.jackson.Jacksonized;
+
+import java.time.LocalDateTime;
 import java.util.Map;
 
+@Value
+@Jacksonized
+@Builder(toBuilder = true)
 public class ValidationErrors {
+    Map<String, String> errors;
 
-    private Map<String, String> errors;
-    private Date timestamp;
-
-    public ValidationErrors(Map<String, String> errors, Date timestamp) {
-        this.errors = errors;
-        this.timestamp = timestamp;
-    }
-
-    public Map<String, String> getErrors() {
-        return errors;
-    }
-
-    public void setErrors(Map<String, String> errors) {
-        this.errors = errors;
-    }
-
-    public Date getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(Date timestamp) {
-        this.timestamp = timestamp;
-    }
-
+    @JsonFormat(pattern="dd-MM-yyyy HH:mm")
+    LocalDateTime timestamp;
 }

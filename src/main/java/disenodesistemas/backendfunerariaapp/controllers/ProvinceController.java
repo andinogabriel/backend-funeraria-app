@@ -1,8 +1,7 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
 import disenodesistemas.backendfunerariaapp.dto.response.ProvinceResponseDto;
-import disenodesistemas.backendfunerariaapp.service.Interface.IProvince;
-import org.springframework.beans.factory.annotation.Autowired;
+import disenodesistemas.backendfunerariaapp.service.Interface.ProvinceService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,10 +12,9 @@ import java.util.List;
 @RequestMapping("api/v1/provinces")
 public class ProvinceController {
 
-    private final IProvince provinceService;
+    private final ProvinceService provinceService;
 
-    @Autowired
-    public ProvinceController(IProvince provinceService) {
+    public ProvinceController(final ProvinceService provinceService) {
         this.provinceService = provinceService;
     }
 

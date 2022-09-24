@@ -7,7 +7,6 @@ import java.math.BigDecimal;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public interface ItemResponseDto {
 
-    long getId();
     String getName();
     String getDescription();
     String getCode();

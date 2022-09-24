@@ -1,14 +1,23 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity(name = "categories")
-@Getter @Setter @NoArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
 public class CategoryEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -25,7 +34,7 @@ public class CategoryEntity implements Serializable {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "category", orphanRemoval = true)
     private List<ItemEntity> items;
 
-    public CategoryEntity(String name, String description) {
+    public CategoryEntity(final String name, final String description) {
         this.name = name;
         this.description = description;
         this.items = new ArrayList<>();

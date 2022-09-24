@@ -1,20 +1,18 @@
 package disenodesistemas.backendfunerariaapp.utils;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Builder;
+import lombok.Value;
+import lombok.extern.jackson.Jacksonized;
 
 import java.time.LocalDateTime;
 
-@Getter @Setter @NoArgsConstructor
+@Value
+@Jacksonized
+@Builder(toBuilder = true)
 public class ErrorMessage {
+    @JsonFormat(pattern="dd-MM-yyyy HH:mm")
+    LocalDateTime timestamp;
 
-    private LocalDateTime timestamp;
-    private String message;
-
-    public ErrorMessage(String message) {
-        this.timestamp = LocalDateTime.now();
-        this.message = message;
-    }
-
+    String message;
 }

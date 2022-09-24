@@ -1,22 +1,21 @@
 package disenodesistemas.backendfunerariaapp.dto.request;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Builder;
+import lombok.Value;
+import lombok.extern.jackson.Jacksonized;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
-import java.io.Serializable;
 
-@Getter @Setter
-public class UserLoginDto implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+@Value
+@Jacksonized
+@Builder(toBuilder = true)
+public class UserLoginDto {
 
     @NotBlank(message = "{user.error.email.blank}")
     @Email(message = "{user.error.email.invalid }")
-    private String email;
+    String email;
 
-    @NotBlank(message = "{user.error.password.blank}")
-    private String password;
+    @NotBlank(message = "{user.error.password.blank}") String password;
 
 }

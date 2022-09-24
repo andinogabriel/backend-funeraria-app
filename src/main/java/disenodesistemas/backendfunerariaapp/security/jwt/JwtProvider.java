@@ -1,9 +1,13 @@
 package disenodesistemas.backendfunerariaapp.security.jwt;
 
 import disenodesistemas.backendfunerariaapp.security.SecurityConstants;
-import io.jsonwebtoken.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.SignatureException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -12,54 +16,53 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 import java.util.stream.Collectors;
 
-import static disenodesistemas.backendfunerariaapp.security.jwt.JwtTokenFilter.AUTHORITIES;
-
 //Clase que genera el token y valida que este bien formado y no este expirado.
-@Component
+@Component @Slf4j
 public class JwtProvider {
 
-    private final static Logger logger = LoggerFactory.getLogger(JwtProvider.class);
-    private final String HEADER = "Authorization";
-    private final String PREFIX = "Bearer ";
+    @Value("${jwt-token.secret}")
+    private String secret;
 
-    @Value("${tokenSecret}")
-    private String SECRET_KEY;
+    @Value("${jwt-token.authorities}")
+    private String authorities;
 
+    @Value("${jwt-token.expiration-date}")
+    private String expirationDate;
 
-     //setIssuedAt --> Asigna fecha de creción del token
-     //setExpiration --> Asigna fecha de expiración
-     //signWith --> Firma
-    public String generateToken(Authentication authentication) {
-        final String authorities = authentication.getAuthorities().stream()
+    //setIssuedAt --> Asigna fecha de creción del token
+    //setExpiration --> Asigna fecha de expiración
+    //signWith --> Firma
+    public String generateToken(final Authentication authentication) {
+        final String authoritiesGranted = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
         return Jwts.builder().setSubject(authentication.getName())
-                .claim(AUTHORITIES, authorities)
+                .claim(authorities, authoritiesGranted)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(new Date().getTime() + SecurityConstants.EXPIRATION_DATE))
-                .signWith(SignatureAlgorithm.HS512, SECRET_KEY)
+                .setExpiration(new Date(new Date().getTime() + Integer.parseInt(expirationDate)))
+                .signWith(SignatureAlgorithm.HS512, secret)
                 .compact();
     }
 
     //subject --> Email del usuario
-    public String getUserNameFromToken(String token){
+    public String getUserNameFromToken(final String token) {
         return Jwts.parser().setSigningKey(SecurityConstants.getTokenSecret()).parseClaimsJws(token).getBody().getSubject();
     }
 
-    public Boolean validateToken(String token){
+    public Boolean validateToken(final String token) {
         try {
             Jwts.parser().setSigningKey(SecurityConstants.getTokenSecret()).parseClaimsJws(token);
             return true;
-        } catch (MalformedJwtException e){
-            logger.error("Token mal formado");
-        } catch (UnsupportedJwtException e){
-            logger.error("Token no soportado");
-        } catch (ExpiredJwtException e){
-            logger.warn("Token expirado");
-        } catch (IllegalArgumentException e){
-            logger.error("Token vacio");
-        } catch (SignatureException e){
-            logger.error("Fallo con la firma");
+        } catch (MalformedJwtException e) {
+            log.error("Token mal formado");
+        } catch (UnsupportedJwtException e) {
+            log.error("Token no soportado");
+        } catch (ExpiredJwtException e) {
+            log.warn("Token expirado");
+        } catch (IllegalArgumentException e) {
+            log.error("Token vacio");
+        } catch (SignatureException e) {
+            log.error("Fallo con la firma");
         }
         return false;
     }

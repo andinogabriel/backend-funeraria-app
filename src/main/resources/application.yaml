@@ -1,0 +1,27 @@
+
+amazon-s3:
+  secret-key: VNrroMPyKEUXVsrkXgwptkc1+hDXkdNb144cs0DB
+  access-key: AKIA4QHJKA6664X3J5PG
+
+jwt-token:
+  expiration-date: 86400000
+  prefix: Bearer
+  authorities: authorities
+  header: Authorization
+  secret: yX5bRDXt1ZyllqLWmQHYgxiEwbke7W8C
+
+spring:
+  messages:
+    basename: "messages"
+    fallback-to-system-locale: false
+
+AbstractUserDetailsAuthenticationProvider:
+  badCredentials: Contraseña incorrecta.
+
+web:
+  cors:
+    allowed-origins: "http://localhost:4200"
+    allowed-methods: GET, POST, PATCH, PUT, DELETE, OPTIONS, HEAD
+    max-age: 3600
+    allowed-headers: "Requestor-Type"
+    exposed-headers: "X-Get-Header"

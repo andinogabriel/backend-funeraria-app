@@ -3,9 +3,15 @@ package disenodesistemas.backendfunerariaapp.entities;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.val;
 import org.hibernate.Hibernate;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,10 +37,10 @@ public class ProvinceEntity implements Serializable {
     private List<CityEntity> cities = new ArrayList<>();
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        ProvinceEntity that = (ProvinceEntity) o;
+        val that = (ProvinceEntity) o;
         return id != null && Objects.equals(id, that.id);
     }
 

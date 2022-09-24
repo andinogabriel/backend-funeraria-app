@@ -1,16 +1,34 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Index;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 import java.io.Serializable;
 import java.util.Date;
 
 @Entity(name = "affiliates")
 @Table(indexes = { @Index(columnList = "dni", name = "index_dni", unique = true) })
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @EntityListeners(AuditingEntityListener.class)
 public class AffiliateEntity implements Serializable {
 
@@ -37,7 +55,7 @@ public class AffiliateEntity implements Serializable {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gender_id")
-    private GenderEntity affiliateGender;
+    private GenderEntity gender;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -45,6 +63,6 @@ public class AffiliateEntity implements Serializable {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "relationship_id")
-    private RelationshipEntity affiliateRelationship;
+    private RelationshipEntity relationship;
 
 }

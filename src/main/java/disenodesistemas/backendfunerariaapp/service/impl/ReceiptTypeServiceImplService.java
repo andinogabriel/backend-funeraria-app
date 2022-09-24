@@ -1,0 +1,22 @@
+package disenodesistemas.backendfunerariaapp.service.impl;
+
+import disenodesistemas.backendfunerariaapp.dto.response.ReceiptTypeResponseDto;
+import disenodesistemas.backendfunerariaapp.repository.ReceiptTypeRepository;
+import disenodesistemas.backendfunerariaapp.service.Interface.ReceiptTypeService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class ReceiptTypeServiceImplService implements ReceiptTypeService {
+
+    private final ReceiptTypeRepository receiptTypeRepository;
+
+    @Override
+    public List<ReceiptTypeResponseDto> getAllReceiptTypes() {
+        return receiptTypeRepository.findAllByOrderByName();
+    }
+
+}

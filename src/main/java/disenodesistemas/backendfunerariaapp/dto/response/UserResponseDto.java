@@ -1,9 +1,10 @@
 package disenodesistemas.backendfunerariaapp.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import disenodesistemas.backendfunerariaapp.enums.RoleName;
+import disenodesistemas.backendfunerariaapp.enums.Role;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -14,7 +15,10 @@ public interface UserResponseDto {
     String getFirstName();
     String getLastName();
     String getEmail();
-    Date getStartDate();
+
+    @JsonFormat(pattern="dd-MM-yyyy")
+    LocalDate getStartDate();
+
     boolean getEnabled();
     List<MobileNumberResponseDto> getMobileNumbers();
     List<AddressResponseDto> getAddresses();
@@ -22,6 +26,6 @@ public interface UserResponseDto {
 
     interface RoleEntity {
         long getId();
-        RoleName getName();
+        Role getName();
     }
 }

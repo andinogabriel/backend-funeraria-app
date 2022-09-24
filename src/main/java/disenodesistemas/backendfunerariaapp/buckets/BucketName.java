@@ -9,5 +9,5 @@ public enum BucketName {
 
     ITEM_IMAGE("funerariadb-images");
 
-    private final String bucketName;
+    private final String name;
 }

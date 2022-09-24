@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 
 @SpringBootApplication
@@ -31,7 +33,7 @@ public class BackendFunerariaAppApplication {
 		return new SpringApplicationContext();
 	}
 
-	@Bean(name = "AppProperties")
+	@Bean
 	public AppProperties getAppProperties() {
 		return new AppProperties();
 	}
@@ -46,8 +48,7 @@ public class BackendFunerariaAppApplication {
 	//Para tener una instancia ModelMapper global para no estar instanciando cada rato
 	@Bean
 	public ModelMapper modelMapper() {
-		ModelMapper mapper = new ModelMapper();
-		return mapper;
+		return new ModelMapper();
 	}
 
 }

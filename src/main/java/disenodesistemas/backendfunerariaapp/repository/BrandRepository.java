@@ -2,8 +2,6 @@ package disenodesistemas.backendfunerariaapp.repository;
 
 import disenodesistemas.backendfunerariaapp.dto.response.BrandResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.BrandEntity;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 

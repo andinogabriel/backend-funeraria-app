@@ -1,15 +1,23 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity(name =  "genders")
-@Getter @Setter
+@Entity(name = "genders")
+@Getter
+@Setter
+@NoArgsConstructor
 public class GenderEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -21,8 +29,11 @@ public class GenderEntity implements Serializable {
     @Column(nullable = false, length = 75)
     private String name;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "affiliateGender")
-    private List<AffiliateEntity> affiliates = new ArrayList<>();
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "gender")
+    private List<AffiliateEntity> affiliates;
 
-
+    public GenderEntity(final String name) {
+        this.name = name;
+        this.affiliates = new ArrayList<>();
+    }
 }

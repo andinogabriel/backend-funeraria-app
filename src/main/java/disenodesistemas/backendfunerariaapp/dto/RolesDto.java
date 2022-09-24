@@ -1,17 +1,18 @@
 package disenodesistemas.backendfunerariaapp.dto;
 
-import disenodesistemas.backendfunerariaapp.enums.RoleName;
+import disenodesistemas.backendfunerariaapp.enums.Role;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.Value;
+import lombok.extern.jackson.Jacksonized;
 
 import java.io.Serializable;
 
-@Getter @Setter
-public class RolesDto implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    private long id;
-    private RoleName name;
-
+@Value
+@Jacksonized
+@Builder(toBuilder = true)
+public class RolesDto {
+    Long id;
+    Role name;
 }

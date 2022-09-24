@@ -6,19 +6,16 @@ import java.util.Date;
 
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public interface AffiliateResponseDto {
-
-    long getId();
     String getFirstName();
     String getLastName();
     Integer getDni();
     Date getBirthDate();
     Date getStartDate();
-    GenderResponseDto getAffiliateGender();
-    RelationshipResponseDto getAffiliateRelationship();
+    GenderResponseDto getGender();
+    RelationshipResponseDto getRelationship();
     UserEntity getUser();
 
     interface UserEntity {
-        long getId();
         String getFirstName();
         String getLastName();
         String getEmail();

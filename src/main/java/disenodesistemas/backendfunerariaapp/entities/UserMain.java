@@ -21,8 +21,7 @@ public class UserMain implements UserDetails {
     //Variable que nos da la autorización (no confundir con autenticación) Coleccion de tipo generico que extendiende de GranthedAuthority de Spring security
     private Collection<? extends GrantedAuthority> authorities;
 
-
-    public UserMain(String firstName, String lastName, String email, String encryptedPassword, Collection<? extends GrantedAuthority> authorities) {
+    public UserMain(final String firstName, final String lastName, final String email, final String encryptedPassword, final Collection<? extends GrantedAuthority> authorities) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -30,15 +29,14 @@ public class UserMain implements UserDetails {
         this.authorities = authorities;
     }
 
-
     //Metodo que asigna los privilegios (autorización)
-    public static UserMain build(UserEntity userEntity) {
+    public static UserMain build(final UserEntity userEntity) {
         //Convertimos la clase Rol a la clase GrantedAuthority
-        List<GrantedAuthority> authorities =
+        final List<GrantedAuthority> authorities =
                 userEntity.getRoles()
                         .stream()
                         .map(rol -> new SimpleGrantedAuthority(rol.getName().name()))
-                        .collect(Collectors.toList());
+                        .collect(Collectors.toUnmodifiableList());
         return new UserMain(userEntity.getFirstName(), userEntity.getLastName(),userEntity.getEmail(), userEntity.getEncryptedPassword(), authorities);
     }
 

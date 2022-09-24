@@ -2,23 +2,39 @@ package disenodesistemas.backendfunerariaapp.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.validation.constraints.Digits;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity(name = "items")
-@Getter @Setter @NoArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
 public class ItemEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, length = 85)
@@ -45,7 +61,7 @@ public class ItemEntity implements Serializable {
 
     private Integer stock;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = {"items", "handler","hibernateLazyInitializer"}, allowSetters = true)
     @JoinColumn(name = "category_id")
     private CategoryEntity category;
@@ -55,15 +71,16 @@ public class ItemEntity implements Serializable {
     @JoinColumn(name = "brand_id")
     private BrandEntity brand;
 
+    @OneToMany(mappedBy = "item", orphanRemoval = true, cascade = CascadeType.MERGE)
+    private Set<ItemPlanEntity>  itemsPlan;
+
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "item")
     @JsonManagedReference
-    private List<EntryDetailEntity> entryDetails = new ArrayList<>();
+    private List<IncomeDetailEntity> incomeDetails;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "itemService")
-    private List<ServiceDetailEntity> serviceDetails = new ArrayList<>();
 
     @Builder
-    public ItemEntity(String name, String description, String code, BigDecimal price, BigDecimal itemLength, BigDecimal itemHeight, BigDecimal itemWidth, CategoryEntity category, BrandEntity brand) {
+    public ItemEntity(final String name, final String description, final String code, final BigDecimal price, final BigDecimal itemLength, final BigDecimal itemHeight, final BigDecimal itemWidth, final CategoryEntity category, final BrandEntity brand) {
         this.name = name;
         this.description = description;
         this.code = code;
@@ -73,5 +90,7 @@ public class ItemEntity implements Serializable {
         this.itemWidth = itemWidth;
         this.category = category;
         this.brand = brand;
+        this.incomeDetails = new ArrayList<>();
+        this.itemsPlan = new HashSet<>();
     }
 }

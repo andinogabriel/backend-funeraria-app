@@ -1,13 +1,21 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
-import disenodesistemas.backendfunerariaapp.dto.request.CategoryCreationDto;
+import disenodesistemas.backendfunerariaapp.dto.request.CategoryRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.CategoryResponseDto;
 import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
-import disenodesistemas.backendfunerariaapp.service.Interface.ICategory;
-import org.springframework.beans.factory.annotation.Autowired;
+import disenodesistemas.backendfunerariaapp.service.Interface.CategoryService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -15,17 +23,11 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:4200/")
 @RestController
 @RequestMapping("api/v1/categories")
+@RequiredArgsConstructor
 public class CategoryController {
 
-    private final ICategory categoryService;
+    private final CategoryService categoryService;
     private final ProjectionFactory projectionFactory;
-
-    @Autowired
-    public CategoryController(ICategory categoryService, ProjectionFactory projectionFactory) {
-        this.categoryService = categoryService;
-        this.projectionFactory = projectionFactory;
-    }
-
 
     @GetMapping
     public List<CategoryResponseDto> getAllCategories() {
@@ -33,30 +35,30 @@ public class CategoryController {
     }
 
     @GetMapping(path = "/{id}")
-    public CategoryResponseDto getCategoryById(@PathVariable Long id) {
+    public CategoryResponseDto getCategoryById(@PathVariable final Long id) {
         return projectionFactory.createProjection(CategoryResponseDto.class, categoryService.findCategoryById(id));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public CategoryResponseDto createCategory(@RequestBody @Valid CategoryCreationDto categoryCreationDto) {
-        return categoryService.createCategory(categoryCreationDto);
+    public CategoryResponseDto createCategory(@RequestBody @Valid final CategoryRequestDto categoryRequestDto) {
+        return categoryService.createCategory(categoryRequestDto);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public CategoryResponseDto updateCategory(@PathVariable Long id, @RequestBody @Valid CategoryCreationDto categoryCreationDto) {
-        return categoryService.updateCategory(id, categoryCreationDto);
+    public CategoryResponseDto updateCategory(@PathVariable final Long id, @RequestBody @Valid final CategoryRequestDto categoryRequestDto) {
+        return categoryService.updateCategory(id, categoryRequestDto);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public OperationStatusModel deleteCategory(@PathVariable Long id) {
-        OperationStatusModel operationStatusModel = new OperationStatusModel();
-        operationStatusModel.setName("DELETE");
+    public OperationStatusModel deleteCategory(@PathVariable final Long id) {
         categoryService.deleteCategory(id);
-        operationStatusModel.setName("SUCCESS");
-        return operationStatusModel;
+        return OperationStatusModel.builder()
+                .name("DELETE")
+                .name("SUCCESS")
+                .build();
     }
 
 }

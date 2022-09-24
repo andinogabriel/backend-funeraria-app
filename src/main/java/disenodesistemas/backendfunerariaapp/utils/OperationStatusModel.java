@@ -1,24 +1,13 @@
 package disenodesistemas.backendfunerariaapp.utils;
 
+import lombok.Builder;
+import lombok.Value;
+import lombok.extern.jackson.Jacksonized;
+
+@Builder(toBuilder = true)
+@Jacksonized
+@Value
 public class OperationStatusModel {
-
-    private String name;
-    private String result;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getResult() {
-        return result;
-    }
-
-    public void setResult(String result) {
-        this.result = result;
-    }
-
+    String name;
+    String result;
 }

@@ -1,24 +1,23 @@
 package disenodesistemas.backendfunerariaapp.dto.request;
 
+import lombok.Builder;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Value;
+import lombok.extern.jackson.Jacksonized;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import java.io.Serializable;
 
-@Getter @Setter
-public class PasswordResetDto implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @NotBlank(message = "{password.error.blank.field}")
-    @Size(min = 8, max = 30, message = "{password.error.size.field}") //Size es para strings
-    private String password;
+@Value
+@Jacksonized
+@Builder(toBuilder = true)
+public class PasswordResetDto {
 
     @NotBlank(message = "{password.error.blank.field}")
-    @Size(min = 8, max = 30, message = "{password.error.size.field}") //Size es para strings
-    private String matchingPassword;
+    @Size(min = 8, max = 30, message = "{password.error.size.field}")
+    String password;
 
+    @NotBlank(message = "{password.error.blank.field}")
+    @Size(min = 8, max = 30, message = "{password.error.size.field}")
+    String matchingPassword;
 }

@@ -4,8 +4,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.val;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import java.io.Serializable;
 
 @Entity(name = "mobileNumbers")
@@ -22,7 +29,7 @@ public class MobileNumberEntity implements Serializable {
     @Column(nullable = false)
     private String mobileNumber;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private UserEntity userNumber;
 
@@ -31,18 +38,16 @@ public class MobileNumberEntity implements Serializable {
     @JoinColumn(name = "supplier_id")
     private SupplierEntity supplierNumber;
 
-    public MobileNumberEntity(String mobileNumber) {
+    public MobileNumberEntity(final String mobileNumber) {
         this.mobileNumber = mobileNumber;
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
         if(this == obj) return true;
         if(!(obj instanceof MobileNumberEntity)) return false;
-        MobileNumberEntity a = (MobileNumberEntity) obj;
-
+        val a = (MobileNumberEntity) obj;
         return this.getMobileNumber() != null && this.getMobileNumber().equals(a.getMobileNumber());
     }
-
 
 }

@@ -1,30 +1,32 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
-import disenodesistemas.backendfunerariaapp.dto.request.BrandCreationDto;
+import disenodesistemas.backendfunerariaapp.dto.request.BrandRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.BrandResponseDto;
 import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
-import disenodesistemas.backendfunerariaapp.service.Interface.IBrand;
-import org.springframework.beans.factory.annotation.Autowired;
+import disenodesistemas.backendfunerariaapp.service.Interface.BrandService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/brands")
+@RequiredArgsConstructor
 public class BrandController {
 
-    private final IBrand brandService;
+    private final BrandService brandService;
     private final ProjectionFactory projectionFactory;
-
-    @Autowired
-    public BrandController(IBrand brandService, ProjectionFactory projectionFactory) {
-        this.brandService = brandService;
-        this.projectionFactory = projectionFactory;
-    }
-
 
     @GetMapping
     public List<BrandResponseDto> getAllBrandes() {
@@ -32,33 +34,30 @@ public class BrandController {
     }
 
     @GetMapping(path = "/{id}")
-    public BrandResponseDto getBrandById(@PathVariable Long id) {
-        return projectionFactory.createProjection(
-                BrandResponseDto.class,
-                brandService.getBrandById(id)
-        );
+    public ResponseEntity<BrandResponseDto> getBrandById(@PathVariable final Long id) {
+        return ResponseEntity.ok(projectionFactory.createProjection(BrandResponseDto.class, brandService.getBrandById(id)));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public BrandResponseDto createBrand(@RequestBody @Valid BrandCreationDto brandCreationDto) {
-        return brandService.createBrand(brandCreationDto);
+    public BrandResponseDto createBrand(@RequestBody @Valid final BrandRequestDto brandRequestDto) {
+        return brandService.createBrand(brandRequestDto);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(path = "/{id}")
-    public BrandResponseDto updateBrand(@PathVariable Long id, @RequestBody @Valid BrandCreationDto brandCreationDto) {
-        return brandService.updateBrand(id, brandCreationDto);
+    public BrandResponseDto updateBrand(@PathVariable final Long id, @RequestBody @Valid final BrandRequestDto brandRequestDto) {
+        return brandService.updateBrand(id, brandRequestDto);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping(path = "/{id}")
-    public OperationStatusModel deleteBrand(@PathVariable Long id) {
-        OperationStatusModel operationStatusModel = new OperationStatusModel();
-        operationStatusModel.setName("DELETE");
+    public OperationStatusModel deleteBrand(@PathVariable final Long id) {
         brandService.deleteBrand(id);
-        operationStatusModel.setResult("SUCCESS");
-        return operationStatusModel;
+        return OperationStatusModel.builder()
+                .name("DELETE")
+                .name("SUCCESS")
+                .build();
     }
 
 }

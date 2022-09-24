@@ -1,16 +1,13 @@
 package disenodesistemas.backendfunerariaapp.utils;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Value;
+import lombok.extern.jackson.Jacksonized;
 
-//Clase custom para mostrar los errores de los modelos que arroja el javax validation
-@Getter
-@Setter
-@Builder
-@AllArgsConstructor
+@Value
+@Jacksonized
+@Builder(toBuilder = true)
 public class CustomFieldError {
-    private String field;
-    private String message;
+    String field;
+    String message;
 }

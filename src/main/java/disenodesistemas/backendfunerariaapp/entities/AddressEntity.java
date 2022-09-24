@@ -1,13 +1,29 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.Hibernate;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import java.io.Serializable;
+import java.util.Objects;
 
 @Entity(name = "addresses")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class AddressEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -40,14 +56,18 @@ public class AddressEntity implements Serializable {
     @JoinColumn(name = "supplier_id")
     private SupplierEntity supplierAddress;
 
-    @Override
-    public boolean equals(Object obj) {
-        if(this == obj) return true;
-        if(!(obj instanceof AddressEntity)) return false;
-        AddressEntity a = (AddressEntity) obj;
 
-        return this.getCity().equals(a.getCity()) && this.getStreetName().equals(a.getStreetName()) && this.getBlockStreet().equals(a.getBlockStreet());
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        final AddressEntity that = (AddressEntity) o;
+        return id != null && Objects.equals(city.getId(), that.getCity().getId()) && Objects.equals(streetName, that.getStreetName())
+                && Objects.equals(blockStreet, that.getBlockStreet());
     }
 
-
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

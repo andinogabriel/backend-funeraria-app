@@ -1,14 +1,21 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
-import disenodesistemas.backendfunerariaapp.dto.request.ItemCreationDto;
+import disenodesistemas.backendfunerariaapp.dto.request.ItemRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.ItemResponseDto;
 import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
-import disenodesistemas.backendfunerariaapp.service.Interface.IItem;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.projection.ProjectionFactory;
-import org.springframework.http.MediaType;
+import disenodesistemas.backendfunerariaapp.service.Interface.ItemService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
@@ -20,17 +27,11 @@ import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 
 @RestController
 @RequestMapping(VERSION + ITEMS)
+@RequiredArgsConstructor
+@Slf4j
 public class ItemController {
 
-    private final IItem itemService;
-    private final ProjectionFactory projectionFactory;
-
-    @Autowired
-    public ItemController(IItem itemService, ProjectionFactory projectionFactory) {
-        this.itemService = itemService;
-        this.projectionFactory = projectionFactory;
-    }
-
+    private final ItemService itemService;
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping
@@ -39,43 +40,43 @@ public class ItemController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping(path = "/{id}")
-    public ItemResponseDto getItemById(@PathVariable Long id) {
-        return projectionFactory.createProjection(ItemResponseDto.class, itemService.getItemById(id));
+    @GetMapping(path = "/{code}")
+    public ItemResponseDto getItemByCode(@PathVariable final String code) {
+        return itemService.findItemByCode(code);
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(path = "/category/{id}")
-    public List<ItemResponseDto> getItemsByCategoryId(@PathVariable Long id) {
+    public List<ItemResponseDto> getItemsByCategoryId(@PathVariable final Long id) {
         return itemService.getItemsByCategoryId(id);
     }
 
-
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ItemResponseDto createItem(@RequestBody @Valid ItemCreationDto itemRequestModel) {
+    public ItemResponseDto createItem(@RequestBody @Valid final ItemRequestDto itemRequestModel) {
         return itemService.createItem(itemRequestModel);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping(path = "/{id}")
-    public ItemResponseDto updateItem(@PathVariable Long id, @RequestBody @Valid ItemCreationDto itemRequestModel) {
-        return itemService.updateItem(id, itemRequestModel);
+    @PutMapping(path = "/{code}")
+    public ItemResponseDto updateItem(@PathVariable(name = "code") final String code, @RequestBody @Valid final ItemRequestDto itemRequestModel) {
+        log.debug("Item to update: " + itemRequestModel);
+        return itemService.updateItem(code, itemRequestModel);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping(path = "/{id}")
-    public OperationStatusModel deleteItem(@PathVariable Long id) {
-        OperationStatusModel operationStatusModel = new OperationStatusModel();
-        operationStatusModel.setName("DELETE");
-        itemService.deleteItem(id);
-        operationStatusModel.setName("SUCCESS");
-        return operationStatusModel;
+    @DeleteMapping(path = "/{code}")
+    public OperationStatusModel deleteItem(@PathVariable final String code) {
+        itemService.deleteItem(code);
+        return OperationStatusModel.builder()
+                .name("DELETE")
+                .name("SUCCESS")
+                .build();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping(path = "{id}/image/upload", consumes = MULTIPART_FORM_DATA_VALUE, produces = APPLICATION_JSON_VALUE)
-    public void uploadItemImage(@PathVariable("id") Long id, @RequestParam("file") MultipartFile file) {
-        itemService.uploadItemImage(id, file);
+    @PostMapping(path = "{code}/image/upload", consumes = MULTIPART_FORM_DATA_VALUE, produces = APPLICATION_JSON_VALUE)
+    public void uploadItemImage(@PathVariable final String code, @RequestParam("file") final MultipartFile file) {
+        itemService.uploadItemImage(code, file);
     }
 }

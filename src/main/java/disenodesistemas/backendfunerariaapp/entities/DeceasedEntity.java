@@ -1,17 +1,28 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import java.io.Serializable;
 import java.util.Date;
 
 @Entity(name = "deceased")
 @EntityListeners(AuditingEntityListener.class)
-@Getter @Setter
+@Getter
+@Setter
+@NoArgsConstructor
 public class DeceasedEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -52,14 +63,13 @@ public class DeceasedEntity implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "gender_id")
-    private GenderEntity deceasedGender;
+    private GenderEntity gender;
 
     @ManyToOne
     @JoinColumn(name = "death_cause_id")
-    private DeathCauseEntity deceasedDeathCause;
+    private DeathCauseEntity deathCause;
 
     @OneToOne(mappedBy = "deceased")
     private ServiceEntity service;
-
 
 }

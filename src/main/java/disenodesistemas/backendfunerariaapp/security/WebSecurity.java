@@ -2,10 +2,10 @@ package disenodesistemas.backendfunerariaapp.security;
 
 import disenodesistemas.backendfunerariaapp.security.jwt.JwtEntryPoint;
 import disenodesistemas.backendfunerariaapp.security.jwt.JwtTokenFilter;
-import disenodesistemas.backendfunerariaapp.service.Interface.IUser;
-import org.springframework.beans.factory.annotation.Autowired;
+import disenodesistemas.backendfunerariaapp.service.Interface.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -17,6 +17,12 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import static java.util.List.of;
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
@@ -26,11 +32,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurity extends WebSecurityConfigurerAdapter {
 
-    @Autowired
-    private IUser userService;
+    private final UserService userService;
+    private final JwtEntryPoint jwtEntryPoint;
 
-    @Autowired
-    private JwtEntryPoint jwtEntryPoint;
+    public WebSecurity(@Lazy final UserService userService, final JwtEntryPoint jwtEntryPoint) {
+        this.userService = userService;
+        this.jwtEntryPoint = jwtEntryPoint;
+    }
 
     @Bean
     public JwtTokenFilter jwtTokenFilter(){
@@ -44,7 +52,7 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
     }
 
     @Override
-    public void configure(AuthenticationManagerBuilder auth) throws Exception {
+    public void configure(final AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(userService).passwordEncoder(passwordEncoder());
     }
 
@@ -60,7 +68,7 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
     }
 
     @Override
-    protected void configure(HttpSecurity http) throws Exception {
+    protected void configure(final HttpSecurity http) throws Exception {
         //Desactivamos cookies ya que enviamos un token
         // cada vez que hacemos una petición
         http.cors().and().csrf().disable()
@@ -69,10 +77,22 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.GET, "/api/v1/users/activation", "/api/v1/categories").permitAll()
                 .anyRequest().authenticated()
                 .and()
+                .httpBasic().and()
                 .exceptionHandling().authenticationEntryPoint(jwtEntryPoint)
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         http.addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
     }
+
+    /*@Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        final CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(of("http://localhost:8081", "https://localhost:4200"));
+        configuration.setAllowedMethods(of("*"));
+        configuration.setAllowedHeaders(of("*"));
+        final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }*/
 
 }
