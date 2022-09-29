@@ -10,7 +10,7 @@ public interface IncomeService {
 
     IncomeResponseDto createIncome(IncomeRequestDto incomeRequestDto);
 
-    List<IncomeResponseDto> getAllIncomes();
+    List<IncomeResponseDto> getAllIncomes(final Boolean deleted);
 
     IncomeResponseDto updateIncome(Long receiptNumber, IncomeRequestDto incomeRequestDto);
 

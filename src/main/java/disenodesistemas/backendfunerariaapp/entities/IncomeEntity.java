@@ -1,19 +1,13 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cascade;
-import org.hibernate.annotations.Filter;
-import org.hibernate.annotations.FilterDef;
-import org.hibernate.annotations.ParamDef;
-import org.hibernate.annotations.SQLDelete;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -22,6 +16,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
@@ -35,13 +30,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static org.hibernate.annotations.CascadeType.SAVE_UPDATE;
 
 @Entity(name = "incomes")
-@SQLDelete(sql = "UPDATE entries SET deleted = true WHERE id=?")
-@FilterDef(name = "deletedEntriesFilter", parameters = @ParamDef(name = "isDeleted", type = "boolean")) //Define los requerimientos, los cuales, serán usados por @Filter
-@Filter(name = "deletedEntriesFilter", condition = "deleted = :isDeleted") //Condición para aplicar el filtro en función del parámetro
-@Getter @Setter @NoArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class IncomeEntity implements Serializable {
 
@@ -51,7 +44,7 @@ public class IncomeEntity implements Serializable {
     @GeneratedValue
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     @Digits(integer = 20, fraction = 0)
     private Long receiptNumber;
 
@@ -60,7 +53,7 @@ public class IncomeEntity implements Serializable {
     private Long receiptSeries;
 
     @CreatedDate
-    @JsonFormat(pattern="dd-MM-yyyy HH:mm")
+    @JsonFormat(pattern = "dd-MM-yyyy HH:mm")
     private LocalDateTime incomeDate;
 
     @Digits(integer = 3, fraction = 2)
@@ -75,30 +68,24 @@ public class IncomeEntity implements Serializable {
     private ReceiptTypeEntity receiptType;
 
     @ManyToOne
-    @Cascade(SAVE_UPDATE)
-    @JsonIgnoreProperties(value = {"entries", "handler","hibernateLazyInitializer"}, allowSetters = true)
     @JoinColumn(name = "supplier_id")
     private SupplierEntity supplier;
 
     @ManyToOne
-    @Cascade(SAVE_UPDATE)
-    @JsonIgnoreProperties(value = {"entries", "handler","hibernateLazyInitializer"}, allowSetters = true)
     @JoinColumn(name = "user_id")
     private UserEntity incomeUser;
 
     private boolean deleted;
 
     @ManyToOne
-    @Cascade(SAVE_UPDATE)
     @JoinColumn(name = "user_modified_id")
     private UserEntity lastModifiedBy;
 
     @LastModifiedDate
-    @JsonFormat(pattern="dd-MM-yyyy HH:mm")
+    @JsonFormat(pattern = "dd-MM-yyyy HH:mm")
     private LocalDateTime lastModifiedDate;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "income", orphanRemoval = true)
-    @JsonManagedReference
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "income", orphanRemoval = true, fetch = FetchType.LAZY)
     private List<IncomeDetailEntity> incomeDetails;
 
     @Builder
@@ -120,7 +107,7 @@ public class IncomeEntity implements Serializable {
     }
 
     public void addIncomeDetails(final IncomeDetailEntity incomeDetailEntity) {
-        if(incomeDetails.contains(incomeDetailEntity)) {
+        if (!incomeDetails.contains(incomeDetailEntity)) {
             incomeDetails.add(incomeDetailEntity);
             incomeDetailEntity.setIncome(this);
         }

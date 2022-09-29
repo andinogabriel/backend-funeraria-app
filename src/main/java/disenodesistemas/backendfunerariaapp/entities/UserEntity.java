@@ -79,7 +79,7 @@ public class UserEntity implements Serializable {
     private List<DeceasedEntity> deceasedList;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "incomeUser", orphanRemoval = true)
-    private List<IncomeEntity> entries;
+    private List<IncomeEntity> incomes;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user", orphanRemoval = true)
     private List<ConfirmationTokenEntity> confirmationTokens;
@@ -94,7 +94,7 @@ public class UserEntity implements Serializable {
         this.addresses = new ArrayList<>();
         this.affiliates = new ArrayList<>();
         this.deceasedList = new ArrayList<>();
-        this.entries = new ArrayList<>();
+        this.incomes = new ArrayList<>();
         this.confirmationTokens = new ArrayList<>();
     }
 

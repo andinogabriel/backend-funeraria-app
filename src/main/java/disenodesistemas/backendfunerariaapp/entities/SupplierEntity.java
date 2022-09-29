@@ -49,7 +49,7 @@ public class SupplierEntity implements Serializable {
     private List<MobileNumberEntity> mobileNumbers;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "supplier", orphanRemoval = true)
-    private List<IncomeEntity> entries;
+    private List<IncomeEntity> incomes;
 
     public SupplierEntity(final String name, final String nif, final String webPage, final String email) {
         this.name = name;
@@ -58,7 +58,7 @@ public class SupplierEntity implements Serializable {
         this.email = email;
         this.mobileNumbers = new ArrayList<>();
         this.addresses = new ArrayList<>();
-        this.entries = new ArrayList<>();
+        this.incomes = new ArrayList<>();
     }
 
     public void setMobileNumbers(final List<MobileNumberEntity> mobileNumbers) {

@@ -36,8 +36,9 @@ public class IncomeController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public List<IncomeResponseDto> getIncomes() {
-        return incomeService.getAllIncomes();
+    public List<IncomeResponseDto> getIncomes(@RequestParam(value = "deleted", required = false, defaultValue = "false") final boolean deleted) {
+
+        return incomeService.getAllIncomes(deleted);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -54,10 +55,10 @@ public class IncomeController {
                                                        @RequestParam(value = "sortBy", defaultValue = "incomeDate") final String sortBy,
                                                        @RequestParam(value = "sortDir", defaultValue = "desc") final String sortDir) {
         final Session session = entityManager.unwrap(Session.class);
-        final Filter filter = session.enableFilter("deletedEntriesFilter");
+        final Filter filter = session.enableFilter("deletedIncomesFilter");
         filter.setParameter("isDeleted", isDeleted);
         final Page<IncomeResponseDto> entries = incomeService.getIncomesPaginated(page, limit, sortBy, sortDir);
-        session.disableFilter("deletedEntriesFilter");
+        session.disableFilter("deletedIncomesFilter");
         return entries;
     }
 

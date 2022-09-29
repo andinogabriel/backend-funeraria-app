@@ -32,14 +32,13 @@ public class ReceiptTypeEntity implements Serializable {
     private String name;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "receiptType")
-    @JsonManagedReference
-    private List<IncomeEntity> entries;
+    private List<IncomeEntity> incomes;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "receiptType")
     private List<ServiceEntity> services;
     public ReceiptTypeEntity(final String name) {
         this.name = name;
-        this.entries = new ArrayList<>();
+        this.incomes = new ArrayList<>();
         this.services = new ArrayList<>();
     }
 

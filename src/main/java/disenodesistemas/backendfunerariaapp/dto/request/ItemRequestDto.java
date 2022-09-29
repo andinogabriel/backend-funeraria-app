@@ -16,6 +16,8 @@ import java.math.BigDecimal;
 @Builder(toBuilder = true)
 public class ItemRequestDto {
 
+    Long id;
+
     @NotBlank(message = "{item.error.blank.name}") String name;
 
     String description;

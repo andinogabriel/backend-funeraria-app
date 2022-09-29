@@ -6,24 +6,25 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
+import java.nio.charset.StandardCharsets;
+
 @Configuration
 public class MessageConfig {
 
-    @Bean
-    public LocalValidatorFactoryBean getValidator() {
-        final LocalValidatorFactoryBean bean = new LocalValidatorFactoryBean();
-        bean.setValidationMessageSource(messageSource());
-        return bean;
+    @Bean("messageSource")
+    public MessageSource messageSource() {
+        ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
+        messageSource.setBasename("classpath:messages");
+        messageSource.setDefaultEncoding(StandardCharsets.UTF_8.name());
+        messageSource.setUseCodeAsDefaultMessage(true);
+        return messageSource;
     }
 
-    @Bean(name="messageSource")
-    public MessageSource messageSource() {
-        ReloadableResourceBundleMessageSource messageSource
-                = new ReloadableResourceBundleMessageSource();
-
-        messageSource.setBasename("classpath:messages/messages_es_es");
-        messageSource.setDefaultEncoding("UTF-8");
-        return messageSource;
+    @Bean
+    public LocalValidatorFactoryBean getValidator() {
+        LocalValidatorFactoryBean bean = new LocalValidatorFactoryBean();
+        bean.setValidationMessageSource(messageSource());
+        return bean;
     }
 
 }

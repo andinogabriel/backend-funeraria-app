@@ -1,12 +1,11 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.hibernate.Hibernate;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -43,14 +42,13 @@ public class IncomeDetailEntity implements Serializable {
     private BigDecimal salePrice;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonBackReference
     @JoinColumn(name = "income_id")
     private IncomeEntity income;
 
-    @ManyToOne
-    @JsonBackReference
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "item_id")
     private ItemEntity item;
+
 
     @Override
     public boolean equals(final Object o) {
@@ -63,13 +61,6 @@ public class IncomeDetailEntity implements Serializable {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(id)
-                .append(purchasePrice)
-                .append(salePrice)
-                .append(item)
-                .append(income)
-                .append(quantity)
-                .toHashCode();
+        return getClass().hashCode();
     }
 }

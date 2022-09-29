@@ -4,6 +4,7 @@ import disenodesistemas.backendfunerariaapp.utils.CustomFieldError;
 import disenodesistemas.backendfunerariaapp.utils.ErrorMessage;
 import disenodesistemas.backendfunerariaapp.utils.ValidationErrors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,12 +20,15 @@ import org.springframework.web.context.request.WebRequest;
 import java.time.LocalDateTime;
 import java.util.AbstractMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
 @RequiredArgsConstructor
 public class AppExceptionsHandler {
+
+    private final MessageSource messageSource;
 
     @ExceptionHandler(value = EmailExistsException.class)
     public ResponseEntity<Object> handleEmailExistsException(final EmailExistsException ex, final WebRequest webRequest) {
@@ -70,7 +74,7 @@ public class AppExceptionsHandler {
         return ResponseEntity
                 .status(ex.getStatus())
                 .body(ErrorMessage.builder()
-                        .message(ex.getMessage())
+                        .message(messageSource.getMessage(ex.getMessage(), null, Locale.getDefault()))
                         .timestamp(LocalDateTime.now())
                         .build()
                 );

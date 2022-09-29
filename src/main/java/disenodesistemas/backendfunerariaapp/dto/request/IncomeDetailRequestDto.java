@@ -24,7 +24,5 @@ public class IncomeDetailRequestDto {
     @Digits(integer=8, fraction=2, message = "{incomeDetail.error.digits.salePrice}")
     @Positive(message = "{incomeDetail.error.positive.salePrice}") BigDecimal salePrice;
 
-    @NotNull(message = "{incomeDetail.error.null.income}") IncomeRequestDto income;
-
     @NotNull(message = "{incomeDetail.error.null.item}") ItemRequestDto item;
 }

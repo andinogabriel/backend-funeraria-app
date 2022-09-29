@@ -47,7 +47,7 @@ public class WebConfig implements Filter, WebMvcConfigurer {
         } else {
             log.info("Pre-flight");
             response.setHeader("Access-Control-Allow-Origin", "*");
-            response.setHeader("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT");
+            response.setHeader("Access-Control-Allow-Methods", "POST, PUT, GET, OPTIONS, DELETE");
             response.setHeader("Access-Control-Max-Age", "3600");
             response.setHeader("Access-Control-Allow-Headers", ACCESS_CONTROL_EXPOSE_HEADERS + "Authorization, content-type," +
                     "USERID"+"ROLE"+

@@ -39,5 +39,6 @@ public class IncomeRequestDto {
 
     UserDto incomeUser;
 
+    @NotNull(message = "{income.error.null.incomeDetails}")
     List<IncomeDetailRequestDto> incomeDetails;
 }

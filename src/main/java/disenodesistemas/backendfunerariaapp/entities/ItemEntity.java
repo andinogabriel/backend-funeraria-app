@@ -1,11 +1,10 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.Hibernate;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -23,6 +22,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity(name = "items")
@@ -42,7 +42,7 @@ public class ItemEntity implements Serializable {
 
     private String description;
 
-    @Column(length = 95)
+    @Column(length = 95, unique = true)
     private String code;
 
     private String itemImageLink;
@@ -61,21 +61,18 @@ public class ItemEntity implements Serializable {
 
     private Integer stock;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties(value = {"items", "handler","hibernateLazyInitializer"}, allowSetters = true)
+    @ManyToOne
     @JoinColumn(name = "category_id")
     private CategoryEntity category;
 
     @ManyToOne
-    @JsonIgnoreProperties(value = {"brandItems", "handler","hibernateLazyInitializer"}, allowSetters = true)
     @JoinColumn(name = "brand_id")
     private BrandEntity brand;
 
     @OneToMany(mappedBy = "item", orphanRemoval = true, cascade = CascadeType.MERGE)
     private Set<ItemPlanEntity>  itemsPlan;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "item")
-    @JsonManagedReference
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "item", orphanRemoval = true, fetch = FetchType.LAZY)
     private List<IncomeDetailEntity> incomeDetails;
 
 
@@ -92,5 +89,18 @@ public class ItemEntity implements Serializable {
         this.brand = brand;
         this.incomeDetails = new ArrayList<>();
         this.itemsPlan = new HashSet<>();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        final ItemEntity that = (ItemEntity) o;
+        return Objects.equals(code, that.code) && Objects.equals(name, that.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }
