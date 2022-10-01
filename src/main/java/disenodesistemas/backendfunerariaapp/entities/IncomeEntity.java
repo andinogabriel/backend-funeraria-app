@@ -59,7 +59,7 @@ public class IncomeEntity implements Serializable {
     @Digits(integer = 3, fraction = 2)
     private BigDecimal tax;
 
-    @Column(columnDefinition = "numeric(8,2) default 0")
+    //@Column(columnDefinition = "numeric(8,2) default 0")
     @Digits(integer = 9, fraction = 2)
     private BigDecimal totalAmount;
 

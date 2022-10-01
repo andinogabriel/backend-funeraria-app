@@ -26,8 +26,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,7 +34,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.nonNull;
@@ -59,48 +56,46 @@ public class IncomeServiceImpl implements IncomeService {
     @Transactional(propagation = Propagation.SUPPORTS)
     public IncomeResponseDto createIncome(final IncomeRequestDto incomeRequestDto) {
         val incomeEntity = IncomeEntity.builder()
+                .receiptNumber(incomeRequestDto.getReceiptNumber())
                 .incomeUser(userService.getUserByEmail(incomeRequestDto.getIncomeUser().getEmail()))
                 .receiptSeries(incomeRequestDto.getReceiptSeries())
                 .receiptType(modelMapper.map(incomeRequestDto.getReceiptType(), ReceiptTypeEntity.class))
                 .tax(incomeRequestDto.getTax())
                 .incomeSupplier(supplierService.findSupplierEntityByNif(incomeRequestDto.getSupplier().getNif()))
                 .build();
-        checkExistsByByReceiptNumber(incomeEntity, incomeRequestDto);
+        checkExistsByByReceiptNumber(incomeRequestDto);
         if (!isEmpty(incomeRequestDto.getIncomeDetails())) {
             incomeRepository.save(incomeEntity);
-            deleteIncomeWhereIsDeletedTrue(incomeEntity);
             incomeEntity.setIncomeDetails(getIncomeDetailsEntities(incomeRequestDto.getIncomeDetails()));
             setItemPrices(incomeEntity.getIncomeDetails());
+            incomeEntity.setTotalAmount(totalAmountCalculator(incomeEntity.getIncomeDetails(), incomeRequestDto));
         }
-        totalAmountCalculator(incomeEntity, incomeRequestDto);
         return projectionFactory.createProjection(IncomeResponseDto.class, incomeRepository.save(incomeEntity));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<IncomeResponseDto> getAllIncomes(final Boolean deleted) {
-        return Boolean.TRUE.equals(deleted) ? incomeRepository.findAllByOrderByIdDesc()
-                : incomeRepository.findByDeletedFalseOrderByIdDesc();
+    public List<IncomeResponseDto> getAllIncomes() {
+        return incomeRepository.findAllByOrderByIdDesc();
     }
 
     @Override
     @Transactional
     public IncomeResponseDto updateIncome(final Long receiptNumber, final IncomeRequestDto incomeRequestDto) {
         val incomeEntity = findEntityByReceiptNumber(receiptNumber);
-        if(!incomeEntity.getReceiptNumber().equals(incomeRequestDto.getReceiptNumber())) checkExistsByByReceiptNumber(incomeEntity, incomeRequestDto);
+        if(!incomeEntity.getReceiptNumber().equals(incomeRequestDto.getReceiptNumber())) checkExistsByByReceiptNumber(incomeRequestDto);
         incomeEntity.setSupplier(modelMapper.map(incomeRequestDto.getSupplier(), SupplierEntity.class));
         incomeEntity.setReceiptType(modelMapper.map(incomeRequestDto.getReceiptType(), ReceiptTypeEntity.class));
         incomeEntity.setTax(incomeRequestDto.getTax());
         incomeEntity.setReceiptSeries(incomeRequestDto.getReceiptSeries());
 
-        totalAmountCalculator(incomeEntity, incomeRequestDto);
         incomeEntity.setLastModifiedBy(modelMapper.map(incomeRequestDto.getIncomeUser(), UserEntity.class));
         if (!isEmpty(incomeRequestDto.getIncomeDetails())) {
             final List<IncomeDetailEntity> incomeDetailEntities = getDeletedIncomeDetails(incomeEntity, incomeRequestDto);
             incomeDetailEntities.forEach(incomeEntity::removeIncomeDetail);
             incomeEntity.setIncomeDetails(modelMapper.map(incomeRequestDto.getIncomeDetails(), new TypeToken<List<IncomeDetailEntity>>() {}.getType()));
-            deleteIncomeWhereIsDeletedTrue(incomeEntity);
             setItemPrices(incomeEntity.getIncomeDetails());
+            incomeEntity.setTotalAmount(totalAmountCalculator(incomeEntity.getIncomeDetails(), incomeRequestDto));
         }
         return projectionFactory.createProjection(IncomeResponseDto.class, incomeRepository.save(incomeEntity));
     }
@@ -109,15 +104,7 @@ public class IncomeServiceImpl implements IncomeService {
     @Transactional
     public void deleteIncome(final Long receiptNumber) {
         val incomeEntity = findEntityByReceiptNumber(receiptNumber);
-        if (incomeEntity.isDeleted()) {
-            incomeRepository.delete(incomeEntity);
-            throw new AppException("income.error.already.deleted", HttpStatus.CONFLICT);
-        }
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String email = authentication.getName();
-        incomeEntity.setLastModifiedBy(userService.getUserByEmail(email));
-        incomeRepository.save(incomeEntity);
-        incomeRepository.deleteByReceiptNumber(incomeEntity.getReceiptNumber());
+        incomeRepository.delete(incomeEntity);
     }
 
     @Override
@@ -139,7 +126,6 @@ public class IncomeServiceImpl implements IncomeService {
         return projectionFactory.createProjection(IncomeResponseDto.class, findEntityByReceiptNumber(receiptNumber));
     }
 
-
     private List<IncomeDetailEntity> getDeletedIncomeDetails(final IncomeEntity incomeEntity, final IncomeRequestDto incomeDto) {
         return incomeEntity.getIncomeDetails()
                 .stream()
@@ -147,22 +133,19 @@ public class IncomeServiceImpl implements IncomeService {
                 .collect(Collectors.toUnmodifiableList());
     }
 
-    private void totalAmountCalculator(final IncomeEntity incomeEntity, final IncomeRequestDto incomeRequestDto) {
-        incomeEntity.setTotalAmount(BigDecimal.valueOf(0));
+    private BigDecimal totalAmountCalculator(final List<IncomeDetailEntity> incomeDetailEntities, final IncomeRequestDto incomeRequestDto) {
         //Cantidad × precio de compra de todos los detalles de ingreso y luego le sumamos el impuesto para obtener el monto total
-        final BigDecimal subTotal = incomeEntity.getIncomeDetails().stream()
+        final BigDecimal subTotal = incomeDetailEntities.stream()
                 .map(e -> e.getPurchasePrice().multiply(BigDecimal.valueOf(e.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        final BigDecimal total = subTotal.add(subTotal.multiply(incomeRequestDto.getTax().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)));
-        incomeEntity.setTotalAmount(new BigDecimal(total.toPlainString()).setScale(2, RoundingMode.HALF_UP));
+        return subTotal.add(subTotal.multiply(incomeRequestDto.getTax().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)));
+        // final BigDecimal total = subTotal.add(subTotal.multiply(incomeRequestDto.getTax().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)));
+        //incomeEntity.setTotalAmount(new BigDecimal(total.toPlainString()).setScale(2, RoundingMode.HALF_UP));
     }
 
-    private void checkExistsByByReceiptNumber(final IncomeEntity incomeEntity, final IncomeRequestDto incomeDto) {
-        final boolean isDeleted = incomeRepository.findByReceiptNumber(incomeDto.getReceiptNumber())
-                .map(IncomeEntity::isDeleted).orElse(true);
-        if(!isDeleted)
+    private void checkExistsByByReceiptNumber(final IncomeRequestDto incomeDto) {
+        if(incomeRepository.existsByReceiptNumber(incomeDto.getReceiptNumber()))
             throw new AppException("income.error.receiptNumber.already.registered", HttpStatus.CONFLICT);
-        incomeEntity.setReceiptNumber(incomeDto.getReceiptNumber());
     }
 
     private IncomeEntity findEntityByReceiptNumber(final Long receiptNumber) {
@@ -192,12 +175,5 @@ public class IncomeServiceImpl implements IncomeService {
         itemRepository.saveAll(itemsToUpdatePrice);
     }
 
-    private void deleteIncomeWhereIsDeletedTrue(final IncomeEntity incomeEntity) {
-        final IncomeEntity incomeEntityToDelete = incomeRepository.findByReceiptNumberOrderByIdDesc(incomeEntity.getReceiptNumber())
-                .stream()
-                .filter(IncomeEntity::isDeleted)
-                .findFirst().orElse(null);
-        if (nonNull(incomeEntity)) incomeRepository.delete(incomeEntityToDelete);
-    }
 
 }

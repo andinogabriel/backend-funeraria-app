@@ -36,9 +36,8 @@ public class IncomeController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public List<IncomeResponseDto> getIncomes(@RequestParam(value = "deleted", required = false, defaultValue = "false") final boolean deleted) {
-
-        return incomeService.getAllIncomes(deleted);
+    public List<IncomeResponseDto> getIncomes() {
+        return incomeService.getAllIncomes();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
