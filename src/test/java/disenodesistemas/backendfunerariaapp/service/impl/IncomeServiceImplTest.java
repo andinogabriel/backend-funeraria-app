@@ -41,6 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -72,6 +73,8 @@ class IncomeServiceImplTest {
     private IncomeRequestDto incomeRequestDto;
     private ProjectionFactory factory;
 
+    private IncomeResponseDto incomeResponseDto;
+
     @BeforeEach
     void setUp() {
         incomeRequestDto = IncomeRequestDto.builder()
@@ -90,13 +93,12 @@ class IncomeServiceImplTest {
         given(supplierService.findSupplierEntityByNif(SupplierRequestDtoMother.getSupplier().getNif()))
                 .willReturn(SupplierEntityMother.getSupplier());
         factory = new SpelAwareProxyProjectionFactory();
+        incomeResponseDto = factory.createProjection(IncomeResponseDto.class,
+                IncomeEntityMother.getIncome());
     }
 
     @Test
     void create() {
-        final IncomeResponseDto incomeResponseDto = factory.createProjection(IncomeResponseDto.class,
-                IncomeEntityMother.getIncome());
-
         given(incomeRepository.existsByReceiptNumber(incomeRequestDto.getReceiptNumber())).willReturn(Boolean.FALSE);
         given(itemRepository.findAll()).willReturn(List.of(ItemEntityMother.getItem()));
         given(modelMapper.map(IncomeDetailRequestDtoMother.getIncomeDetail(),IncomeDetailEntity.class))
@@ -141,4 +143,14 @@ class IncomeServiceImplTest {
         verify(incomeRepository, never()).delete(any(IncomeEntity.class));
     }
 
+    @Test
+    void getAllIncomes() {
+        given(incomeRepository.findAllByOrderByIdDesc()).willReturn(List.of(incomeResponseDto));
+        given(sut.getAllIncomes()).willReturn(List.of(incomeResponseDto));
+
+        final List<IncomeResponseDto> incomes = sut.getAllIncomes();
+
+        assertTrue(incomes.size() > 0);
+        verify(incomeRepository).findAllByOrderByIdDesc();
+    }
 }

@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static java.util.Objects.nonNull;
+import static org.springframework.util.CollectionUtils.isEmpty;
 
 @Service
 @RequiredArgsConstructor
@@ -45,11 +45,11 @@ public class SupplierServiceImplService implements SupplierService {
                 supplier.getEmail()
         );
 
-        if (nonNull(supplier.getMobileNumbers()) && !supplier.getMobileNumbers().isEmpty()) {
+        if (!isEmpty(supplier.getMobileNumbers())) {
             supplierEntity.setMobileNumbers(modelMapper.map(supplier.getMobileNumbers(), new TypeToken<List<MobileNumberEntity>>() {
             }.getType()));
         }
-        if (nonNull(supplier.getAddresses()) && !supplier.getAddresses().isEmpty()) {
+        if (!isEmpty(supplier.getAddresses())) {
             supplierEntity.setAddresses(modelMapper.map(supplier.getAddresses(), new TypeToken<List<AddressEntity>>() {
             }.getType()));
         }
@@ -75,13 +75,13 @@ public class SupplierServiceImplService implements SupplierService {
         supplierEntity.setEmail(supplier.getEmail());
         supplierEntity.setWebPage(supplier.getWebPage());
 
-        if (nonNull(supplier.getMobileNumbers()) && !supplier.getMobileNumbers().isEmpty()) {
+        if (!isEmpty(supplier.getMobileNumbers())) {
             val deletedMobileNumbers = getDeletedMobileNumbers(supplierEntity, supplier);
             deletedMobileNumbers.forEach(supplierEntity::removeMobileNumber);
             supplierEntity.setMobileNumbers(modelMapper.map(supplier.getMobileNumbers(), new TypeToken<List<MobileNumberEntity>>() {
             }.getType()));
         }
-        if (nonNull(supplier.getAddresses()) && !supplier.getAddresses().isEmpty()) {
+        if (!isEmpty(supplier.getAddresses())) {
             val deletedAddresses = getDeletedAddresses(supplierEntity, supplier);
             deletedAddresses.forEach(supplierEntity::removeAddress);
             supplierEntity.setAddresses(modelMapper.map(supplier.getAddresses(), new TypeToken<List<AddressEntity>>() {

@@ -48,7 +48,7 @@ public class SupplierEntity implements Serializable {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "supplierNumber", orphanRemoval = true)
     private List<MobileNumberEntity> mobileNumbers;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "supplier", orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "supplier")
     private List<IncomeEntity> incomes;
 
     public SupplierEntity(final String name, final String nif, final String webPage, final String email) {
