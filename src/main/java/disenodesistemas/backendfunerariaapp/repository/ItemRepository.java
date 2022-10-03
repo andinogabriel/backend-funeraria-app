@@ -16,6 +16,7 @@ public interface ItemRepository extends PagingAndSortingRepository<ItemEntity, L
 
     List<ItemResponseDto> findAllProjectedBy();
 
+    List<ItemEntity> findAllByCodeIn(List<String> codes);
     List<ItemResponseDto> findByCategoryOrderByName(CategoryEntity categoryEntity);
 
 }

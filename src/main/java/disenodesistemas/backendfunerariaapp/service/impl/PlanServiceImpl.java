@@ -7,6 +7,7 @@ import disenodesistemas.backendfunerariaapp.entities.ItemEntity;
 import disenodesistemas.backendfunerariaapp.entities.ItemPlanEntity;
 import disenodesistemas.backendfunerariaapp.entities.Plan;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
+import disenodesistemas.backendfunerariaapp.repository.ItemRepository;
 import disenodesistemas.backendfunerariaapp.repository.ItemsPlanRepository;
 import disenodesistemas.backendfunerariaapp.repository.PlanRepository;
 import disenodesistemas.backendfunerariaapp.service.Interface.PlanService;
@@ -31,6 +32,7 @@ public class PlanServiceImpl implements PlanService {
 
     private final PlanRepository planRepository;
     private final ItemsPlanRepository itemsPlanRepository;
+    private final ItemRepository itemRepository;
     private final ProjectionFactory projectionFactory;
     private final ModelMapper modelMapper;
 
@@ -84,15 +86,28 @@ public class PlanServiceImpl implements PlanService {
     }
 
     private Set<ItemPlanEntity> getItemsPlanEntities(final Set<ItemPlanRequestDto> itemsPlanRequestDto, final Plan planEntity) {
+        final List<ItemEntity> itemEntities = findItemsByCode(itemsPlanRequestDto);
         return itemsPlanRequestDto.stream()
                 .map(itemPlan -> {
                     final ItemPlanEntity itemPlanEntity = new ItemPlanEntity(
                             planEntity,
-                            modelMapper.map(itemPlan.getItem(), ItemEntity.class),
+                            findItemByCode(itemEntities, itemPlan.getItem().getCode()),
                             itemPlan.getQuantity()
                     );
                     return itemsPlanRepository.save(itemPlanEntity);
                 }).filter(Objects::nonNull).collect(Collectors.toUnmodifiableSet());
+    }
+
+    private List<ItemEntity> findItemsByCode(final Set<ItemPlanRequestDto> itemsPlanRequestDto) {
+        final List<String> codes = itemsPlanRequestDto.stream()
+                .map(itemRequest -> itemRequest.getItem().getCode())
+                .collect(Collectors.toUnmodifiableList());
+        return itemRepository.findAllByCodeIn(codes);
+    }
+
+    private ItemEntity findItemByCode(final List<ItemEntity> itemEntities, final String code) {
+        return itemEntities.stream().filter(item -> item.getCode().equals(code))
+                .findFirst().orElse(null);
     }
 
     private Set<ItemPlanEntity> getDeletedItemsPlanEntities(final Plan planEntity, final PlanRequestDto planRequestDto) {

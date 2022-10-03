@@ -3,7 +3,6 @@ package disenodesistemas.backendfunerariaapp.entities;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.hibernate.Hibernate;
 
 import javax.persistence.CascadeType;
@@ -46,25 +45,20 @@ public class ItemPlanEntity implements Serializable {
     }
 
 
-
-
     private static final long serialVersionUID = 1L;
+
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
         final ItemPlanEntity that = (ItemPlanEntity) o;
-        return id != null && Objects.equals(item.getId(), that.getItem().getId()) && Objects.equals(plan.getId(), that.getPlan().getId());
+        return id != null && Objects.equals(item.getId(), that.getItem().getId()) &&
+                Objects.equals(plan.getId(), that.getPlan().getId());
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(id)
-                .append(plan)
-                .append(item)
-                .append(quantity)
-                .toHashCode();
+        return Objects.hash(id);
     }
 }

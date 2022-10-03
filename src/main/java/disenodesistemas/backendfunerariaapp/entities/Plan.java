@@ -3,7 +3,6 @@ package disenodesistemas.backendfunerariaapp.entities;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.hibernate.Hibernate;
 
 import javax.persistence.CascadeType;
@@ -88,13 +87,6 @@ public class Plan implements Serializable {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(id)
-                .append(name)
-                .append(description)
-                .append(imageUrl)
-                .append(price)
-                .append(itemsPlan)
-                .toHashCode();
+        return getClass().hashCode();
     }
 }
