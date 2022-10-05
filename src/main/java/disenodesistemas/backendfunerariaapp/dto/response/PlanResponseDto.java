@@ -10,6 +10,7 @@ public interface PlanResponseDto {
     String getDescription();
     String getImageUrl();
     BigDecimal getPrice();
+    BigDecimal getProfitPercentage();
     Set<ItemPlanEntity> getItemsPlan();
 
     interface ItemPlanEntity {

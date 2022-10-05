@@ -1,14 +1,13 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
+import disenodesistemas.backendfunerariaapp.controllers.converters.AbstractConverter;
 import disenodesistemas.backendfunerariaapp.dto.request.IncomeRequestDto;
-import disenodesistemas.backendfunerariaapp.dto.request.IncomeDetailRequestDto;
+import disenodesistemas.backendfunerariaapp.dto.request.IncomeDetailRequestDto;;
 import disenodesistemas.backendfunerariaapp.dto.response.IncomeResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.IncomeDetailEntity;
 import disenodesistemas.backendfunerariaapp.entities.IncomeEntity;
 import disenodesistemas.backendfunerariaapp.entities.ItemEntity;
 import disenodesistemas.backendfunerariaapp.entities.ReceiptTypeEntity;
-import disenodesistemas.backendfunerariaapp.entities.SupplierEntity;
-import disenodesistemas.backendfunerariaapp.entities.UserEntity;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.IncomeRepository;
 import disenodesistemas.backendfunerariaapp.repository.ItemRepository;
@@ -19,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.modelmapper.ModelMapper;
-import org.modelmapper.TypeToken;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,9 +34,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static java.util.Objects.nonNull;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
-
 
 @Service
 @RequiredArgsConstructor
@@ -51,6 +47,7 @@ public class IncomeServiceImpl implements IncomeService {
     private final SupplierService supplierService;
     private final ProjectionFactory projectionFactory;
     private final ModelMapper modelMapper;
+    private final AbstractConverter<IncomeDetailEntity, IncomeDetailRequestDto> incomeDetailConverter;
 
     @Override
     @Transactional(propagation = Propagation.SUPPORTS)
@@ -66,7 +63,7 @@ public class IncomeServiceImpl implements IncomeService {
         checkExistsByByReceiptNumber(incomeRequestDto);
         if (!isEmpty(incomeRequestDto.getIncomeDetails())) {
             incomeRepository.save(incomeEntity);
-            incomeEntity.setIncomeDetails(getIncomeDetailsEntities(incomeRequestDto.getIncomeDetails()));
+            incomeEntity.setIncomeDetails(incomeDetailConverter.fromDTOs(incomeRequestDto.getIncomeDetails()));
             setItemPrices(incomeEntity.getIncomeDetails());
             incomeEntity.setTotalAmount(totalAmountCalculator(incomeEntity.getIncomeDetails(), incomeRequestDto));
         }
@@ -84,16 +81,17 @@ public class IncomeServiceImpl implements IncomeService {
     public IncomeResponseDto updateIncome(final Long receiptNumber, final IncomeRequestDto incomeRequestDto) {
         val incomeEntity = findEntityByReceiptNumber(receiptNumber);
         if(!incomeEntity.getReceiptNumber().equals(incomeRequestDto.getReceiptNumber())) checkExistsByByReceiptNumber(incomeRequestDto);
-        incomeEntity.setSupplier(modelMapper.map(incomeRequestDto.getSupplier(), SupplierEntity.class));
+        incomeEntity.setSupplier(supplierService.findSupplierEntityByNif(incomeRequestDto.getSupplier().getNif()));
         incomeEntity.setReceiptType(modelMapper.map(incomeRequestDto.getReceiptType(), ReceiptTypeEntity.class));
         incomeEntity.setTax(incomeRequestDto.getTax());
         incomeEntity.setReceiptSeries(incomeRequestDto.getReceiptSeries());
+        incomeEntity.setReceiptNumber(incomeRequestDto.getReceiptNumber());
 
-        incomeEntity.setLastModifiedBy(modelMapper.map(incomeRequestDto.getIncomeUser(), UserEntity.class));
+        incomeEntity.setLastModifiedBy(userService.getUserByEmail(incomeRequestDto.getIncomeUser().getEmail()));
         if (!isEmpty(incomeRequestDto.getIncomeDetails())) {
             final List<IncomeDetailEntity> incomeDetailEntities = getDeletedIncomeDetails(incomeEntity, incomeRequestDto);
             incomeDetailEntities.forEach(incomeEntity::removeIncomeDetail);
-            incomeEntity.setIncomeDetails(modelMapper.map(incomeRequestDto.getIncomeDetails(), new TypeToken<List<IncomeDetailEntity>>() {}.getType()));
+            incomeEntity.setIncomeDetails(incomeDetailConverter.fromDTOs(incomeRequestDto.getIncomeDetails()));
             setItemPrices(incomeEntity.getIncomeDetails());
             incomeEntity.setTotalAmount(totalAmountCalculator(incomeEntity.getIncomeDetails(), incomeRequestDto));
         }
@@ -129,7 +127,8 @@ public class IncomeServiceImpl implements IncomeService {
     private List<IncomeDetailEntity> getDeletedIncomeDetails(final IncomeEntity incomeEntity, final IncomeRequestDto incomeDto) {
         return incomeEntity.getIncomeDetails()
                 .stream()
-                .filter(eDb -> !incomeDto.getIncomeDetails().contains(modelMapper.map(eDb, IncomeDetailRequestDto.class)))
+                //.filter(eDb -> !incomeDto.getIncomeDetails().contains(incomeDetailEntityToDto(eDb)))
+                .filter(incomeDetailEntity -> !incomeDto.getIncomeDetails().contains(incomeDetailConverter.toDTO(incomeDetailEntity)))
                 .collect(Collectors.toUnmodifiableList());
     }
 
@@ -139,8 +138,6 @@ public class IncomeServiceImpl implements IncomeService {
                 .map(e -> e.getPurchasePrice().multiply(BigDecimal.valueOf(e.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         return subTotal.add(subTotal.multiply(incomeRequestDto.getTax().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)));
-        // final BigDecimal total = subTotal.add(subTotal.multiply(incomeRequestDto.getTax().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)));
-        //incomeEntity.setTotalAmount(new BigDecimal(total.toPlainString()).setScale(2, RoundingMode.HALF_UP));
     }
 
     private void checkExistsByByReceiptNumber(final IncomeRequestDto incomeDto) {
@@ -152,20 +149,6 @@ public class IncomeServiceImpl implements IncomeService {
         return incomeRepository.findByReceiptNumber(receiptNumber).orElseThrow(() -> new AppException("income.error.not.found", HttpStatus.NOT_FOUND));
     }
 
-    private List<IncomeDetailEntity> getIncomeDetailsEntities(final List<IncomeDetailRequestDto> incomeDetailsRequestDto) {
-        final List<ItemEntity> itemEntities = (List<ItemEntity>) itemRepository.findAll();
-        return incomeDetailsRequestDto.stream().map(
-                income -> {
-                    final ItemEntity itemEntity = itemEntities.stream()
-                            .filter(item -> income.getItem().getCode().equals(item.getCode()))
-                            .findFirst().orElse(null);
-                    final IncomeDetailEntity incomeToReturn = modelMapper.map(income, IncomeDetailEntity.class);
-                    incomeToReturn.setItem(itemEntity);
-                    return incomeToReturn;
-                }
-        ).collect(Collectors.toUnmodifiableList());
-    }
-
     private void setItemPrices(final List<IncomeDetailEntity> incomeDetails) {
         final List<ItemEntity> itemsToUpdatePrice = incomeDetails.stream().filter(Objects::nonNull)
                 .map(incomeDetail -> {
@@ -174,6 +157,5 @@ public class IncomeServiceImpl implements IncomeService {
                 }).collect(Collectors.toUnmodifiableList());
         itemRepository.saveAll(itemsToUpdatePrice);
     }
-
 
 }

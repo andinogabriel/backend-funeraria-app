@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -47,6 +48,12 @@ public class PlanRestController {
                         .result("SUCCESSFUL")
                         .build()
         );
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping({"/{id}"})
+    public ResponseEntity<PlanResponseDto> update(@Valid @RequestBody final PlanRequestDto planRequestDto, @PathVariable final Long id) {
+        return ResponseEntity.ok(planService.update(id, planRequestDto));
     }
 
 }

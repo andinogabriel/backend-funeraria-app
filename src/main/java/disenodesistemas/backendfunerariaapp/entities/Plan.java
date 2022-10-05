@@ -43,20 +43,23 @@ public class Plan implements Serializable {
 
     private String imageUrl;
 
-    @Column(nullable = false)
     @Digits(integer = 9, fraction = 2)
     private BigDecimal price;
 
-    @OneToMany(mappedBy = "plan", orphanRemoval = true, cascade = CascadeType.MERGE)
+    @Column(nullable = false)
+    @Digits(integer = 7, fraction = 2)
+    private BigDecimal profitPercentage;
+
+    @OneToMany(mappedBy = "plan", orphanRemoval = true, cascade = CascadeType.ALL)
     private Set<ItemPlanEntity> itemsPlan;
 
     @OneToMany(mappedBy = "servicePlan", cascade = CascadeType.ALL)
     private List<ServiceEntity> servicesPlan;
 
-    public Plan(final String name, final String description, final BigDecimal price) {
+    public Plan(final String name, final String description, final  BigDecimal profitPercentage) {
         this.name = name;
         this.description = description;
-        this.price = price;
+        this.profitPercentage = profitPercentage;
         this.itemsPlan = new HashSet<>();
         this.servicesPlan = new ArrayList<>();
     }

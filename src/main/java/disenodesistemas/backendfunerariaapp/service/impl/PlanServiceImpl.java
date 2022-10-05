@@ -1,6 +1,7 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
 import disenodesistemas.backendfunerariaapp.dto.request.ItemPlanRequestDto;
+import disenodesistemas.backendfunerariaapp.dto.request.ItemRequestPlanDto;
 import disenodesistemas.backendfunerariaapp.dto.request.PlanRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.PlanResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.ItemEntity;
@@ -13,13 +14,14 @@ import disenodesistemas.backendfunerariaapp.repository.PlanRepository;
 import disenodesistemas.backendfunerariaapp.service.Interface.PlanService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
-import org.modelmapper.ModelMapper;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -34,30 +36,31 @@ public class PlanServiceImpl implements PlanService {
     private final ItemsPlanRepository itemsPlanRepository;
     private final ItemRepository itemRepository;
     private final ProjectionFactory projectionFactory;
-    private final ModelMapper modelMapper;
 
 
     @Override
     @Transactional
     public PlanResponseDto create(final PlanRequestDto planRequestDto) {
         final Plan planEntity = new Plan(planRequestDto.getName(),
-                planRequestDto.getDescription(), planRequestDto.getPrice());
+                planRequestDto.getDescription(), planRequestDto.getProfitPercentage());
         final Set<ItemPlanEntity> itemPlanEntities = getItemsPlanEntities(planRequestDto.getItemsPlan(), planRepository.save(planEntity));
         planEntity.setItemsPlan(itemPlanEntities);
+        planEntity.setPrice(priceCalculator(planRequestDto.getProfitPercentage(), itemPlanEntities));
         return projectionFactory.createProjection(PlanResponseDto.class, planRepository.save(planEntity));
     }
 
     @Override
     @Transactional
-    public PlanResponseDto update(final Long id, final PlanRequestDto planResponseDto) {
+    public PlanResponseDto update(final Long id, final PlanRequestDto planRequestDto) {
         final Plan planToUpdate = findPlanById(id);
-        planToUpdate.setName(planToUpdate.getName());
-        planToUpdate.setPrice(planResponseDto.getPrice());
-        planToUpdate.setDescription(planToUpdate.getDescription());
-        if (ObjectUtils.isEmpty(planResponseDto.getItemsPlan())) {
-            final Set<ItemPlanEntity> itemPlanEntitiesDeleted = getDeletedItemsPlanEntities(planToUpdate, planResponseDto);
+        planToUpdate.setName(planRequestDto.getName());
+        planToUpdate.setDescription(planRequestDto.getDescription());
+        planToUpdate.setProfitPercentage(planRequestDto.getProfitPercentage());
+        if (!CollectionUtils.isEmpty(planRequestDto.getItemsPlan())) {
+            final List<ItemPlanEntity> itemPlanEntitiesDeleted = getDeletedItemsPlanEntities(planToUpdate, planRequestDto);
             itemPlanEntitiesDeleted.forEach(planToUpdate::removeItemToPlan);
-            planToUpdate.setItemsPlan(getItemsPlanEntities(planResponseDto.getItemsPlan(), planToUpdate));
+            planToUpdate.setItemsPlan(getItemsPlanEntities(planRequestDto.getItemsPlan(), planToUpdate));
+            planToUpdate.setPrice(priceCalculator(planRequestDto.getProfitPercentage(), planToUpdate.getItemsPlan()));
         }
         return projectionFactory.createProjection(PlanResponseDto.class, planRepository.save(planToUpdate));
     }
@@ -110,10 +113,32 @@ public class PlanServiceImpl implements PlanService {
                 .findFirst().orElse(null);
     }
 
-    private Set<ItemPlanEntity> getDeletedItemsPlanEntities(final Plan planEntity, final PlanRequestDto planRequestDto) {
+    private List<ItemPlanEntity> getDeletedItemsPlanEntities(final Plan planEntity, final PlanRequestDto planRequestDto) {
         return planEntity.getItemsPlan().stream()
-                .filter(planDb -> !planRequestDto.getItemsPlan().contains(modelMapper.map(planDb, ItemPlanRequestDto.class)))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toUnmodifiableSet());
+                .filter(itemPlanDb -> !planRequestDto.getItemsPlan().contains(itemPlanEntityToDto(itemPlanDb)))
+                .collect(Collectors.toUnmodifiableList());
+    }
+
+    private BigDecimal priceCalculator(final BigDecimal profitPercentage, final Set<ItemPlanEntity> itemPlanEntities) {
+        final BigDecimal subTotal = itemPlanEntities.stream()
+                .map(itemPlan -> itemPlan.getItem().getPrice().multiply(BigDecimal.valueOf(itemPlan.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return subTotal.add(subTotal.multiply(profitPercentage.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP))).setScale(2, RoundingMode.HALF_EVEN);
+    }
+
+    private ItemPlanRequestDto itemPlanEntityToDto(final ItemPlanEntity itemPlanEntity) {
+        return ItemPlanRequestDto.builder()
+                /*.id(ItemPlanIdDto.builder()
+                        .planId(itemPlanEntity.getId().getPlanId())
+                        .itemId(itemPlanEntity.getId().getItemId())
+                        .build()
+                )*/
+                .quantity(itemPlanEntity.getQuantity())
+                .item(ItemRequestPlanDto.builder()
+                        .code(itemPlanEntity.getItem().getCode())
+                        .id(itemPlanEntity.getItem().getId())
+                        .name(itemPlanEntity.getItem().getName())
+                        .build())
+                .build();
     }
 }

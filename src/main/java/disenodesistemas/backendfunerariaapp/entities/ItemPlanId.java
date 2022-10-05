@@ -4,6 +4,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 import javax.persistence.Embeddable;
 import java.io.Serializable;
@@ -13,6 +14,7 @@ import java.io.Serializable;
 @EqualsAndHashCode
 @Embeddable
 @NoArgsConstructor
+@ToString
 public class ItemPlanId implements Serializable {
     private static final long serialVersionUID = 1L;
     private Long planId;

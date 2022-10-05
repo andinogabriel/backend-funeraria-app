@@ -2,7 +2,7 @@ package disenodesistemas.backendfunerariaapp.dto.request;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
-import lombok.Value;
+import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
 
 import javax.validation.constraints.Digits;
@@ -12,18 +12,22 @@ import javax.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.util.Set;
 
-@Value
+@Getter
 @Jacksonized
+@EqualsAndHashCode
 @Builder(toBuilder = true)
 public class PlanRequestDto {
 
-    @NotBlank(message = "{plan.error.blank.name}") String name;
-    String description;
+    @NotBlank(message = "{plan.error.blank.name}")
+    private final String name;
 
-    @NotNull(message = "{plan.error.null.price}")
-    @Digits(integer=8, fraction=2, message = "{plan.error.digits.tax}")
-    @Positive(message = "{plan.error.negative.value}")
-    BigDecimal price;
+    private final String description;
 
-    @NotNull(message = "{plan.error.null.items}") Set<ItemPlanRequestDto> itemsPlan;
+    @NotNull(message = "{plan.error.null.profit.percentage}")
+    @Digits(integer=8, fraction=2, message = "{plan.error.digits.profit.percentage}")
+    @Positive(message = "{plan.error.negative.profit.percentage}")
+    private final BigDecimal profitPercentage;
+
+    @NotNull(message = "{plan.error.null.items}")
+    private final Set<ItemPlanRequestDto> itemsPlan;
 }

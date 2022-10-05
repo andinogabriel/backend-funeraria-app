@@ -80,7 +80,7 @@ public class IncomeController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(path = "/{receiptNumber}")
-    public IncomeResponseDto updateIncome(@PathVariable final Long receiptNumber , @Valid @RequestBody final IncomeRequestDto incomeRequest) {
+    public IncomeResponseDto updateIncome(@PathVariable final Long receiptNumber, @Valid @RequestBody final IncomeRequestDto incomeRequest) {
         val authentication = SecurityContextHolder.getContext().getAuthentication();
         final String email = authentication.getName();
         final IncomeRequestDto incomeRequestDto = IncomeRequestDto.builder()

@@ -2,15 +2,13 @@ package disenodesistemas.backendfunerariaapp.dto.request;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
 
-@Getter
-@EqualsAndHashCode
+@Value
 @Jacksonized
 @Builder(toBuilder = true)
-public class ItemRequestPlanDto {
-    private final Long id;
-    private final String name;
-    private final String code;
+public class ItemPlanIdDto {
+    Long planId;
+    Long itemId;
 }

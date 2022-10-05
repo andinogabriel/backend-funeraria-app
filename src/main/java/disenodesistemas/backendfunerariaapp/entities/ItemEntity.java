@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,6 +30,8 @@ import java.util.Set;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ItemEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -96,7 +99,7 @@ public class ItemEntity implements Serializable {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
         final ItemEntity that = (ItemEntity) o;
-        return Objects.equals(code, that.code) && Objects.equals(name, that.name);
+        return id != null && Objects.equals(code, that.code) && Objects.equals(name, that.name);
     }
 
     @Override
