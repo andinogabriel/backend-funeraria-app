@@ -62,27 +62,23 @@ public class SupplierEntity implements Serializable {
     }
 
     public void setMobileNumbers(final List<MobileNumberEntity> mobileNumbers) {
-        if(!isEmpty(mobileNumbers))
-            mobileNumbers.forEach(this::addMobileNumber);
+        mobileNumbers.forEach(this::addMobileNumber);
     }
 
     public void addMobileNumber(final MobileNumberEntity mobileNumber) {
-        if(!mobileNumbers.contains(mobileNumber)) {
+        if(!this.mobileNumbers.contains(mobileNumber)) {
             mobileNumbers.add(mobileNumber);
             mobileNumber.setSupplierNumber(this);
         }
     }
 
     public void removeMobileNumber(final MobileNumberEntity mobileNumber) {
-        if(nonNull(mobileNumber)) {
-            mobileNumbers.remove(mobileNumber);
-            mobileNumber.setSupplierNumber(null);
-        }
+        mobileNumbers.remove(mobileNumber);
+        mobileNumber.setSupplierNumber(null);
     }
 
     public void setAddresses(final List<AddressEntity> addresses) {
-        if(!isEmpty(addresses))
-            addresses.forEach(this::addAddress);
+        addresses.forEach(this::addAddress);
     }
 
     public void addAddress(final AddressEntity address) {
@@ -93,10 +89,8 @@ public class SupplierEntity implements Serializable {
     }
 
     public void removeAddress(final AddressEntity address) {
-        if(nonNull(address)) {
-            this.addresses.remove(address);
-            address.setSupplierAddress(null);
-        }
+        this.addresses.remove(address);
+        address.setSupplierAddress(null);
     }
 
     @Override

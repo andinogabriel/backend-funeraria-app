@@ -12,6 +12,7 @@ import disenodesistemas.backendfunerariaapp.repository.ItemRepository;
 import disenodesistemas.backendfunerariaapp.repository.ItemsPlanRepository;
 import disenodesistemas.backendfunerariaapp.repository.PlanRepository;
 import disenodesistemas.backendfunerariaapp.service.Interface.PlanService;
+import disenodesistemas.backendfunerariaapp.service.converters.AbstractConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.projection.ProjectionFactory;
@@ -33,9 +34,10 @@ import java.util.stream.Collectors;
 public class PlanServiceImpl implements PlanService {
 
     private final PlanRepository planRepository;
-    private final ItemsPlanRepository itemsPlanRepository;
     private final ItemRepository itemRepository;
+    private final ItemsPlanRepository itemsPlanRepository;
     private final ProjectionFactory projectionFactory;
+    private final AbstractConverter<ItemPlanEntity, ItemPlanRequestDto> itemPlanConverter;
 
 
     @Override
@@ -91,14 +93,12 @@ public class PlanServiceImpl implements PlanService {
     private Set<ItemPlanEntity> getItemsPlanEntities(final Set<ItemPlanRequestDto> itemsPlanRequestDto, final Plan planEntity) {
         final List<ItemEntity> itemEntities = findItemsByCode(itemsPlanRequestDto);
         return itemsPlanRequestDto.stream()
-                .map(itemPlan -> {
-                    final ItemPlanEntity itemPlanEntity = new ItemPlanEntity(
+                .map(itemPlan ->  itemsPlanRepository.save(new ItemPlanEntity(
                             planEntity,
                             findItemByCode(itemEntities, itemPlan.getItem().getCode()),
                             itemPlan.getQuantity()
-                    );
-                    return itemsPlanRepository.save(itemPlanEntity);
-                }).filter(Objects::nonNull).collect(Collectors.toUnmodifiableSet());
+                    ))
+                ).filter(Objects::nonNull).collect(Collectors.toUnmodifiableSet());
     }
 
     private List<ItemEntity> findItemsByCode(final Set<ItemPlanRequestDto> itemsPlanRequestDto) {
@@ -115,7 +115,7 @@ public class PlanServiceImpl implements PlanService {
 
     private List<ItemPlanEntity> getDeletedItemsPlanEntities(final Plan planEntity, final PlanRequestDto planRequestDto) {
         return planEntity.getItemsPlan().stream()
-                .filter(itemPlanDb -> !planRequestDto.getItemsPlan().contains(itemPlanEntityToDto(itemPlanDb)))
+                .filter(itemPlanDb -> !planRequestDto.getItemsPlan().contains(itemPlanConverter.toDTO(itemPlanDb)))
                 .collect(Collectors.toUnmodifiableList());
     }
 
@@ -126,19 +126,4 @@ public class PlanServiceImpl implements PlanService {
         return subTotal.add(subTotal.multiply(profitPercentage.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP))).setScale(2, RoundingMode.HALF_EVEN);
     }
 
-    private ItemPlanRequestDto itemPlanEntityToDto(final ItemPlanEntity itemPlanEntity) {
-        return ItemPlanRequestDto.builder()
-                /*.id(ItemPlanIdDto.builder()
-                        .planId(itemPlanEntity.getId().getPlanId())
-                        .itemId(itemPlanEntity.getId().getItemId())
-                        .build()
-                )*/
-                .quantity(itemPlanEntity.getQuantity())
-                .item(ItemRequestPlanDto.builder()
-                        .code(itemPlanEntity.getItem().getCode())
-                        .id(itemPlanEntity.getItem().getId())
-                        .name(itemPlanEntity.getItem().getName())
-                        .build())
-                .build();
-    }
 }

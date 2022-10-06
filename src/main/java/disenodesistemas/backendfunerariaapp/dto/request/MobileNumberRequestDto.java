@@ -10,7 +10,8 @@ import javax.validation.constraints.NotEmpty;
 @Jacksonized
 @Builder(toBuilder = true)
 public class MobileNumberRequestDto {
-
-    @NotEmpty(message = "{mobileNumber.error.empty.number}") String mobileNumber;
+    Long id;
+    @NotEmpty(message = "{mobileNumber.error.empty.number}")
+    String mobileNumber;
 
 }

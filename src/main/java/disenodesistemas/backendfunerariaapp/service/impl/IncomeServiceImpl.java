@@ -1,6 +1,6 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
-import disenodesistemas.backendfunerariaapp.controllers.converters.AbstractConverter;
+import disenodesistemas.backendfunerariaapp.service.converters.AbstractConverter;
 import disenodesistemas.backendfunerariaapp.dto.request.IncomeRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.IncomeDetailRequestDto;;
 import disenodesistemas.backendfunerariaapp.dto.response.IncomeResponseDto;

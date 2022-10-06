@@ -3,8 +3,8 @@ package disenodesistemas.backendfunerariaapp.service.Interface;
 import disenodesistemas.backendfunerariaapp.entities.ConfirmationTokenEntity;
 import disenodesistemas.backendfunerariaapp.entities.UserEntity;
 
-import java.sql.Timestamp;
-import java.util.Calendar;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 public interface ConfirmationTokenService {
 
@@ -14,10 +14,8 @@ public interface ConfirmationTokenService {
 
     void save(UserEntity user, String token);
 
-    default Timestamp calculateExpiryDate(int expiryDateInMinutes) {
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.MINUTE, expiryDateInMinutes);
-        return new Timestamp(cal.getTime().getTime());
+    default Instant calculateExpiryDate(final long expiryDateInMinutes) {
+        return Instant.now().plus(expiryDateInMinutes, ChronoUnit.MINUTES);
     }
 
 

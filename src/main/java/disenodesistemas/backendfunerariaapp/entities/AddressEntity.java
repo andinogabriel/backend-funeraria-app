@@ -1,6 +1,5 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -44,7 +43,6 @@ public class AddressEntity implements Serializable {
     private String flat; //Piso del departamento
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties(value = {"addresses", "handler","hibernateLazyInitializer"}, allowSetters = true)
     @JoinColumn(name = "city_id")
     private CityEntity city;
 

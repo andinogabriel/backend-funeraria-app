@@ -10,10 +10,9 @@ import disenodesistemas.backendfunerariaapp.entities.SupplierEntity;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.SupplierRepository;
 import disenodesistemas.backendfunerariaapp.service.Interface.SupplierService;
+import disenodesistemas.backendfunerariaapp.service.converters.AbstractConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.modelmapper.ModelMapper;
-import org.modelmapper.TypeToken;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -29,7 +28,8 @@ public class SupplierServiceImplService implements SupplierService {
 
     private final SupplierRepository supplierRepository;
     private final ProjectionFactory projectionFactory;
-    private final ModelMapper modelMapper;
+    private final AbstractConverter<MobileNumberEntity, MobileNumberRequestDto> mobileNumberConverter;
+    private final AbstractConverter<AddressEntity, AddressRequestDto> addressConverter;
 
     @Override
     public List<SupplierResponseDto> getSuppliers() {
@@ -44,15 +44,8 @@ public class SupplierServiceImplService implements SupplierService {
                 supplier.getWebPage(),
                 supplier.getEmail()
         );
-
-        if (!isEmpty(supplier.getMobileNumbers())) {
-            supplierEntity.setMobileNumbers(modelMapper.map(supplier.getMobileNumbers(), new TypeToken<List<MobileNumberEntity>>() {
-            }.getType()));
-        }
-        if (!isEmpty(supplier.getAddresses())) {
-            supplierEntity.setAddresses(modelMapper.map(supplier.getAddresses(), new TypeToken<List<AddressEntity>>() {
-            }.getType()));
-        }
+        supplierEntity.setMobileNumbers(mobileNumberConverter.fromDTOs(supplier.getMobileNumbers()));
+        supplierEntity.setAddresses(addressConverter.fromDTOs(supplier.getAddresses()));
         return projectionFactory.createProjection(SupplierResponseDto.class, supplierRepository.save(supplierEntity));
     }
 
@@ -75,18 +68,14 @@ public class SupplierServiceImplService implements SupplierService {
         supplierEntity.setEmail(supplier.getEmail());
         supplierEntity.setWebPage(supplier.getWebPage());
 
-        if (!isEmpty(supplier.getMobileNumbers())) {
-            val deletedMobileNumbers = getDeletedMobileNumbers(supplierEntity, supplier);
-            deletedMobileNumbers.forEach(supplierEntity::removeMobileNumber);
-            supplierEntity.setMobileNumbers(modelMapper.map(supplier.getMobileNumbers(), new TypeToken<List<MobileNumberEntity>>() {
-            }.getType()));
-        }
-        if (!isEmpty(supplier.getAddresses())) {
-            val deletedAddresses = getDeletedAddresses(supplierEntity, supplier);
-            deletedAddresses.forEach(supplierEntity::removeAddress);
-            supplierEntity.setAddresses(modelMapper.map(supplier.getAddresses(), new TypeToken<List<AddressEntity>>() {
-            }.getType()));
-        }
+        val deletedMobileNumbers = getDeletedMobileNumbers(supplierEntity, supplier);
+        deletedMobileNumbers.forEach(supplierEntity::removeMobileNumber);
+        supplierEntity.setMobileNumbers(mobileNumberConverter.fromDTOs(supplier.getMobileNumbers()));
+
+        val deletedAddresses = getDeletedAddresses(supplierEntity, supplier);
+        deletedAddresses.forEach(supplierEntity::removeAddress);
+        supplierEntity.setAddresses(addressConverter.fromDTOs(supplier.getAddresses()));
+
         return projectionFactory.createProjection(SupplierResponseDto.class, supplierRepository.save(supplierEntity));
     }
 
@@ -96,17 +85,18 @@ public class SupplierServiceImplService implements SupplierService {
     }
 
     private List<MobileNumberEntity> getDeletedMobileNumbers(final SupplierEntity supplierEntity, final SupplierRequestDto supplier) {
-        return supplierEntity.getMobileNumbers()
+        return !isEmpty(supplierEntity.getMobileNumbers()) ? supplierEntity.getMobileNumbers()
                 .stream()
-                .filter(mDb -> !supplier.getMobileNumbers().contains(modelMapper.map(mDb, MobileNumberRequestDto.class)))
-                .collect(Collectors.toUnmodifiableList());
+                .filter(mDb -> !supplier.getMobileNumbers().contains(mobileNumberConverter.toDTO(mDb)))
+                .collect(Collectors.toUnmodifiableList())
+                : List.of();
     }
 
     private List<AddressEntity> getDeletedAddresses(final SupplierEntity supplierEntity, final SupplierRequestDto supplier) {
-        return supplierEntity.getAddresses()
-                .stream()
-                .filter(aDb -> !supplier.getAddresses().contains(modelMapper.map(aDb, AddressRequestDto.class)))
-                .collect(Collectors.toUnmodifiableList());
+        return !isEmpty(supplierEntity.getAddresses()) ? supplierEntity.getAddresses().stream()
+                .filter(aDb -> !supplier.getAddresses().contains(addressConverter.toDTO(aDb)))
+                .collect(Collectors.toUnmodifiableList())
+                : List.of();
     }
 
 }

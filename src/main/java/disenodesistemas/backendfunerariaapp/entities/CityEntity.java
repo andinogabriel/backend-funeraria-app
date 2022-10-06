@@ -1,7 +1,10 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.val;
 import org.hibernate.Hibernate;
@@ -18,6 +21,9 @@ import java.util.Objects;
 
 @Entity(name = "cities")
 @Getter @Setter
+@NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class CityEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -27,7 +33,6 @@ public class CityEntity implements Serializable {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties(value = {"cities", "handler","hibernateLazyInitializer"}, allowSetters = true)
     @JoinColumn(name = "province_id")
     private ProvinceEntity province;
 

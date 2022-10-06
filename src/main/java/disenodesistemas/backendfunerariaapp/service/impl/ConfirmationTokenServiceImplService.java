@@ -33,7 +33,7 @@ public class ConfirmationTokenServiceImplService implements ConfirmationTokenSer
     @Transactional
     public void save(final UserEntity user, final String token) {
         val confirmationTokenEntity = new ConfirmationTokenEntity(user, token);
-        confirmationTokenEntity.setExpiryDate(calculateExpiryDate(24*60)); //24hs
+        confirmationTokenEntity.setExpiryDate(calculateExpiryDate(24L*60L)); //24hs
         confirmationTokenRepository.save(confirmationTokenEntity);
     }
 

@@ -1,4 +1,4 @@
-package disenodesistemas.backendfunerariaapp.controllers.converters;
+package disenodesistemas.backendfunerariaapp.service.converters;
 
 import disenodesistemas.backendfunerariaapp.dto.request.CategoryRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.IncomeDetailRequestDto;
@@ -20,7 +20,7 @@ import static java.util.Objects.nonNull;
 
 @Component(value = "incomeDetailConverter")
 @RequiredArgsConstructor
-public class IncomeDetailConverter extends AbstractConverter<IncomeDetailEntity, IncomeDetailRequestDto>{
+public class IncomeDetailConverter implements AbstractConverter<IncomeDetailEntity, IncomeDetailRequestDto>{
 
     private final ModelMapper modelMapper;
     private final ItemRepository itemRepository;
@@ -46,8 +46,6 @@ public class IncomeDetailConverter extends AbstractConverter<IncomeDetailEntity,
                         .quantity(dto.getQuantity())
                     .build()
                 : null;
-
-
     }
 
     @Override
@@ -80,7 +78,7 @@ public class IncomeDetailConverter extends AbstractConverter<IncomeDetailEntity,
         final List<ItemEntity> itemEntities = findItemsByCode(dtos);
         return dtos.stream().map(
                 income -> {
-                    final IncomeDetailEntity incomeToReturn = modelMapper.map(income, IncomeDetailEntity.class);
+                    final IncomeDetailEntity incomeToReturn = fromDto(income);
                     incomeToReturn.setItem(findItemByCode(itemEntities, income.getItem().getCode()));
                     return incomeToReturn;
                 }

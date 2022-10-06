@@ -30,7 +30,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -38,7 +37,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -135,9 +134,8 @@ public class UserServiceImplService implements UserService {
         val userEntity = confirmationTokenEntity.getUser();
         //if the user account isn't activated
         if(!userEntity.isEnabled()) {
-            confirmationTokenEntity.getExpiryDate().before(new Timestamp(System.currentTimeMillis()));
             //check if the token is expired
-            if(confirmationTokenEntity.getExpiryDate().before(new Timestamp(System.currentTimeMillis()))) {
+            if(confirmationTokenEntity.getExpiryDate().isBefore(Instant.now())) {
                 message = "confirmationToken.error.expired";
             } else {
                 //token is valid so activate the user account
@@ -155,7 +153,7 @@ public class UserServiceImplService implements UserService {
     @Override
     public String resetUserPassword(final PasswordResetDto passwordResetDto, final String token) {
         val tokenEntity = confirmationTokenService.findByToken(token);
-        if (Objects.nonNull(tokenEntity.getUser()) && tokenEntity.getExpiryDate().after(new Timestamp(System.currentTimeMillis()))) {
+        if (Objects.nonNull(tokenEntity.getUser()) && tokenEntity.getExpiryDate().isAfter(Instant.now())) {
             tokenEntity.getUser().setEncryptedPassword(bCryptPasswordEncoder.encode(passwordResetDto.getPassword()));
             userRepository.save(tokenEntity.getUser());
             //Password successfully reset. You can now log in with the new credentials.
@@ -187,20 +185,5 @@ public class UserServiceImplService implements UserService {
         );
         return userRepository.findAllProjectedBy(pageable);
     }
-
-    /*
-    public List<AffiliateDto> getUserAffiliates(String email) {
-        UserEntity userEntity = getUserByEmail(email);
-        List<AffiliateEntity> affiliates = affiliateRepository.getByUserIdOrderByStartDateDesc(userEntity.getId());
-        List<AffiliateDto> affiliatesDto = new ArrayList<>();
-        for (AffiliateEntity affiliate : affiliates) {
-            AffiliateDto affiliateDto = mapper.map(affiliate, AffiliateDto.class);
-            affiliatesDto.add(affiliateDto);
-        }
-        return affiliatesDto;
-    }
-    */
-
-
 
 }

@@ -13,7 +13,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import java.io.Serializable;
-import java.sql.Timestamp;
+import java.time.Instant;
 
 @Entity(name = "confirmation_tokens")
 @Getter @Setter
@@ -27,7 +27,7 @@ public class ConfirmationTokenEntity implements Serializable {
     @Column(nullable = false, length = 100)
     private String token;
 
-    private Timestamp expiryDate;
+    private Instant expiryDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = {"confirmationTokens", "handler","hibernateLazyInitializer"}, allowSetters = true)

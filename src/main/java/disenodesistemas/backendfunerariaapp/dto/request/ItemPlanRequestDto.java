@@ -15,7 +15,7 @@ import javax.validation.constraints.Positive;
 @Jacksonized
 @Builder(toBuilder = true)
 public class ItemPlanRequestDto {
-    //private final ItemPlanIdDto id;
+
     @NotNull(message = "{items.plan.error.null.item}")
     private final ItemRequestPlanDto item;
 
