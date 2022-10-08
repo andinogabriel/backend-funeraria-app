@@ -34,7 +34,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.nonNull;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
+import static org.springframework.http.HttpStatus.CONFLICT;
 
 @Service
 @RequiredArgsConstructor
@@ -64,7 +66,8 @@ public class IncomeServiceImpl implements IncomeService {
         if (!isEmpty(incomeRequestDto.getIncomeDetails())) {
             incomeRepository.save(incomeEntity);
             incomeEntity.setIncomeDetails(incomeDetailConverter.fromDTOs(incomeRequestDto.getIncomeDetails()));
-            setItemPrices(incomeEntity.getIncomeDetails());
+            setItemsPrice(incomeEntity.getIncomeDetails());
+            setItemsStock(incomeEntity.getIncomeDetails());
             incomeEntity.setTotalAmount(totalAmountCalculator(incomeEntity.getIncomeDetails(), incomeRequestDto));
         }
         return projectionFactory.createProjection(IncomeResponseDto.class, incomeRepository.save(incomeEntity));
@@ -88,11 +91,13 @@ public class IncomeServiceImpl implements IncomeService {
         incomeEntity.setReceiptNumber(incomeRequestDto.getReceiptNumber());
 
         incomeEntity.setLastModifiedBy(userService.getUserByEmail(incomeRequestDto.getIncomeUser().getEmail()));
+        preUpdateItemsStock(incomeEntity.getIncomeDetails());
         if (!isEmpty(incomeRequestDto.getIncomeDetails())) {
             final List<IncomeDetailEntity> incomeDetailEntities = getDeletedIncomeDetails(incomeEntity, incomeRequestDto);
             incomeDetailEntities.forEach(incomeEntity::removeIncomeDetail);
             incomeEntity.setIncomeDetails(incomeDetailConverter.fromDTOs(incomeRequestDto.getIncomeDetails()));
-            setItemPrices(incomeEntity.getIncomeDetails());
+            setItemsPrice(incomeEntity.getIncomeDetails());
+            setItemsStock(incomeEntity.getIncomeDetails());
             incomeEntity.setTotalAmount(totalAmountCalculator(incomeEntity.getIncomeDetails(), incomeRequestDto));
         }
         return projectionFactory.createProjection(IncomeResponseDto.class, incomeRepository.save(incomeEntity));
@@ -127,7 +132,6 @@ public class IncomeServiceImpl implements IncomeService {
     private List<IncomeDetailEntity> getDeletedIncomeDetails(final IncomeEntity incomeEntity, final IncomeRequestDto incomeDto) {
         return incomeEntity.getIncomeDetails()
                 .stream()
-                //.filter(eDb -> !incomeDto.getIncomeDetails().contains(incomeDetailEntityToDto(eDb)))
                 .filter(incomeDetailEntity -> !incomeDto.getIncomeDetails().contains(incomeDetailConverter.toDTO(incomeDetailEntity)))
                 .collect(Collectors.toUnmodifiableList());
     }
@@ -141,21 +145,41 @@ public class IncomeServiceImpl implements IncomeService {
     }
 
     private void checkExistsByByReceiptNumber(final IncomeRequestDto incomeDto) {
-        if(incomeRepository.existsByReceiptNumber(incomeDto.getReceiptNumber()))
-            throw new AppException("income.error.receiptNumber.already.registered", HttpStatus.CONFLICT);
+        if(incomeRepository.existsByReceiptNumber(incomeDto.getReceiptNumber())) {
+            log.info("Receipt number: " + incomeDto.getReceiptNumber() + " already registered");
+            throw new AppException("income.error.receiptNumber.already.registered", CONFLICT);
+        }
     }
 
     private IncomeEntity findEntityByReceiptNumber(final Long receiptNumber) {
         return incomeRepository.findByReceiptNumber(receiptNumber).orElseThrow(() -> new AppException("income.error.not.found", HttpStatus.NOT_FOUND));
     }
 
-    private void setItemPrices(final List<IncomeDetailEntity> incomeDetails) {
+    private void setItemsPrice(final List<IncomeDetailEntity> incomeDetails) {
         final List<ItemEntity> itemsToUpdatePrice = incomeDetails.stream().filter(Objects::nonNull)
                 .map(incomeDetail -> {
                     incomeDetail.getItem().setPrice(incomeDetail.getSalePrice());
                     return incomeDetail.getItem();
                 }).collect(Collectors.toUnmodifiableList());
         itemRepository.saveAll(itemsToUpdatePrice);
+    }
+
+    private void setItemsStock(final List<IncomeDetailEntity> incomeDetails) {
+        final List<ItemEntity> itemsToUpdateStock = incomeDetails.stream()
+                .map(incomeDetail -> {
+                    incomeDetail.getItem().setStock( nonNull(incomeDetail.getItem().getStock()) ?
+                            incomeDetail.getItem().getStock() + incomeDetail.getQuantity()
+                            : incomeDetail.getQuantity()
+                    );
+                    return incomeDetail.getItem();
+                }).collect(Collectors.toUnmodifiableList());
+        itemRepository.saveAll(itemsToUpdateStock);
+    }
+
+    private void preUpdateItemsStock(final List<IncomeDetailEntity> incomeDetails) {
+        incomeDetails.forEach(incomeDetail -> incomeDetail.getItem().setStock(
+                incomeDetail.getItem().getStock() - incomeDetail.getQuantity()
+        ));
     }
 
 }
