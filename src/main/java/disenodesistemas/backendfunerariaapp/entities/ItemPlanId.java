@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,7 +15,7 @@ import java.io.Serializable;
 @EqualsAndHashCode
 @Embeddable
 @NoArgsConstructor
-@ToString
+@AllArgsConstructor
 public class ItemPlanId implements Serializable {
     private static final long serialVersionUID = 1L;
     private Long planId;

@@ -1,7 +1,6 @@
 package disenodesistemas.backendfunerariaapp.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import disenodesistemas.backendfunerariaapp.entities.UserEntity;
 
 import java.util.Date;
 

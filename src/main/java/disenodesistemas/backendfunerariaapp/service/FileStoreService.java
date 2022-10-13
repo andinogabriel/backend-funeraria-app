@@ -1,4 +1,4 @@
-package disenodesistemas.backendfunerariaapp.service.Interface;
+package disenodesistemas.backendfunerariaapp.service;
 
 import org.springframework.web.multipart.MultipartFile;
 

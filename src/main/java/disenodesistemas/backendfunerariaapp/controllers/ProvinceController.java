@@ -1,7 +1,7 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
 import disenodesistemas.backendfunerariaapp.dto.response.ProvinceResponseDto;
-import disenodesistemas.backendfunerariaapp.service.Interface.ProvinceService;
+import disenodesistemas.backendfunerariaapp.service.ProvinceService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

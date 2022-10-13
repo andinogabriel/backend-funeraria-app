@@ -1,4 +1,4 @@
-package disenodesistemas.backendfunerariaapp.service.Interface;
+package disenodesistemas.backendfunerariaapp.service;
 
 import disenodesistemas.backendfunerariaapp.dto.request.ItemRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.ItemResponseDto;

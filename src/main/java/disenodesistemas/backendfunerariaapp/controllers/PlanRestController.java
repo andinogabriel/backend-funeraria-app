@@ -2,7 +2,7 @@ package disenodesistemas.backendfunerariaapp.controllers;
 
 import disenodesistemas.backendfunerariaapp.dto.request.PlanRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.PlanResponseDto;
-import disenodesistemas.backendfunerariaapp.service.Interface.PlanService;
+import disenodesistemas.backendfunerariaapp.service.PlanService;
 import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

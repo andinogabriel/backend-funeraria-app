@@ -7,7 +7,7 @@ import disenodesistemas.backendfunerariaapp.entities.GenderEntity;
 import disenodesistemas.backendfunerariaapp.entities.RelationshipEntity;
 import disenodesistemas.backendfunerariaapp.entities.UserEntity;
 import disenodesistemas.backendfunerariaapp.repository.AffiliateRepository;
-import disenodesistemas.backendfunerariaapp.service.Interface.AffiliateService;
+import disenodesistemas.backendfunerariaapp.service.AffiliateService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.projection.ProjectionFactory;

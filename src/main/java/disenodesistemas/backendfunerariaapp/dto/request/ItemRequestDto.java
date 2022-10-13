@@ -1,7 +1,6 @@
 package disenodesistemas.backendfunerariaapp.dto.request;
 
 import lombok.Builder;
-import lombok.ToString;
 import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
 

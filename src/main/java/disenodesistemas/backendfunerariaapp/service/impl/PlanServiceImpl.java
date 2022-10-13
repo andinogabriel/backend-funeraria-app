@@ -1,7 +1,6 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
 import disenodesistemas.backendfunerariaapp.dto.request.ItemPlanRequestDto;
-import disenodesistemas.backendfunerariaapp.dto.request.ItemRequestPlanDto;
 import disenodesistemas.backendfunerariaapp.dto.request.PlanRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.PlanResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.ItemEntity;
@@ -11,7 +10,7 @@ import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.ItemRepository;
 import disenodesistemas.backendfunerariaapp.repository.ItemsPlanRepository;
 import disenodesistemas.backendfunerariaapp.repository.PlanRepository;
-import disenodesistemas.backendfunerariaapp.service.Interface.PlanService;
+import disenodesistemas.backendfunerariaapp.service.PlanService;
 import disenodesistemas.backendfunerariaapp.service.converters.AbstractConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

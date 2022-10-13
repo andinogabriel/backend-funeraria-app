@@ -2,7 +2,6 @@ package disenodesistemas.backendfunerariaapp.repository;
 
 import disenodesistemas.backendfunerariaapp.dto.response.RelationshipResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.RelationshipEntity;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 

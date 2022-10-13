@@ -3,7 +3,7 @@ package disenodesistemas.backendfunerariaapp.controllers;
 import disenodesistemas.backendfunerariaapp.dto.request.BrandRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.BrandResponseDto;
 import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
-import disenodesistemas.backendfunerariaapp.service.Interface.BrandService;
+import disenodesistemas.backendfunerariaapp.service.BrandService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.http.ResponseEntity;

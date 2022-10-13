@@ -1,4 +1,4 @@
-package disenodesistemas.backendfunerariaapp.service.Interface;
+package disenodesistemas.backendfunerariaapp.service;
 
 import disenodesistemas.backendfunerariaapp.dto.response.RelationshipResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.RelationshipEntity;

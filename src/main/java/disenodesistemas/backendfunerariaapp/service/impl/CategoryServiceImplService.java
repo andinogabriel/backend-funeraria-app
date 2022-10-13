@@ -5,7 +5,7 @@ import disenodesistemas.backendfunerariaapp.dto.response.CategoryResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.CategoryEntity;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.CategoryRepository;
-import disenodesistemas.backendfunerariaapp.service.Interface.CategoryService;
+import disenodesistemas.backendfunerariaapp.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.data.projection.ProjectionFactory;

@@ -1,6 +1,5 @@
 package disenodesistemas.backendfunerariaapp.dto.request;
 
-import disenodesistemas.backendfunerariaapp.entities.ItemPlanId;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

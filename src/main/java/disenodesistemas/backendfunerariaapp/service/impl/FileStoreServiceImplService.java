@@ -8,7 +8,7 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.util.IOUtils;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
-import disenodesistemas.backendfunerariaapp.service.Interface.FileStoreService;
+import disenodesistemas.backendfunerariaapp.service.FileStoreService;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;

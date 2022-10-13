@@ -4,7 +4,7 @@ import disenodesistemas.backendfunerariaapp.dto.request.IncomeRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.UserDto;
 import disenodesistemas.backendfunerariaapp.dto.response.IncomeResponseDto;
 import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
-import disenodesistemas.backendfunerariaapp.service.Interface.IncomeService;
+import disenodesistemas.backendfunerariaapp.service.IncomeService;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.hibernate.Filter;

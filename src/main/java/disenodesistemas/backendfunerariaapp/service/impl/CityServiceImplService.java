@@ -5,7 +5,7 @@ import disenodesistemas.backendfunerariaapp.entities.CityEntity;
 import disenodesistemas.backendfunerariaapp.entities.ProvinceEntity;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.CityRepository;
-import disenodesistemas.backendfunerariaapp.service.Interface.CityService;
+import disenodesistemas.backendfunerariaapp.service.CityService;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.http.HttpStatus;

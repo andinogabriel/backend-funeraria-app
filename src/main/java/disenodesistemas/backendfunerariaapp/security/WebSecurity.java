@@ -2,7 +2,7 @@ package disenodesistemas.backendfunerariaapp.security;
 
 import disenodesistemas.backendfunerariaapp.security.jwt.JwtEntryPoint;
 import disenodesistemas.backendfunerariaapp.security.jwt.JwtTokenFilter;
-import disenodesistemas.backendfunerariaapp.service.Interface.UserService;
+import disenodesistemas.backendfunerariaapp.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;

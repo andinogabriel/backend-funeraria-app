@@ -4,7 +4,7 @@ import disenodesistemas.backendfunerariaapp.dto.response.ProvinceResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.ProvinceEntity;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.ProvinceRepository;
-import disenodesistemas.backendfunerariaapp.service.Interface.ProvinceService;
+import disenodesistemas.backendfunerariaapp.service.ProvinceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

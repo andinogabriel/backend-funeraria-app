@@ -2,7 +2,7 @@ package disenodesistemas.backendfunerariaapp.controllers;
 
 import disenodesistemas.backendfunerariaapp.dto.response.BrandResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.BrandEntity;
-import disenodesistemas.backendfunerariaapp.service.Interface.BrandService;
+import disenodesistemas.backendfunerariaapp.service.BrandService;
 import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

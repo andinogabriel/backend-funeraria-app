@@ -4,7 +4,7 @@ import disenodesistemas.backendfunerariaapp.dto.response.GenderResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.GenderEntity;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.GenderRepository;
-import disenodesistemas.backendfunerariaapp.service.Interface.GenderService;
+import disenodesistemas.backendfunerariaapp.service.GenderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

@@ -5,7 +5,7 @@ import disenodesistemas.backendfunerariaapp.dto.response.BrandResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.BrandEntity;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.BrandRepository;
-import disenodesistemas.backendfunerariaapp.service.Interface.BrandService;
+import disenodesistemas.backendfunerariaapp.service.BrandService;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.data.projection.ProjectionFactory;

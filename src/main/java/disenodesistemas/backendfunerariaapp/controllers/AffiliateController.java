@@ -2,7 +2,7 @@ package disenodesistemas.backendfunerariaapp.controllers;
 
 import disenodesistemas.backendfunerariaapp.dto.request.AffiliateRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.AffiliateResponseDto;
-import disenodesistemas.backendfunerariaapp.service.Interface.AffiliateService;
+import disenodesistemas.backendfunerariaapp.service.AffiliateService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;

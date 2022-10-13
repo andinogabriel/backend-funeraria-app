@@ -3,7 +3,7 @@ package disenodesistemas.backendfunerariaapp.controllers;
 import disenodesistemas.backendfunerariaapp.dto.request.ItemRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.ItemResponseDto;
 import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
-import disenodesistemas.backendfunerariaapp.service.Interface.ItemService;
+import disenodesistemas.backendfunerariaapp.service.ItemService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;

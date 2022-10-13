@@ -4,7 +4,7 @@ import disenodesistemas.backendfunerariaapp.dto.response.RelationshipResponseDto
 import disenodesistemas.backendfunerariaapp.entities.RelationshipEntity;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.RelationshipRepository;
-import disenodesistemas.backendfunerariaapp.service.Interface.RelationshipService;
+import disenodesistemas.backendfunerariaapp.service.RelationshipService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

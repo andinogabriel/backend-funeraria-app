@@ -2,7 +2,7 @@ package disenodesistemas.backendfunerariaapp.service.impl;
 
 import disenodesistemas.backendfunerariaapp.dto.response.ReceiptTypeResponseDto;
 import disenodesistemas.backendfunerariaapp.repository.ReceiptTypeRepository;
-import disenodesistemas.backendfunerariaapp.service.Interface.ReceiptTypeService;
+import disenodesistemas.backendfunerariaapp.service.ReceiptTypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

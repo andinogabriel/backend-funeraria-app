@@ -46,9 +46,8 @@ public class ItemPlanConverter implements AbstractConverter<ItemPlanEntity, Item
                 .map(itemPlan -> new ItemPlanEntity(
                             planEntity,
                             findItemByCode(itemEntities, itemPlan.getItem().getCode()),
-                            itemPlan.getQuantity()
-                        //return itemsPlanRepository.save(itemPlanEntity);
-                    )).collect(Collectors.toUnmodifiableSet());
+                            itemPlan.getQuantity())
+                ).collect(Collectors.toUnmodifiableSet());
 
     }
 

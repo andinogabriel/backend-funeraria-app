@@ -9,7 +9,7 @@ import disenodesistemas.backendfunerariaapp.entities.MobileNumberEntity;
 import disenodesistemas.backendfunerariaapp.entities.SupplierEntity;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.SupplierRepository;
-import disenodesistemas.backendfunerariaapp.service.Interface.SupplierService;
+import disenodesistemas.backendfunerariaapp.service.SupplierService;
 import disenodesistemas.backendfunerariaapp.service.converters.AbstractConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.val;

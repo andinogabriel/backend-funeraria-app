@@ -3,7 +3,7 @@ package disenodesistemas.backendfunerariaapp.service.impl;
 import disenodesistemas.backendfunerariaapp.entities.UserEntity;
 import disenodesistemas.backendfunerariaapp.repository.ConfirmationTokenRepository;
 import disenodesistemas.backendfunerariaapp.entities.ConfirmationTokenEntity;
-import disenodesistemas.backendfunerariaapp.service.Interface.ConfirmationTokenService;
+import disenodesistemas.backendfunerariaapp.service.ConfirmationTokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.stereotype.Service;
