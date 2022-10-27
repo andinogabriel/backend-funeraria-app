@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -57,6 +58,7 @@ public class UserServiceImplService implements UserService {
     private final JwtProvider jwtProvider;
     private final AuthenticationManager authenticationManager;
     private final ProjectionFactory projectionFactory;
+    private static final String ASC = "asc";
 
 
     @Override
@@ -174,16 +176,21 @@ public class UserServiceImplService implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<UserResponseDto> getAllUsers(int page,
+    public Page<UserEntity> getAllUsers(int page,
                                              final int limit,
                                              final String sortBy,
                                              final String sortDir) {
-        if (page > 0) page = page - 1;
+        page = page > 0 ? page - 1 : page;
         final Pageable pageable = PageRequest.of(
                 page, limit,
-                sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending()
+                sortDir.equalsIgnoreCase(ASC) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending()
         );
-        return userRepository.findAllProjectedBy(pageable);
+        return userRepository.findAll(pageable);
+    }
+
+    @Override
+    public List<UserResponseDto> findAll() {
+        return userRepository.findAllByOrderByStartDateDesc();
     }
 
 }

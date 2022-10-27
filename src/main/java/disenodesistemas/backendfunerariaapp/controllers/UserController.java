@@ -1,21 +1,26 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
 import disenodesistemas.backendfunerariaapp.dto.JwtDto;
+import disenodesistemas.backendfunerariaapp.dto.UserModel;
+import disenodesistemas.backendfunerariaapp.dto.UserModelAssembler;
 import disenodesistemas.backendfunerariaapp.dto.request.PasswordResetDto;
 import disenodesistemas.backendfunerariaapp.dto.request.UserRegisterDto;
 import disenodesistemas.backendfunerariaapp.dto.request.UserLoginDto;
 import disenodesistemas.backendfunerariaapp.dto.response.UserResponseDto;
+import disenodesistemas.backendfunerariaapp.entities.UserEntity;
 import disenodesistemas.backendfunerariaapp.service.EmailService;
 import disenodesistemas.backendfunerariaapp.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,16 +29,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-@CrossOrigin
+@Slf4j
 public class UserController {
 
     private final UserService userService;
     private final EmailService emailService;
     private final ProjectionFactory projectionFactory;
+    private final UserModelAssembler userModelAssembler;
+    private final PagedResourcesAssembler<UserEntity> pagedResourcesAssembler;
+
 
 
     @GetMapping(path = "/me")
@@ -47,14 +56,20 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping
-    public Page<UserResponseDto> getAllUsers(@RequestParam(value = "page", defaultValue = "0") final int page,
-                                             @RequestParam(value="limit", defaultValue = "5") final int limit,
+    @GetMapping("/paginated")
+    public PagedModel<UserModel> getAllUsersPaginated(@RequestParam(value = "page", defaultValue = "0") final int page,
+                                             @RequestParam(value="size", defaultValue = "1") final int size,
                                              @RequestParam(value = "sortBy", defaultValue = "startDate") final String sortBy,
                                              @RequestParam(value = "sortDir", defaultValue = "desc") final String sortDir) {
-        return userService.getAllUsers(page, limit, sortBy, sortDir);
+        final Page<UserEntity> userPage =  userService.getAllUsers(page, size, sortBy, sortDir);
+        return pagedResourcesAssembler.toModel(userPage, userModelAssembler);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping
+    public List<UserResponseDto> getAllUsers() {
+        return userService.findAll();
+    }
 
     @PostMapping
     public ResponseEntity<UserResponseDto> createUser(@RequestBody @Valid final UserRegisterDto userRegisterDto) {

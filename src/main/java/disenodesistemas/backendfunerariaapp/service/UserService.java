@@ -11,6 +11,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+import java.util.List;
+
 public interface UserService extends UserDetailsService {
 
     UserEntity save(UserEntity user);
@@ -29,6 +31,8 @@ public interface UserService extends UserDetailsService {
 
     UserDetails loadUserByUsername(String email) throws UsernameNotFoundException;
 
-    Page<UserResponseDto> getAllUsers(int page, int limit, String sortBy, String sortDir);
+    Page<UserEntity> getAllUsers(int page, int limit, String sortBy, String sortDir);
+
+    List<UserResponseDto> findAll();
 
 }
