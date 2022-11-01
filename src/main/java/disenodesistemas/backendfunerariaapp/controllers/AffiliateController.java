@@ -3,14 +3,21 @@ package disenodesistemas.backendfunerariaapp.controllers;
 import disenodesistemas.backendfunerariaapp.dto.request.AffiliateRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.AffiliateResponseDto;
 import disenodesistemas.backendfunerariaapp.service.AffiliateService;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/affiliates")
@@ -22,14 +29,39 @@ public class AffiliateController {
         this.affiliateService = affiliateService;
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @PostMapping
-    public AffiliateResponseDto createAffiliate(@RequestBody @Valid final AffiliateRequestDto affiliateRequestDto) {
-        //con SecurityContextHolder accedemos al contexto de la parte de la seguridad de la app y obtenemos la autenticacion del user
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        //Del metodo obtenemos el subject name que seria nuestro email
-        //final String email = authentication.getName();
-        //affiliateCreationDto.setUserEmail(email);
-        return affiliateService.createAffiliate(affiliateRequestDto);
+    public ResponseEntity<AffiliateResponseDto> createAffiliate(@RequestBody @Valid final AffiliateRequestDto affiliateRequestDto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(affiliateService.createAffiliate(affiliateRequestDto));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping
+    public ResponseEntity<List<AffiliateResponseDto>> findAll() {
+        return ResponseEntity.ok(affiliateService.findAll());
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+    @GetMapping("/by-user")
+    public ResponseEntity<List<AffiliateResponseDto>> findAffiliatesByUser() {
+        return ResponseEntity.ok(affiliateService.findAffiliatesByUser());
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+    @DeleteMapping("/{dni}")
+    public ResponseEntity<OperationStatusModel> deleteAffiliate(@PathVariable final Integer dni) {
+        affiliateService.delete(dni);
+        return ResponseEntity.ok(OperationStatusModel.builder()
+                .name("DELETE AFFILIATE")
+                .result("SUCCESS")
+                .build());
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+    @PutMapping("/{dni}")
+    public ResponseEntity<AffiliateResponseDto> updateAffiliate(@PathVariable final Integer dni,
+                                                   @RequestBody @Valid final AffiliateRequestDto affiliateRequestDto) {
+        return ResponseEntity.ok(affiliateService.update(dni, affiliateRequestDto));
     }
 
 

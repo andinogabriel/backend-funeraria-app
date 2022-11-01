@@ -3,21 +3,16 @@ package disenodesistemas.backendfunerariaapp.repository;
 import disenodesistemas.backendfunerariaapp.dto.response.AffiliateResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.AffiliateEntity;
 import disenodesistemas.backendfunerariaapp.entities.UserEntity;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface AffiliateRepository extends PagingAndSortingRepository<AffiliateEntity, Long> {
-
-    Optional<AffiliateEntity> findById(Long id);
-
-    List<AffiliateResponseDto> findByUserOrderByStartDateDesc(UserEntity userEntity);
-
-    Page<AffiliateResponseDto> findAllProjectedBy(Pageable pageable);
-
+public interface AffiliateRepository extends JpaRepository<AffiliateEntity, Long> {
+    Optional<AffiliateEntity> findByDni(final Integer dni);
+    Boolean existsAffiliateEntitiesByDni(Integer dni);
+    List<AffiliateResponseDto> findByUserOrderByStartDateDesc(final UserEntity userEntity);
+    List<AffiliateResponseDto> findAllByOrderByStartDateDesc();
 }

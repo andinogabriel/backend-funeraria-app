@@ -1,16 +1,20 @@
 package disenodesistemas.backendfunerariaapp.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import java.util.Date;
+import java.time.LocalDate;
+import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public interface AffiliateResponseDto {
     String getFirstName();
     String getLastName();
     Integer getDni();
-    Date getBirthDate();
-    Date getStartDate();
+    @JsonFormat(pattern="dd-MM-yyyy")
+    LocalDate getBirthDate();
+    @JsonFormat(pattern="dd-MM-yyyy")
+    LocalDate getStartDate();
     GenderResponseDto getGender();
     RelationshipResponseDto getRelationship();
     UserEntity getUser();
@@ -19,8 +23,8 @@ public interface AffiliateResponseDto {
         String getFirstName();
         String getLastName();
         String getEmail();
-        MobileNumberResponseDto getMobileNumbers();
-        AddressResponseDto getAddresses();
+        List<MobileNumberResponseDto> getMobileNumbers();
+        List<AddressResponseDto> getAddresses();
     }
 
 }

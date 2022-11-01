@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.Hibernate;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -19,8 +20,8 @@ import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
+import java.util.Objects;
 
 @Entity(name = "affiliates")
 @Table(indexes = { @Index(columnList = "dni", name = "index_dni", unique = true) })
@@ -30,9 +31,7 @@ import java.util.Date;
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
-public class AffiliateEntity implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class AffiliateEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,10 +47,10 @@ public class AffiliateEntity implements Serializable {
     private Integer dni;
 
     @Column(nullable = false)
-    private Date birthDate;
+    private LocalDate birthDate;
 
     @CreatedDate
-    private Date startDate;
+    private LocalDate startDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gender_id")
@@ -65,4 +64,17 @@ public class AffiliateEntity implements Serializable {
     @JoinColumn(name = "relationship_id")
     private RelationshipEntity relationship;
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        final AffiliateEntity that = (AffiliateEntity) o;
+        return id != null && Objects.equals(firstName, that.getFirstName()) &&
+                Objects.equals(lastName, that.getLastName()) && Objects.equals(dni, that.getDni());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

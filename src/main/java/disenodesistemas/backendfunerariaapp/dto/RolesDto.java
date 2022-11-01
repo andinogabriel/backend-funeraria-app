@@ -10,5 +10,5 @@ import lombok.extern.jackson.Jacksonized;
 @Builder(toBuilder = true)
 public class RolesDto {
     Long id;
-    Role name;
+    String name;
 }

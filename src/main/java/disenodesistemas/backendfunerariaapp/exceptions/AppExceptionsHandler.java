@@ -68,7 +68,7 @@ public class AppExceptionsHandler {
     }
 
 
-    @ExceptionHandler(value = { AppException.class })
+    @ExceptionHandler({AppException.class, NotFoundException.class, ConflictException.class })
     @ResponseBody
     public ResponseEntity<ErrorMessage> handleException(final AppException ex) {
         return ResponseEntity

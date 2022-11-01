@@ -189,6 +189,7 @@ public class UserServiceImplService implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<UserResponseDto> findAll() {
         return userRepository.findAllByOrderByStartDateDesc();
     }
