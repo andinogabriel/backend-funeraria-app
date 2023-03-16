@@ -2,6 +2,7 @@ package disenodesistemas.backendfunerariaapp.dto.request;
 
 import disenodesistemas.backendfunerariaapp.dto.GenderDto;
 import disenodesistemas.backendfunerariaapp.dto.RelationshipDto;
+import disenodesistemas.backendfunerariaapp.dto.UserDto;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
@@ -16,6 +17,7 @@ import java.time.LocalDate;
 @Jacksonized
 public class AffiliateRequestDto {
 
+    Long id;
     @NotBlank(message = "{affiliate.error.firstName.blank}") String firstName;
 
     @NotBlank(message = "{affiliate.error.lastName.blank}") String lastName;

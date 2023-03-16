@@ -55,11 +55,11 @@ public class AffiliateServiceImplService implements AffiliateService {
     @Transactional
     public AffiliateResponseDto update(final Integer dni, final AffiliateRequestDto affiliate) {
         final AffiliateEntity affiliateToUpdate = findByDni(dni);
-        if(affiliateRepository.existsAffiliateEntitiesByDni(affiliate.getDni()) &&
+        if(Boolean.TRUE.equals(affiliateRepository.existsAffiliateEntitiesByDni(affiliate.getDni())) &&
                 !Objects.equals(affiliateToUpdate.getDni(), affiliate.getDni()))
             throw new ConflictException("affiliate.error.dni.already.exists");
 
-        affiliateToUpdate.setBirthDate(affiliateToUpdate.getBirthDate());
+        affiliateToUpdate.setBirthDate(affiliate.getBirthDate());
         affiliateToUpdate.setDni(affiliate.getDni());
         affiliateToUpdate.setGender(mapper.map(affiliate.getGender(), GenderEntity.class));
         affiliateToUpdate.setRelationship(mapper.map(affiliate.getRelationship(), RelationshipEntity.class));

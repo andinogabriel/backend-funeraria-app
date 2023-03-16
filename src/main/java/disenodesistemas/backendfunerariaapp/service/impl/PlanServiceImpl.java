@@ -6,7 +6,7 @@ import disenodesistemas.backendfunerariaapp.dto.response.PlanResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.ItemEntity;
 import disenodesistemas.backendfunerariaapp.entities.ItemPlanEntity;
 import disenodesistemas.backendfunerariaapp.entities.Plan;
-import disenodesistemas.backendfunerariaapp.exceptions.AppException;
+import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
 import disenodesistemas.backendfunerariaapp.repository.ItemRepository;
 import disenodesistemas.backendfunerariaapp.repository.ItemsPlanRepository;
 import disenodesistemas.backendfunerariaapp.repository.PlanRepository;
@@ -15,7 +15,6 @@ import disenodesistemas.backendfunerariaapp.service.converters.AbstractConverter
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.projection.ProjectionFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -53,7 +52,7 @@ public class PlanServiceImpl implements PlanService {
     @Override
     @Transactional
     public PlanResponseDto update(final Long id, final PlanRequestDto planRequestDto) {
-        final Plan planToUpdate = findPlanById(id);
+        final Plan planToUpdate = findById(id);
         planToUpdate.setName(planRequestDto.getName());
         planToUpdate.setDescription(planRequestDto.getDescription());
         planToUpdate.setProfitPercentage(planRequestDto.getProfitPercentage());
@@ -69,13 +68,19 @@ public class PlanServiceImpl implements PlanService {
     @Override
     @Transactional(readOnly = true)
     public PlanResponseDto getById(final Long id) {
-        return projectionFactory.createProjection(PlanResponseDto.class, findPlanById(id));
+        return projectionFactory.createProjection(PlanResponseDto.class, findById(id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Plan findById(final Long id) {
+        return planRepository.findById(id).orElseThrow(() -> new NotFoundException("plan.error.not.found"));
     }
 
     @Override
     @Transactional
     public void delete(final Long id) {
-        planRepository.delete(findPlanById(id));
+        planRepository.delete(findById(id));
     }
 
     @Override
@@ -84,10 +89,6 @@ public class PlanServiceImpl implements PlanService {
         return planRepository.findAllProjectedByOrderByIdDesc();
     }
 
-    private Plan findPlanById(final Long id) {
-        return planRepository.findById(id)
-                .orElseThrow(() -> new AppException("plan.error.not.found", HttpStatus.NOT_FOUND));
-    }
 
     private Set<ItemPlanEntity> getItemsPlanEntities(final Set<ItemPlanRequestDto> itemsPlanRequestDto, final Plan planEntity) {
         final List<ItemEntity> itemEntities = findItemsByCode(itemsPlanRequestDto);
@@ -122,7 +123,8 @@ public class PlanServiceImpl implements PlanService {
         final BigDecimal subTotal = itemPlanEntities.stream()
                 .map(itemPlan -> itemPlan.getItem().getPrice().multiply(BigDecimal.valueOf(itemPlan.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        return subTotal.add(subTotal.multiply(profitPercentage.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP))).setScale(2, RoundingMode.HALF_EVEN);
+        return subTotal.add(subTotal.multiply(profitPercentage.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)))
+                .setScale(2, RoundingMode.HALF_EVEN);
     }
 
 }

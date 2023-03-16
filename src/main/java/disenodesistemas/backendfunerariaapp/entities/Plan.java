@@ -34,7 +34,6 @@ public class Plan implements Serializable {
     @Column(name = "id", nullable = false)
     private Long id;
 
-
     @Column(nullable = false, length = 100)
     private String name;
 
@@ -53,15 +52,15 @@ public class Plan implements Serializable {
     @OneToMany(mappedBy = "plan", orphanRemoval = true, cascade = CascadeType.ALL)
     private Set<ItemPlanEntity> itemsPlan;
 
-    @OneToMany(mappedBy = "servicePlan", cascade = CascadeType.ALL)
-    private List<ServiceEntity> servicesPlan;
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL)
+    private List<Funeral> funeral;
 
-    public Plan(final String name, final String description, final  BigDecimal profitPercentage) {
+    public Plan(final String name, final String description, final BigDecimal profitPercentage) {
         this.name = name;
         this.description = description;
         this.profitPercentage = profitPercentage;
         this.itemsPlan = new HashSet<>();
-        this.servicesPlan = new ArrayList<>();
+        this.funeral = new ArrayList<>();
     }
 
     public void setItemsPlan(final Set<ItemPlanEntity> itemsPlan) {

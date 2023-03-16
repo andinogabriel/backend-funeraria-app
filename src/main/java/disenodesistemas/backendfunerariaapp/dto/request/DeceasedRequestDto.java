@@ -1,6 +1,8 @@
 package disenodesistemas.backendfunerariaapp.dto.request;
 
-import disenodesistemas.backendfunerariaapp.entities.*;
+import disenodesistemas.backendfunerariaapp.dto.GenderDto;
+import disenodesistemas.backendfunerariaapp.dto.RelationshipDto;
+import disenodesistemas.backendfunerariaapp.dto.UserDto;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
@@ -10,7 +12,8 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Past;
 import javax.validation.constraints.Positive;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Value
 @Jacksonized
@@ -25,15 +28,17 @@ public class DeceasedRequestDto {
     @Positive(message = "{deceased.error.positive.dni}") Integer dni;
 
     @NotNull(message = "{deceased.error.empty.birthDate}")
-    @Past(message = "{deceased.error.past.birthDate}") Date birthDate;
+    @Past(message = "{deceased.error.past.birthDate}") LocalDate birthDate;
 
-    @NotNull(message = "{deceased.error.empty.deathDate}") Date deathDate;
+    @NotNull(message = "{deceased.error.empty.deathDate}") LocalDateTime deathDate;
 
-    AddressEntity placeOfDeath;
+    AddressRequestDto placeOfDeath;
 
-    @NotNull(message = "{deceased.error.empty.gender}") GenderEntity gender;
+    @NotNull(message = "{deceased.error.empty.gender}") GenderDto gender;
 
-    @NotNull(message = "{deceased.error.empty.relationship}") RelationshipEntity userRelationship;
+    @NotNull(message = "{deceased.error.empty.relationship}") RelationshipDto userRelationship;
 
-    @NotNull(message = "{deceased.error.empty.deathCause}") DeathCauseEntity deathCause;
+    @NotNull(message = "{deceased.error.empty.deathCause}") DeathCauseDto deathCause;
+
+    UserDto user;
 }

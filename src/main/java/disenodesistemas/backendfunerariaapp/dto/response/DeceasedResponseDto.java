@@ -2,7 +2,8 @@ package disenodesistemas.backendfunerariaapp.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public interface DeceasedResponseDto {
@@ -11,14 +12,14 @@ public interface DeceasedResponseDto {
     String getFirstName();
     String getLastName();
     Integer getDni();
-    Date getBirthDate();
-    Date getRegisterDate();
-    Date getDeathDate();
+    LocalDate getBirthDate();
+    LocalDateTime getRegisterDate();
+    LocalDateTime getDeathDate();
     AddressResponseDto getPlaceOfDeath();
     RelationshipResponseDto getDeceasedRelationship();
     UserEntity getDeceasedUser();
-    GenderResponseDto getDeceasedGender();
-    DeathCauseResponseDto getDeceasedDeathCause();
+    GenderResponseDto getGender();
+    DeathCauseResponseDto getDeathCause();
 
     interface UserEntity {
         String getFirstName();

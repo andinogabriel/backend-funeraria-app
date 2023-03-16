@@ -2,7 +2,7 @@ package disenodesistemas.backendfunerariaapp.dto.response;
 
 public interface GenderResponseDto {
 
-    long getId();
+    Long getId();
     String getName();
 
 }

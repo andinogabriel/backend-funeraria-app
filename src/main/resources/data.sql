@@ -51,6 +51,13 @@ INSERT INTO receipt_types (id, name) VALUES
 	(3, 'Recibo de depósito en cuenta corriente')
 	ON CONFLICT (id) DO NOTHING;
 
+INSERT INTO death_causes (id, name) VALUES
+     (1, 'Muerte súbita'),
+     (2, 'Muerte clínica'),
+     (3, 'Suicidio'),
+     (4, 'Accidente de transito')
+ON CONFLICT (id) DO NOTHING;
+
 INSERT INTO provinces (id, name, code31662) VALUES
 	(1,'Ciudad Autónoma de Buenos Aires (CABA)','AR-C'),
 	(2,'Buenos Aires','AR-B'),

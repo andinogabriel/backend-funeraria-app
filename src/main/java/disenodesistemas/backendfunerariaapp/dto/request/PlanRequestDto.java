@@ -18,13 +18,14 @@ import java.util.Set;
 @Builder(toBuilder = true)
 public class PlanRequestDto {
 
+    Long id;
     @NotBlank(message = "{plan.error.blank.name}")
     private final String name;
 
     private final String description;
 
     @NotNull(message = "{plan.error.null.profit.percentage}")
-    @Digits(integer=8, fraction=2, message = "{plan.error.digits.profit.percentage}")
+    @Digits(integer=7, fraction=2, message = "{plan.error.digits.profit.percentage}")
     @Positive(message = "{plan.error.negative.profit.percentage}")
     private final BigDecimal profitPercentage;
 
