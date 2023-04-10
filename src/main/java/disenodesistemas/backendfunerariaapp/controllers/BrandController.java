@@ -56,7 +56,7 @@ public class BrandController {
         brandService.deleteBrand(id);
         return OperationStatusModel.builder()
                 .name("DELETE")
-                .name("SUCCESS")
+                .result("SUCCESS")
                 .build();
     }
 

@@ -18,7 +18,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
-import javax.persistence.PrimaryKeyJoinColumn;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -47,7 +46,7 @@ public class DeceasedEntity {
     private LocalDate birthDate;
 
     @Column(nullable = false)
-    private LocalDateTime deathDate;
+    private LocalDate deathDate;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id", referencedColumnName = "id")
@@ -80,7 +79,7 @@ public class DeceasedEntity {
 
     @Builder
     public DeceasedEntity(final String lastName, final String firstName, final Integer dni, final LocalDate birthDate,
-                          final LocalDateTime deathDate, final AddressEntity placeOfDeath,
+                          final LocalDate deathDate, final AddressEntity placeOfDeath,
                           final RelationshipEntity deceasedRelationship, final boolean affiliated,
                           final UserEntity deceasedUser, final GenderEntity gender, final DeathCauseEntity deathCause) {
         this.lastName = lastName;

@@ -8,6 +8,7 @@ import disenodesistemas.backendfunerariaapp.entities.UserEntity;
 import disenodesistemas.backendfunerariaapp.entities.UserMain;
 import disenodesistemas.backendfunerariaapp.enums.Role;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
+import disenodesistemas.backendfunerariaapp.exceptions.ConflictException;
 import disenodesistemas.backendfunerariaapp.exceptions.EmailExistsException;
 import disenodesistemas.backendfunerariaapp.dto.request.PasswordResetDto;
 import disenodesistemas.backendfunerariaapp.dto.request.UserLoginDto;
@@ -71,7 +72,7 @@ public class UserServiceImplService implements UserService {
     @Transactional
     public UserResponseDto createUser(final UserRegisterDto user) {
         if (userRepository.findByEmail(user.getEmail()).isPresent())
-            throw new EmailExistsException("user.error.email.already.registered");
+            throw new ConflictException("user.error.email.already.registered");
 
         val userEntity = new UserEntity(user.getEmail(), user.getFirstName(),
                 user.getLastName(), bCryptPasswordEncoder.encode(user.getPassword()));

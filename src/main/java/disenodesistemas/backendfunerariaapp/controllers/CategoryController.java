@@ -55,7 +55,7 @@ public class CategoryController {
         categoryService.deleteCategory(id);
         return OperationStatusModel.builder()
                 .name("DELETE")
-                .name("SUCCESS")
+                .result("SUCCESS")
                 .build();
     }
 

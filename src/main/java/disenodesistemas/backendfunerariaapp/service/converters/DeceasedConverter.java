@@ -6,7 +6,6 @@ import disenodesistemas.backendfunerariaapp.entities.DeathCauseEntity;
 import disenodesistemas.backendfunerariaapp.entities.DeceasedEntity;
 import disenodesistemas.backendfunerariaapp.entities.GenderEntity;
 import disenodesistemas.backendfunerariaapp.entities.RelationshipEntity;
-import disenodesistemas.backendfunerariaapp.repository.DeceasedRepository;
 import disenodesistemas.backendfunerariaapp.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -22,12 +21,11 @@ public class DeceasedConverter implements AbstractConverter<DeceasedEntity, Dece
 
     private final UserService userService;
     private final ModelMapper mapper;
-    private final DeceasedRepository deceasedRepository;
 
     @Override
     public DeceasedEntity fromDto(final DeceasedRequestDto dto) {
         val authentication = SecurityContextHolder.getContext().getAuthentication();
-        final DeceasedEntity deceased = DeceasedEntity.builder()
+        return DeceasedEntity.builder()
                 .dni(dto.getDni())
                 .birthDate(dto.getBirthDate())
                 .deathDate(dto.getDeathDate())
@@ -42,7 +40,6 @@ public class DeceasedConverter implements AbstractConverter<DeceasedEntity, Dece
                 .lastName(dto.getLastName())
                 .affiliated(Boolean.FALSE)
                 .build();
-        return deceasedRepository.save(deceased);
     }
 
     @Override

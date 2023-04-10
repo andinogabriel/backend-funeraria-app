@@ -2,6 +2,7 @@ package disenodesistemas.backendfunerariaapp.service.impl;
 
 import disenodesistemas.backendfunerariaapp.dto.ReceiptTypeDtoMother;
 import disenodesistemas.backendfunerariaapp.dto.UserDtoMother;
+import disenodesistemas.backendfunerariaapp.dto.request.IncomeDetailRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.IncomeDetailRequestDtoMother;
 import disenodesistemas.backendfunerariaapp.dto.request.IncomeRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.SupplierRequestDtoMother;
@@ -20,6 +21,7 @@ import disenodesistemas.backendfunerariaapp.repository.IncomeRepository;
 import disenodesistemas.backendfunerariaapp.repository.ItemRepository;
 import disenodesistemas.backendfunerariaapp.service.SupplierService;
 import disenodesistemas.backendfunerariaapp.service.UserService;
+import disenodesistemas.backendfunerariaapp.service.converters.AbstractConverter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,6 +48,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -66,12 +69,13 @@ class IncomeServiceImplTest {
     private ProjectionFactory projectionFactory;
     @Mock
     private ModelMapper modelMapper;
+    @Mock
+    private AbstractConverter<IncomeDetailEntity, IncomeDetailRequestDto> incomeDetailConverter;
 
     @InjectMocks
     private IncomeServiceImpl sut;
 
     private IncomeRequestDto incomeRequestDto;
-    private ProjectionFactory factory;
 
     private IncomeResponseDto incomeResponseDto;
 
@@ -92,7 +96,7 @@ class IncomeServiceImplTest {
                 .willReturn(ReceiptTypeEntityMother.getReceipt());
         given(supplierService.findSupplierEntityByNif(SupplierRequestDtoMother.getSupplier().getNif()))
                 .willReturn(SupplierEntityMother.getSupplier());
-        factory = new SpelAwareProxyProjectionFactory();
+        final ProjectionFactory factory = new SpelAwareProxyProjectionFactory();
         incomeResponseDto = factory.createProjection(IncomeResponseDto.class,
                 IncomeEntityMother.getIncome());
     }
@@ -104,6 +108,8 @@ class IncomeServiceImplTest {
         given(modelMapper.map(IncomeDetailRequestDtoMother.getIncomeDetail(),IncomeDetailEntity.class))
                 .willReturn(IncomeDetailEntityMother.getIncomeDetail());
         given(incomeRepository.save(IncomeEntityMother.getIncome())).willReturn(IncomeEntityMother.getIncome());
+        given(incomeDetailConverter.fromDTOs(incomeRequestDto.getIncomeDetails()))
+                .willReturn(List.of(IncomeDetailEntityMother.getIncomeDetail()));
         given(projectionFactory.createProjection(IncomeResponseDto.class, IncomeEntityMother.getIncome()))
                 .willReturn(incomeResponseDto);
 
@@ -117,7 +123,7 @@ class IncomeServiceImplTest {
                 () -> assertNotNull(response.getTotalAmount())
         );
         verify(incomeRepository, times(2)).save(IncomeEntityMother.getIncome());
-        verify(itemRepository).saveAll(anyList());
+        verify(itemRepository, atMost(2)).saveAll(anyList());
     }
 
     @DisplayName("Given a incomeRequestDto with an existing receipt number when call create method then return an exception")

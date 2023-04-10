@@ -13,7 +13,6 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Past;
 import javax.validation.constraints.Positive;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Value
 @Jacksonized
@@ -30,7 +29,7 @@ public class DeceasedRequestDto {
     @NotNull(message = "{deceased.error.empty.birthDate}")
     @Past(message = "{deceased.error.past.birthDate}") LocalDate birthDate;
 
-    @NotNull(message = "{deceased.error.empty.deathDate}") LocalDateTime deathDate;
+    @NotNull(message = "{deceased.error.empty.deathDate}") LocalDate deathDate;
 
     AddressRequestDto placeOfDeath;
 

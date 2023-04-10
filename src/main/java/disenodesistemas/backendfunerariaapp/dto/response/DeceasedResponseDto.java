@@ -8,13 +8,13 @@ import java.time.LocalDateTime;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public interface DeceasedResponseDto {
 
-    long getId();
+    Long getId();
     String getFirstName();
     String getLastName();
     Integer getDni();
     LocalDate getBirthDate();
     LocalDateTime getRegisterDate();
-    LocalDateTime getDeathDate();
+    LocalDate getDeathDate();
     AddressResponseDto getPlaceOfDeath();
     RelationshipResponseDto getDeceasedRelationship();
     UserEntity getDeceasedUser();
@@ -26,6 +26,5 @@ public interface DeceasedResponseDto {
         String getLastName();
         String getEmail();
     }
-
 
 }

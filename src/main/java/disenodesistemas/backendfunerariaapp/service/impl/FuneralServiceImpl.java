@@ -9,6 +9,7 @@ import disenodesistemas.backendfunerariaapp.entities.Plan;
 import disenodesistemas.backendfunerariaapp.entities.ReceiptTypeEntity;
 import disenodesistemas.backendfunerariaapp.exceptions.ConflictException;
 import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
+import disenodesistemas.backendfunerariaapp.repository.DeceasedRepository;
 import disenodesistemas.backendfunerariaapp.repository.FuneralRepository;
 import disenodesistemas.backendfunerariaapp.service.FuneralService;
 import disenodesistemas.backendfunerariaapp.service.PlanService;
@@ -29,6 +30,7 @@ import java.util.Objects;
 public class FuneralServiceImpl implements FuneralService {
 
     private final FuneralRepository funeralRepository;
+    private final DeceasedRepository deceasedRepository;
     private final PlanService planService;
     private final ProjectionFactory projectionFactory;
     private final ModelMapper modelMapper;
@@ -41,20 +43,19 @@ public class FuneralServiceImpl implements FuneralService {
         if (existsByReceiptNumber(funeralRequest.getReceiptNumber()))
             throw new ConflictException("funeral.error.receiptNumber.already.exists");
         final Plan funeralPlan = planService.findById(funeralRequest.getPlan().getId());
-        final DeceasedEntity deceased = deceasedConverter.fromDto(funeralRequest.getDeceased());
+        final DeceasedEntity deceased = deceasedRepository.save(deceasedConverter.fromDto(funeralRequest.getDeceased()));
+        final BigDecimal tax = Objects.nonNull(funeralRequest.getTax()) ? funeralRequest.getTax() : TAX;
         final Funeral funeral = Funeral.builder()
                 .funeralDate(funeralRequest.getFuneralDate())
                 .receiptSeries(funeralRequest.getReceiptSeries())
-                .tax(Objects.nonNull(funeralRequest.getTax()) ? funeralRequest.getTax() : TAX)
+                .tax(tax)
                 .receiptType(modelMapper.map(funeralRequest.getReceiptType(), ReceiptTypeEntity.class))
                 .receiptNumber(funeralRequest.getReceiptNumber())
                 .plan(funeralPlan)
                 .deceased(deceased)
                 .build();
 
-        funeral.setTotalAmount(funeralPlan.getPrice().add(funeralPlan.getPrice()
-                .multiply(BigDecimal.valueOf(5).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)))
-                .setScale(2, RoundingMode.HALF_UP));
+        funeral.setTotalAmount(getTotalAmount(funeralPlan, tax));
         final Funeral funeralCreated = funeralRepository.save(funeral);
         funeralCreated.setDeceased(deceased);
 
@@ -71,6 +72,7 @@ public class FuneralServiceImpl implements FuneralService {
         funeralToUpdate.setFuneralDate(funeralToUpdate.getFuneralDate());
         funeralToUpdate.setReceiptSeries(funeralRequest.getReceiptSeries());
         funeralToUpdate.setTax(Objects.nonNull(funeralRequest.getTax()) ? funeralRequest.getTax() : BigDecimal.valueOf(21));
+        funeralToUpdate.setTotalAmount(getTotalAmount(funeralToUpdate.getPlan(), Objects.nonNull(funeralRequest.getTax()) ? funeralRequest.getTax() : BigDecimal.valueOf(21)));
         return projectionFactory.createProjection(FuneralResponseDto.class, funeralRepository.save(funeralToUpdate));
     }
 
@@ -87,12 +89,20 @@ public class FuneralServiceImpl implements FuneralService {
     }
 
     private Funeral findById(final Long id) {
-        return funeralRepository.findById(id).orElseThrow(() -> new NotFoundException("funeral.error.not.found"));
+        return funeralRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("funeral.error.not.found"));
     }
 
     private boolean existsByReceiptNumber(final String receiptNumber) {
         return funeralRepository.existsByReceiptNumber(receiptNumber);
     }
 
+    private static BigDecimal getTotalAmount(final Plan funeralPlan, final BigDecimal tax) {
+        return funeralPlan.getPrice()
+                .add(funeralPlan.getPrice()
+                    .multiply(tax.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP))
+                )
+                .setScale(2, RoundingMode.HALF_UP);
+    }
 
 }

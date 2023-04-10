@@ -101,7 +101,7 @@ public class IncomeController {
         incomeService.deleteIncome(receiptNumber);
         return OperationStatusModel.builder()
                 .name("DELETE")
-                .name("SUCCESS")
+                .result("SUCCESS")
                 .build();
     }
 

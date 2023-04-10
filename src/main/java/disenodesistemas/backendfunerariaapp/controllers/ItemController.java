@@ -70,7 +70,7 @@ public class ItemController {
         itemService.deleteItem(code);
         return OperationStatusModel.builder()
                 .name("DELETE")
-                .name("SUCCESS")
+                .result("SUCCESS")
                 .build();
     }
 

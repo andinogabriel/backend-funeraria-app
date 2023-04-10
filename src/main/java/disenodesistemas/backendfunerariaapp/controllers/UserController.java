@@ -43,8 +43,6 @@ public class UserController {
     private final UserModelAssembler userModelAssembler;
     private final PagedResourcesAssembler<UserEntity> pagedResourcesAssembler;
 
-
-
     @GetMapping(path = "/me")
     public UserResponseDto getUser() {
         //con SecurityContextHolder accedemos al contexto de la parte de la seguridad de la app y obtenemos la autenticacion del user
@@ -92,30 +90,9 @@ public class UserController {
     }
 
     @PostMapping(path = "/reset-password")
-    public String resetUserPassword(@Valid @RequestBody final PasswordResetDto passwordResetDto, @RequestParam("token") final String token) {
+    public String resetUserPassword(@Valid @RequestBody final PasswordResetDto passwordResetDto,
+                                    @RequestParam("token") final String token) {
         return userService.resetUserPassword(passwordResetDto, token);
     }
-
-    /*
-    @GetMapping(path = "/affiliates")
-    public List<AffiliateRest> getAffiliates() {
-
-        //con SecurityContextHolder accedemos al contexto de la parte de la seguridad de la app y obtenemos la autenticacion del user
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        //Del metodo obtenemos el subject name que seria nuestro email
-        String email = authentication.getName();
-
-        List<AffiliateDto> affiliatesDto = userServiceImpl.getUserAffiliates(email);
-
-        List<AffiliateRest> affiliatesRest = new ArrayList<>();
-
-        for (AffiliateDto affiliate : affiliatesDto) {
-            AffiliateRest affiliateRest = mapper.map(affiliate, AffiliateRest.class);
-            affiliatesRest.add(affiliateRest);
-
-        }
-        return affiliatesRest;
-    }*/
 
 }

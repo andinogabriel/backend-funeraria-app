@@ -51,7 +51,7 @@ public class SupplierController {
         supplierService.deleteSupplier(nif);
         return OperationStatusModel.builder()
                 .name("DELETE")
-                .name("SUCCESS")
+                .result("SUCCESSFUL")
                 .build();
     }
 

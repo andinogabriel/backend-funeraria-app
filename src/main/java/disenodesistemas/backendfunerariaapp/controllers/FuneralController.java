@@ -53,7 +53,7 @@ public class FuneralController {
         return ResponseEntity.ok(
                 OperationStatusModel.builder()
                         .name("DELETE FUNERAL")
-                        .name("SUCCESS")
+                        .result("SUCCESS")
                         .build()
         );
     }
