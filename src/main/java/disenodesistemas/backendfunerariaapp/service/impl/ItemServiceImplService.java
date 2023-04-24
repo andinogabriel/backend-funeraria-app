@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+import static java.util.Objects.nonNull;
+
 
 @Service
 @RequiredArgsConstructor
@@ -83,7 +85,8 @@ public class ItemServiceImplService implements ItemService {
     @Transactional
     public void deleteItem(final String code) {
         val itemEntity = getItemByCode(code);
-        fileStoreService.deleteFilesFromS3Bucket(itemEntity);
+        if(nonNull(itemEntity.getItemImageLink()))
+            fileStoreService.deleteFilesFromS3Bucket(itemEntity);
         itemRepository.delete(itemEntity);
     }
 
@@ -92,7 +95,7 @@ public class ItemServiceImplService implements ItemService {
     @Transactional
     public void uploadItemImage(final String code, final MultipartFile image) {
         val itemEntity = getItemByCode(code);
-        if(Objects.nonNull(image))
+        if(nonNull(image))
             itemEntity.setItemImageLink(fileStoreService.save(itemEntity, image));
     }
 

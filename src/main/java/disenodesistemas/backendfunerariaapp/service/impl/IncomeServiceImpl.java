@@ -54,6 +54,7 @@ public class IncomeServiceImpl implements IncomeService {
     @Override
     @Transactional(propagation = Propagation.SUPPORTS)
     public IncomeResponseDto createIncome(final IncomeRequestDto incomeRequestDto) {
+        checkExistsByByReceiptNumber(incomeRequestDto);
         val incomeEntity = IncomeEntity.builder()
                 .receiptNumber(incomeRequestDto.getReceiptNumber())
                 .incomeUser(userService.getUserByEmail(incomeRequestDto.getIncomeUser().getEmail()))
@@ -62,14 +63,7 @@ public class IncomeServiceImpl implements IncomeService {
                 .tax(incomeRequestDto.getTax())
                 .incomeSupplier(supplierService.findSupplierEntityByNif(incomeRequestDto.getSupplier().getNif()))
                 .build();
-        checkExistsByByReceiptNumber(incomeRequestDto);
-        if (!isEmpty(incomeRequestDto.getIncomeDetails())) {
-            incomeRepository.save(incomeEntity);
-            incomeEntity.setIncomeDetails(incomeDetailConverter.fromDTOs(incomeRequestDto.getIncomeDetails()));
-            setItemsPrice(incomeEntity.getIncomeDetails());
-            setItemsStock(incomeEntity.getIncomeDetails());
-            incomeEntity.setTotalAmount(totalAmountCalculator(incomeEntity.getIncomeDetails(), incomeRequestDto));
-        }
+        saveIncomeDetails(incomeRequestDto, incomeEntity);
         return projectionFactory.createProjection(IncomeResponseDto.class, incomeRepository.save(incomeEntity));
     }
 
@@ -83,7 +77,8 @@ public class IncomeServiceImpl implements IncomeService {
     @Transactional
     public IncomeResponseDto updateIncome(final Long receiptNumber, final IncomeRequestDto incomeRequestDto) {
         val incomeEntity = findEntityByReceiptNumber(receiptNumber);
-        if(!incomeEntity.getReceiptNumber().equals(incomeRequestDto.getReceiptNumber())) checkExistsByByReceiptNumber(incomeRequestDto);
+        if(!incomeEntity.getReceiptNumber().equals(incomeRequestDto.getReceiptNumber()))
+            checkExistsByByReceiptNumber(incomeRequestDto);
         incomeEntity.setSupplier(supplierService.findSupplierEntityByNif(incomeRequestDto.getSupplier().getNif()));
         incomeEntity.setReceiptType(modelMapper.map(incomeRequestDto.getReceiptType(), ReceiptTypeEntity.class));
         incomeEntity.setTax(incomeRequestDto.getTax());
@@ -92,14 +87,7 @@ public class IncomeServiceImpl implements IncomeService {
 
         incomeEntity.setLastModifiedBy(userService.getUserByEmail(incomeRequestDto.getIncomeUser().getEmail()));
         preUpdateItemsStock(incomeEntity.getIncomeDetails());
-        if (!isEmpty(incomeRequestDto.getIncomeDetails())) {
-            final List<IncomeDetailEntity> incomeDetailEntities = getDeletedIncomeDetails(incomeEntity, incomeRequestDto);
-            incomeDetailEntities.forEach(incomeEntity::removeIncomeDetail);
-            incomeEntity.setIncomeDetails(incomeDetailConverter.fromDTOs(incomeRequestDto.getIncomeDetails()));
-            setItemsPrice(incomeEntity.getIncomeDetails());
-            setItemsStock(incomeEntity.getIncomeDetails());
-            incomeEntity.setTotalAmount(totalAmountCalculator(incomeEntity.getIncomeDetails(), incomeRequestDto));
-        }
+        saveIncomeDetailsUpdated(incomeRequestDto, incomeEntity);
         return projectionFactory.createProjection(IncomeResponseDto.class, incomeRepository.save(incomeEntity));
     }
 
@@ -127,6 +115,27 @@ public class IncomeServiceImpl implements IncomeService {
     @Transactional(readOnly = true)
     public IncomeResponseDto findByReceiptNumber(final Long receiptNumber) {
         return projectionFactory.createProjection(IncomeResponseDto.class, findEntityByReceiptNumber(receiptNumber));
+    }
+
+    private void saveIncomeDetails(IncomeRequestDto incomeRequestDto, IncomeEntity incomeEntity) {
+        if (!isEmpty(incomeRequestDto.getIncomeDetails())) {
+            incomeRepository.save(incomeEntity);
+            incomeEntity.setIncomeDetails(incomeDetailConverter.fromDTOs(incomeRequestDto.getIncomeDetails()));
+            setItemsPrice(incomeEntity.getIncomeDetails());
+            setItemsStock(incomeEntity.getIncomeDetails());
+            incomeEntity.setTotalAmount(totalAmountCalculator(incomeEntity.getIncomeDetails(), incomeRequestDto));
+        }
+    }
+
+    private void saveIncomeDetailsUpdated(final IncomeRequestDto incomeRequestDto, final IncomeEntity incomeEntity) {
+        if (!isEmpty(incomeRequestDto.getIncomeDetails())) {
+            final List<IncomeDetailEntity> incomeDetailEntities = getDeletedIncomeDetails(incomeEntity, incomeRequestDto);
+            incomeDetailEntities.forEach(incomeEntity::removeIncomeDetail);
+            incomeEntity.setIncomeDetails(incomeDetailConverter.fromDTOs(incomeRequestDto.getIncomeDetails()));
+            setItemsPrice(incomeEntity.getIncomeDetails());
+            setItemsStock(incomeEntity.getIncomeDetails());
+            incomeEntity.setTotalAmount(totalAmountCalculator(incomeEntity.getIncomeDetails(), incomeRequestDto));
+        }
     }
 
     private List<IncomeDetailEntity> getDeletedIncomeDetails(final IncomeEntity incomeEntity, final IncomeRequestDto incomeDto) {

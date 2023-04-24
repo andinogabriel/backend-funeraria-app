@@ -16,7 +16,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.MapsId;
 import javax.persistence.OneToOne;
 import javax.validation.constraints.Digits;
 import java.io.Serializable;
@@ -49,6 +48,7 @@ public class Funeral implements Serializable {
     @Column(nullable = false)
     @Digits(integer = 9, fraction = 2)
     private BigDecimal totalAmount;
+
     private LocalDateTime registerDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -69,6 +69,7 @@ public class Funeral implements Serializable {
                    final String receiptNumber,
                    final String receiptSeries,
                    final BigDecimal tax,
+                   final BigDecimal totalAmount,
                    final ReceiptTypeEntity receiptType,
                    final DeceasedEntity deceased,
                    final Plan plan) {
@@ -76,6 +77,7 @@ public class Funeral implements Serializable {
         this.receiptNumber = receiptNumber;
         this.receiptSeries = receiptSeries;
         this.tax = tax;
+        this.totalAmount = totalAmount;
         this.registerDate = LocalDateTime.now();
         this.receiptType = receiptType;
         this.deceased = deceased;

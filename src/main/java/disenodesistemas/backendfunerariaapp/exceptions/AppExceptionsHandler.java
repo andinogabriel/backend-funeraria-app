@@ -91,8 +91,7 @@ public class AppExceptionsHandler {
                 .collect(Collectors.toUnmodifiableList());
         return ResponseEntity.badRequest().body(customFieldErrors);
     }
-
-    //Control de expeciones generico
+    
     @ExceptionHandler(value = Exception.class)
     public ResponseEntity<Object> handleExceptionCustom(final Exception ex, final WebRequest webRequest) {
         final ErrorMessage errorMessage = ErrorMessage.builder()

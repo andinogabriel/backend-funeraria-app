@@ -3,13 +3,13 @@ package disenodesistemas.backendfunerariaapp.service.impl;
 import disenodesistemas.backendfunerariaapp.dto.JwtDto;
 import disenodesistemas.backendfunerariaapp.dto.request.UserRegisterDto;
 import disenodesistemas.backendfunerariaapp.dto.response.UserResponseDto;
+import disenodesistemas.backendfunerariaapp.entities.ConfirmationTokenEntity;
 import disenodesistemas.backendfunerariaapp.entities.RoleEntity;
 import disenodesistemas.backendfunerariaapp.entities.UserEntity;
 import disenodesistemas.backendfunerariaapp.entities.UserMain;
 import disenodesistemas.backendfunerariaapp.enums.Role;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.exceptions.ConflictException;
-import disenodesistemas.backendfunerariaapp.exceptions.EmailExistsException;
 import disenodesistemas.backendfunerariaapp.dto.request.PasswordResetDto;
 import disenodesistemas.backendfunerariaapp.dto.request.UserLoginDto;
 import disenodesistemas.backendfunerariaapp.repository.RoleRepository;
@@ -41,10 +41,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+
+import static java.util.Objects.isNull;
 
 @Service
 @RequiredArgsConstructor
@@ -132,38 +133,32 @@ public class UserServiceImplService implements UserService {
 
     @Override
     public String confirmationUser(final String token) {
-        String message;
-        val confirmationTokenEntity = confirmationTokenService.findByToken(token);
-        val userEntity = confirmationTokenEntity.getUser();
-        //if the user account isn't activated
-        if(!userEntity.isEnabled()) {
-            //check if the token is expired
-            if(confirmationTokenEntity.getExpiryDate().isBefore(Instant.now())) {
-                message = "confirmationToken.error.expired";
-            } else {
-                //token is valid so activate the user account
-                userEntity.setEnabled(true);
-                userRepository.save(userEntity);
-                message = "confirmationToken.successful.activation";
-            }
-        } else {
-            //User account is already activated
+        final ConfirmationTokenEntity tokenEntity = confirmationTokenService.findByToken(token);
+        final UserEntity userEntity = tokenEntity.getUser();
+
+        if (userEntity.isEnabled())
             throw new AppException("confirmationToken.error.already.activated", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        return message;
+
+        if (tokenEntity.getExpiryDate().isBefore(Instant.now()))
+            return "confirmationToken.error.expired";
+
+        userEntity.setEnabled(true);
+        userRepository.save(userEntity);
+        return "confirmationToken.successful.activation";
     }
 
     @Override
     public String resetUserPassword(final PasswordResetDto passwordResetDto, final String token) {
-        val tokenEntity = confirmationTokenService.findByToken(token);
-        if (Objects.nonNull(tokenEntity.getUser()) && tokenEntity.getExpiryDate().isAfter(Instant.now())) {
-            tokenEntity.getUser().setEncryptedPassword(bCryptPasswordEncoder.encode(passwordResetDto.getPassword()));
-            userRepository.save(tokenEntity.getUser());
-            //Password successfully reset. You can now log in with the new credentials.
-            return  "confirmationToken.successful.reset.password";
-        } else {
-            throw new AppException("confirmationToken.error.invalid.link",HttpStatus.GONE);
+        final ConfirmationTokenEntity tokenEntity = confirmationTokenService.findByToken(token);
+        if (isNull(tokenEntity.getUser()) || tokenEntity.getExpiryDate().isBefore(Instant.now())) {
+            throw new AppException("confirmationToken.error.invalid.link", HttpStatus.GONE);
         }
+
+        final UserEntity userEntity = tokenEntity.getUser();
+        userEntity.setEncryptedPassword(bCryptPasswordEncoder.encode(passwordResetDto.getPassword()));
+        userRepository.save(userEntity);
+
+        return "confirmationToken.successful.reset.password";
     }
 
     @Override
