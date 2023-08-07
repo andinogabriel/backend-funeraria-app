@@ -10,4 +10,5 @@ public interface FuneralService {
     FuneralResponseDto update(Long id, FuneralRequestDto funeralRequest);
     void delete(Long id);
     List<FuneralResponseDto> findAll();
+    FuneralResponseDto findById(Long id);
 }

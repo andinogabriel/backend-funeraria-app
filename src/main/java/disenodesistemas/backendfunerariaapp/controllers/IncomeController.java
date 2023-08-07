@@ -70,8 +70,6 @@ public class IncomeController {
                 .supplier(incomeRequest.getSupplier())
                 .incomeDetails(incomeRequest.getIncomeDetails())
                 .incomeUser(UserDto.builder().email(email).build())
-                .receiptNumber(incomeRequest.getReceiptNumber())
-                .receiptSeries(incomeRequest.getReceiptSeries())
                 .receiptType(incomeRequest.getReceiptType())
                 .tax(incomeRequest.getTax())
                 .build();
@@ -87,8 +85,6 @@ public class IncomeController {
                 .supplier(incomeRequest.getSupplier())
                 .incomeDetails(incomeRequest.getIncomeDetails())
                 .incomeUser(UserDto.builder().email(email).build())
-                .receiptNumber(incomeRequest.getReceiptNumber())
-                .receiptSeries(incomeRequest.getReceiptSeries())
                 .receiptType(incomeRequest.getReceiptType())
                 .tax(incomeRequest.getTax())
                 .build();

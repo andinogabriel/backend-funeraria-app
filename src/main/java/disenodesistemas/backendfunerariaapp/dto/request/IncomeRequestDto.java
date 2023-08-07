@@ -19,13 +19,13 @@ import java.util.List;
 @Builder(toBuilder = true)
 public class IncomeRequestDto {
 
-    @NotNull(message = "{income.error.empty.receiptNumber}")
+    /*@NotNull(message = "{income.error.empty.receiptNumber}")
     @Digits(integer=20, fraction=0, message = "{income.error.digits.receiptNumber}")
-    Long receiptNumber;
+    Long receiptNumber;*/
 
-    @NotNull(message = "{income.error.empty.receiptSeries}")
+    /*@NotNull(message = "{income.error.empty.receiptSeries}")
     @Digits(integer=20, fraction=0, message = "{income.error.digits.receiptSeries}")
-    Long receiptSeries;
+    Long receiptSeries;*/
 
     @NotNull(message = "{income.error.empty.tax}")
     @Digits(integer=8, fraction=2, message = "{income.error.digits.tax}")

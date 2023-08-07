@@ -29,8 +29,14 @@ public class FuneralController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public List<FuneralResponseDto> getAllItems() {
+    public List<FuneralResponseDto> getAll() {
         return funeralService.findAll();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/{id}")
+    public FuneralResponseDto getFuneralById(@PathVariable final Long id) {
+        return funeralService.findById(id);
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")

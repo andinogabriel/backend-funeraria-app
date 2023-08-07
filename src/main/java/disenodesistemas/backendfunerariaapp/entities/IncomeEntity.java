@@ -45,11 +45,9 @@ public class IncomeEntity implements Serializable {
     private Long id;
 
     @Column(nullable = false)
-    @Digits(integer = 20, fraction = 0)
     private Long receiptNumber;
 
     @Column(nullable = false)
-    @Digits(integer = 20, fraction = 0)
     private Long receiptSeries;
 
     @CreatedDate

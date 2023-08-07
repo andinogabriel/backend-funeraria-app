@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 public class FileStoreServiceImplService implements FileStoreService {
@@ -52,7 +53,8 @@ public class FileStoreServiceImplService implements FileStoreService {
 
         try {
             val path = String.format("%s/%s", bucketName, folderName);
-            val filename = String.format("%s", Objects.requireNonNull(file.getOriginalFilename()).replaceAll("\\s+", SEPARATOR));
+            val filename = String.format("%s", Objects.requireNonNullElse(file.getOriginalFilename(), UUID.randomUUID().toString())
+                    .replaceAll("\\s+", SEPARATOR));
             s3.putObject(path, filename, file.getInputStream(), metadata);
             return bucketUrl + folderName + "/" + filename;
         } catch (AmazonServiceException | IOException | IllegalStateException ex) {

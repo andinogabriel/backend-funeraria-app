@@ -47,6 +47,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.never;
@@ -82,9 +83,9 @@ class IncomeServiceImplTest {
     @BeforeEach
     void setUp() {
         incomeRequestDto = IncomeRequestDto.builder()
-                .receiptNumber(123456789L)
+                //.receiptNumber(123456789L)
                 .tax(BigDecimal.TEN)
-                .receiptSeries(321L)
+                //.receiptSeries(321L)
                 .receiptType(ReceiptTypeDtoMother.getReciboDeCaja())
                 .incomeUser(UserDtoMother.getUserDto())
                 .supplier(SupplierRequestDtoMother.getSupplier())
@@ -103,7 +104,6 @@ class IncomeServiceImplTest {
 
     @Test
     void create() {
-        given(incomeRepository.existsByReceiptNumber(incomeRequestDto.getReceiptNumber())).willReturn(Boolean.FALSE);
         given(itemRepository.findAll()).willReturn(List.of(ItemEntityMother.getItem()));
         given(modelMapper.map(IncomeDetailRequestDtoMother.getIncomeDetail(),IncomeDetailEntity.class))
                 .willReturn(IncomeDetailEntityMother.getIncomeDetail());
@@ -129,7 +129,7 @@ class IncomeServiceImplTest {
     @DisplayName("Given a incomeRequestDto with an existing receipt number when call create method then return an exception")
     @Test
     void createIncomeWithAnExistentReceiptNumber() {
-        given(incomeRepository.existsByReceiptNumber(anyLong())).willReturn(Boolean.TRUE);
+        given(incomeRepository.existsByReceiptNumber(anyString())).willReturn(Boolean.TRUE);
         assertThrows(AppException.class, () ->  sut.createIncome(incomeRequestDto));
     }
 

@@ -1,6 +1,7 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
 import disenodesistemas.backendfunerariaapp.dto.JwtDto;
+import disenodesistemas.backendfunerariaapp.dto.request.PasswordResetByEmailDto;
 import disenodesistemas.backendfunerariaapp.dto.request.UserRegisterDto;
 import disenodesistemas.backendfunerariaapp.dto.response.UserResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.ConfirmationTokenEntity;
@@ -10,7 +11,6 @@ import disenodesistemas.backendfunerariaapp.entities.UserMain;
 import disenodesistemas.backendfunerariaapp.enums.Role;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.exceptions.ConflictException;
-import disenodesistemas.backendfunerariaapp.dto.request.PasswordResetDto;
 import disenodesistemas.backendfunerariaapp.dto.request.UserLoginDto;
 import disenodesistemas.backendfunerariaapp.repository.RoleRepository;
 import disenodesistemas.backendfunerariaapp.repository.UserRepository;
@@ -148,7 +148,7 @@ public class UserServiceImplService implements UserService {
     }
 
     @Override
-    public String resetUserPassword(final PasswordResetDto passwordResetDto, final String token) {
+    public String resetUserPasswordByEmail(final PasswordResetByEmailDto passwordResetDto, final String token) {
         final ConfirmationTokenEntity tokenEntity = confirmationTokenService.findByToken(token);
         if (isNull(tokenEntity.getUser()) || tokenEntity.getExpiryDate().isBefore(Instant.now())) {
             throw new AppException("confirmationToken.error.invalid.link", HttpStatus.GONE);

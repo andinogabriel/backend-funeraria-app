@@ -8,8 +8,8 @@ import java.util.List;
 
 public interface IncomeResponseDto {
 
-    Long getReceiptNumber();
-    Long getReceiptSeries();
+    String getReceiptNumber();
+    String getReceiptSeries();
 
     @JsonFormat(pattern="dd-MM-yyyy HH:mm")
     LocalDateTime getIncomeDate();

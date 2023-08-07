@@ -1,7 +1,7 @@
 package disenodesistemas.backendfunerariaapp.service;
 
 import disenodesistemas.backendfunerariaapp.dto.JwtDto;
-import disenodesistemas.backendfunerariaapp.dto.request.PasswordResetDto;
+import disenodesistemas.backendfunerariaapp.dto.request.PasswordResetByEmailDto;
 import disenodesistemas.backendfunerariaapp.dto.request.UserLoginDto;
 import disenodesistemas.backendfunerariaapp.dto.request.UserRegisterDto;
 import disenodesistemas.backendfunerariaapp.dto.response.UserResponseDto;
@@ -27,7 +27,7 @@ public interface UserService extends UserDetailsService {
 
     String confirmationUser(String token);
 
-    String resetUserPassword(PasswordResetDto passwordResetDto, String token);
+    String resetUserPasswordByEmail(PasswordResetByEmailDto passwordResetDto, String token);
 
     UserDetails loadUserByUsername(String email) throws UsernameNotFoundException;
 

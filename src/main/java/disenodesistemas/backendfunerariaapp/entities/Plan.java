@@ -3,6 +3,7 @@ package disenodesistemas.backendfunerariaapp.entities;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.Hibernate;
 
 import javax.persistence.CascadeType;
@@ -27,6 +28,7 @@ import java.util.Set;
 @Getter
 @Setter
 @NoArgsConstructor
+@ToString
 public class Plan implements Serializable {
 
     @Id
@@ -50,9 +52,11 @@ public class Plan implements Serializable {
     private BigDecimal profitPercentage;
 
     @OneToMany(mappedBy = "plan", orphanRemoval = true, cascade = CascadeType.ALL)
+    @ToString.Exclude
     private Set<ItemPlanEntity> itemsPlan;
 
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL)
+    @ToString.Exclude
     private List<Funeral> funeral;
 
     public Plan(final String name, final String description, final BigDecimal profitPercentage) {

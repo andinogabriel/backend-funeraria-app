@@ -3,12 +3,15 @@ package disenodesistemas.backendfunerariaapp.service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
-import static org.apache.http.entity.ContentType.*;
+import static org.apache.http.entity.ContentType.IMAGE_GIF;
+import static org.apache.http.entity.ContentType.IMAGE_JPEG;
+import static org.apache.http.entity.ContentType.IMAGE_PNG;
+
 
 public interface FileStoreService {
 
@@ -19,14 +22,17 @@ public interface FileStoreService {
     byte[] download(String path, String key);
 
     default Optional<Map<String, String>> extractMetadata(MultipartFile file) {
-        Map<String, String> metadata = new HashMap<>();
-        metadata.put("Content-Type", file.getContentType());
-        metadata.put("Content-Length", String.valueOf(file.getSize()));
-        return Optional.of(metadata);
+        return Optional.of(
+                Map.of(
+                        "Content-Type", Objects.requireNonNullElse(file.getContentType(), null),
+                        "Content-Length", String.valueOf(file.getSize())
+                )
+        );
     }
 
     default void isAnImage(MultipartFile file) {
-        if(!Arrays.asList(IMAGE_JPEG.getMimeType(), IMAGE_PNG.getMimeType(), IMAGE_GIF.getMimeType()).contains(file.getContentType())) {
+        if(!List.of(IMAGE_JPEG.getMimeType(), IMAGE_PNG.getMimeType(), IMAGE_GIF.getMimeType())
+                .contains(file.getContentType())) {
             throw new IllegalStateException("El archivo debe ser una imagen valida (JPEG, JPG, PNG, GIF).");
         }
     }

@@ -3,7 +3,7 @@ package disenodesistemas.backendfunerariaapp.controllers;
 import disenodesistemas.backendfunerariaapp.dto.JwtDto;
 import disenodesistemas.backendfunerariaapp.dto.UserModel;
 import disenodesistemas.backendfunerariaapp.dto.UserModelAssembler;
-import disenodesistemas.backendfunerariaapp.dto.request.PasswordResetDto;
+import disenodesistemas.backendfunerariaapp.dto.request.PasswordResetByEmailDto;
 import disenodesistemas.backendfunerariaapp.dto.request.UserRegisterDto;
 import disenodesistemas.backendfunerariaapp.dto.request.UserLoginDto;
 import disenodesistemas.backendfunerariaapp.dto.response.UserResponseDto;
@@ -90,9 +90,9 @@ public class UserController {
     }
 
     @PostMapping(path = "/reset-password")
-    public String resetUserPassword(@Valid @RequestBody final PasswordResetDto passwordResetDto,
+    public String resetUserPassword(@Valid @RequestBody final PasswordResetByEmailDto passwordResetDto,
                                     @RequestParam("token") final String token) {
-        return userService.resetUserPassword(passwordResetDto, token);
+        return userService.resetUserPasswordByEmail(passwordResetDto, token);
     }
 
 }

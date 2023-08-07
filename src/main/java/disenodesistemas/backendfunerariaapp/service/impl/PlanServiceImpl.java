@@ -89,6 +89,14 @@ public class PlanServiceImpl implements PlanService {
         return planRepository.findAllProjectedByOrderByIdDesc();
     }
 
+    @Override
+    @Transactional
+    public void updatePlansPrice(final List<ItemEntity> items) {
+        final List<Plan> plansToUpdatePrice = planRepository.findPlansContainingAnyOfThisItems(items);
+        plansToUpdatePrice.forEach(plan -> plan.setPrice(priceCalculator(plan.getProfitPercentage(), plan.getItemsPlan())));
+        planRepository.saveAll(plansToUpdatePrice);
+    }
+
 
     private Set<ItemPlanEntity> getItemsPlanEntities(final Set<ItemPlanRequestDto> itemsPlanRequestDto, final Plan planEntity) {
         final List<ItemEntity> itemEntities = findItemsByCode(itemsPlanRequestDto);

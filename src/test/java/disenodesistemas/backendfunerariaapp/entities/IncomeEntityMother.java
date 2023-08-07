@@ -9,8 +9,8 @@ import java.util.List;
 @UtilityClass
 public class IncomeEntityMother {
 
-    private static final Long RECEIPT_NUMBER = 123456789L;
-    private static final Long RECEIPT_SERIES = 321L;
+    private static final Long RECEIPT_NUMBER = 1L;
+    private static final Long RECEIPT_SERIES = 45555L;
     private static final BigDecimal TAX = BigDecimal.TEN;
 
     public static IncomeEntity getIncome() {

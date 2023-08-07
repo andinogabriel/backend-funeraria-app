@@ -1,5 +1,7 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
+import disenodesistemas.backendfunerariaapp.repository.PlanRepository;
+import disenodesistemas.backendfunerariaapp.service.*;
 import disenodesistemas.backendfunerariaapp.service.converters.AbstractConverter;
 import disenodesistemas.backendfunerariaapp.dto.request.IncomeRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.IncomeDetailRequestDto;;
@@ -11,9 +13,6 @@ import disenodesistemas.backendfunerariaapp.entities.ReceiptTypeEntity;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.IncomeRepository;
 import disenodesistemas.backendfunerariaapp.repository.ItemRepository;
-import disenodesistemas.backendfunerariaapp.service.IncomeService;
-import disenodesistemas.backendfunerariaapp.service.SupplierService;
-import disenodesistemas.backendfunerariaapp.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -36,7 +35,6 @@ import java.util.stream.Collectors;
 
 import static java.util.Objects.nonNull;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
-import static org.springframework.http.HttpStatus.CONFLICT;
 
 @Service
 @RequiredArgsConstructor
@@ -45,20 +43,21 @@ public class IncomeServiceImpl implements IncomeService {
 
     private final IncomeRepository incomeRepository;
     private final ItemRepository itemRepository;
+    private final PlanService planService;
     private final UserService userService;
     private final SupplierService supplierService;
     private final ProjectionFactory projectionFactory;
     private final ModelMapper modelMapper;
+    private final InvoiceService invoiceService;
     private final AbstractConverter<IncomeDetailEntity, IncomeDetailRequestDto> incomeDetailConverter;
 
     @Override
     @Transactional(propagation = Propagation.SUPPORTS)
     public IncomeResponseDto createIncome(final IncomeRequestDto incomeRequestDto) {
-        checkExistsByByReceiptNumber(incomeRequestDto);
         val incomeEntity = IncomeEntity.builder()
-                .receiptNumber(incomeRequestDto.getReceiptNumber())
+                .receiptSeries(invoiceService.createSerialNumber())
+                .receiptNumber(invoiceService.createReceiptNumber())
                 .incomeUser(userService.getUserByEmail(incomeRequestDto.getIncomeUser().getEmail()))
-                .receiptSeries(incomeRequestDto.getReceiptSeries())
                 .receiptType(modelMapper.map(incomeRequestDto.getReceiptType(), ReceiptTypeEntity.class))
                 .tax(incomeRequestDto.getTax())
                 .incomeSupplier(supplierService.findSupplierEntityByNif(incomeRequestDto.getSupplier().getNif()))
@@ -77,13 +76,10 @@ public class IncomeServiceImpl implements IncomeService {
     @Transactional
     public IncomeResponseDto updateIncome(final Long receiptNumber, final IncomeRequestDto incomeRequestDto) {
         val incomeEntity = findEntityByReceiptNumber(receiptNumber);
-        if(!incomeEntity.getReceiptNumber().equals(incomeRequestDto.getReceiptNumber()))
-            checkExistsByByReceiptNumber(incomeRequestDto);
+
         incomeEntity.setSupplier(supplierService.findSupplierEntityByNif(incomeRequestDto.getSupplier().getNif()));
         incomeEntity.setReceiptType(modelMapper.map(incomeRequestDto.getReceiptType(), ReceiptTypeEntity.class));
         incomeEntity.setTax(incomeRequestDto.getTax());
-        incomeEntity.setReceiptSeries(incomeRequestDto.getReceiptSeries());
-        incomeEntity.setReceiptNumber(incomeRequestDto.getReceiptNumber());
 
         incomeEntity.setLastModifiedBy(userService.getUserByEmail(incomeRequestDto.getIncomeUser().getEmail()));
         preUpdateItemsStock(incomeEntity.getIncomeDetails());
@@ -153,12 +149,6 @@ public class IncomeServiceImpl implements IncomeService {
         return subTotal.add(subTotal.multiply(incomeRequestDto.getTax().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)));
     }
 
-    private void checkExistsByByReceiptNumber(final IncomeRequestDto incomeDto) {
-        if(incomeRepository.existsByReceiptNumber(incomeDto.getReceiptNumber())) {
-            log.info("Receipt number: " + incomeDto.getReceiptNumber() + " already registered");
-            throw new AppException("income.error.receiptNumber.already.registered", CONFLICT);
-        }
-    }
 
     private IncomeEntity findEntityByReceiptNumber(final Long receiptNumber) {
         return incomeRepository.findByReceiptNumber(receiptNumber).orElseThrow(() -> new AppException("income.error.not.found", HttpStatus.NOT_FOUND));
@@ -171,6 +161,7 @@ public class IncomeServiceImpl implements IncomeService {
                     return incomeDetail.getItem();
                 }).collect(Collectors.toUnmodifiableList());
         itemRepository.saveAll(itemsToUpdatePrice);
+        planService.updatePlansPrice(itemsToUpdatePrice);
     }
 
     private void setItemsStock(final List<IncomeDetailEntity> incomeDetails) {

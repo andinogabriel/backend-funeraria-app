@@ -55,7 +55,7 @@ public class FuneralServiceImpl implements FuneralService {
     @Override
     @Transactional
     public FuneralResponseDto update(final Long id, final FuneralRequestDto funeralRequest) {
-        final Funeral funeralToUpdate = findById(id);
+        final Funeral funeralToUpdate = findEntityById(id);
         validateUniqueReceiptNumber(funeralRequest.getReceiptNumber(), funeralToUpdate.getReceiptNumber());
         funeralToUpdate.setFuneralDate(funeralToUpdate.getFuneralDate());
         funeralToUpdate.setReceiptSeries(funeralRequest.getReceiptSeries());
@@ -68,7 +68,7 @@ public class FuneralServiceImpl implements FuneralService {
     @Override
     @Transactional
     public void delete(final Long id) {
-        funeralRepository.delete(findById(id));
+        funeralRepository.delete(findEntityById(id));
     }
 
     @Override
@@ -77,7 +77,13 @@ public class FuneralServiceImpl implements FuneralService {
         return funeralRepository.findAllByOrderByRegisterDateDesc();
     }
 
-    private Funeral findById(final Long id) {
+    @Override
+    @Transactional(readOnly = true)
+    public FuneralResponseDto findById(final Long id) {
+        return projectionFactory.createProjection(FuneralResponseDto.class, findEntityById(id));
+    }
+
+    private Funeral findEntityById(final Long id) {
         return funeralRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("funeral.error.not.found"));
     }

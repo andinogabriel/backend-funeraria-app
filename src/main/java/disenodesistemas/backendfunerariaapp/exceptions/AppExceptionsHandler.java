@@ -6,7 +6,6 @@ import disenodesistemas.backendfunerariaapp.utils.ValidationErrors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.BindException;
@@ -22,7 +21,11 @@ import java.util.AbstractMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 @ControllerAdvice
 @RequiredArgsConstructor
@@ -36,7 +39,7 @@ public class AppExceptionsHandler {
                 .message(ex.getMessage())
                 .timestamp(LocalDateTime.now())
                 .build();
-        return new ResponseEntity<>(errorMessage, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(errorMessage, new HttpHeaders(), INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(value = UsernameNotFoundException.class)
@@ -45,7 +48,7 @@ public class AppExceptionsHandler {
                 .message(exception.getMessage())
                 .timestamp(LocalDateTime.now())
                 .build();
-        return new ResponseEntity<>(errorMessage, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(errorMessage, new HttpHeaders(), INTERNAL_SERVER_ERROR);
     }
 
     //Excepciones al validar un modelo en el controller, datos que vienen de los modelos request
@@ -63,12 +66,15 @@ public class AppExceptionsHandler {
         final ValidationErrors validationErrors = ValidationErrors.builder()
                 .errors(errors)
                 .timestamp(LocalDateTime.now())
+                .id(UUID.randomUUID().toString())
+                .status(BAD_REQUEST)
+                .code(BAD_REQUEST.value())
                 .build();
-        return new ResponseEntity<>(validationErrors, new HttpHeaders(), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(validationErrors, new HttpHeaders(), BAD_REQUEST);
     }
 
 
-    @ExceptionHandler({AppException.class, NotFoundException.class, ConflictException.class })
+    @ExceptionHandler({AppException.class})
     @ResponseBody
     public ResponseEntity<ErrorMessage> handleException(final AppException ex) {
         return ResponseEntity
@@ -76,6 +82,9 @@ public class AppExceptionsHandler {
                 .body(ErrorMessage.builder()
                         .message(messageSource.getMessage(ex.getMessage(), null, Locale.getDefault()))
                         .timestamp(LocalDateTime.now())
+                        .id(UUID.randomUUID().toString())
+                        .status(ex.getStatus())
+                        .code(ex.getStatus().value())
                         .build()
                 );
     }
@@ -97,8 +106,11 @@ public class AppExceptionsHandler {
         final ErrorMessage errorMessage = ErrorMessage.builder()
                 .message(ex.getMessage())
                 .timestamp(LocalDateTime.now())
+                .id(UUID.randomUUID().toString())
+                .status(INTERNAL_SERVER_ERROR)
+                .code(INTERNAL_SERVER_ERROR.value())
                 .build();
-        return new ResponseEntity<>(errorMessage, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(errorMessage, new HttpHeaders(), INTERNAL_SERVER_ERROR);
     }
 
 }
