@@ -20,10 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-//con perPostEnabled se usa para indicar a q metodos puede acceder solo el admin
-// Los metodos que no lleven anotación pueden acceder el admin como un generic user
-// @preauthorized solo puede acceder el admin
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+@EnableGlobalMethodSecurity(securedEnabled = true, jsr250Enabled = true, prePostEnabled = true)
 public class WebSecurity extends WebSecurityConfigurerAdapter {
 
     private final UserService userService;
@@ -65,7 +62,7 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
         http.cors().and().csrf().disable()
                 .authorizeRequests()
                 .antMatchers(HttpMethod.POST, "/api/v1/users", "/api/v1/users/login","/api/v1/users/forgot-password", "/api/v1/users/reset-password", "/api/v1/addresses").permitAll()
-                .antMatchers(HttpMethod.GET, "/api/v1/users/activation", "/api/v1/categories").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/v1/users/activation", "/api/v1/categories", "/api/v1/provinces", "/api/v1/cities").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .httpBasic().and()

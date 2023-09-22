@@ -20,6 +20,7 @@ import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -31,7 +32,7 @@ import java.util.Objects;
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
-public class AffiliateEntity {
+public class AffiliateEntity implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -51,6 +52,9 @@ public class AffiliateEntity {
 
     @CreatedDate
     private LocalDate startDate;
+
+    @Column(name = "deceased", columnDefinition = "boolean default false")
+    private Boolean deceased;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gender_id")

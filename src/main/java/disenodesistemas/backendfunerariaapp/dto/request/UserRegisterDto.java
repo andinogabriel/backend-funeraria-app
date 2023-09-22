@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
 
+import java.util.List;
 import java.util.Set;
 
 @PasswordMatches
@@ -26,7 +27,7 @@ public class UserRegisterDto {
     String email;
 
     @NotBlank(message = "{user.error.password.blank}")
-    @Size(min = 8, max = 30, message = "{user.error.password.size}") //Size es para strings
+    @Size(min = 8, max = 30, message = "{user.error.password.size}")
     String password;
 
     @NotBlank(message = "{user.error.password.blank}")
@@ -34,4 +35,7 @@ public class UserRegisterDto {
     String matchingPassword;
 
     Set<String> roles;
+
+    List<MobileNumberRequestDto> mobileNumbers;
+    List<AddressRequestDto> addresses;
 }

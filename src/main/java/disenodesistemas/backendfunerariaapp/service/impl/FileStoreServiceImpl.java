@@ -17,19 +17,20 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
 @Service
-public class FileStoreServiceImplService implements FileStoreService {
+public class FileStoreServiceImpl implements FileStoreService {
 
     private final AmazonS3 s3;
     private final String bucketName;
     private final String bucketUrl;
 
-    public FileStoreServiceImplService(final AmazonS3 s3,
-                                       @Value("${aws.s3.bucket.name}") final String bucketName,
-                                       @Value("${aws.s3.bucket.url}") final String bucketUrl) {
+    public FileStoreServiceImpl(final AmazonS3 s3,
+                                @Value("${aws.s3.bucket.name}") final String bucketName,
+                                @Value("${aws.s3.bucket.url}") final String bucketUrl) {
         this.s3 = s3;
         this.bucketName = bucketName;
         this.bucketUrl = bucketUrl;
@@ -42,7 +43,6 @@ public class FileStoreServiceImplService implements FileStoreService {
         isAnImage(file);
 
         val metadata = new ObjectMetadata();
-        //Metadata extraction from the file - Grabar metadata del archivo
         extractMetadata(file).ifPresent(map -> {
             if(!map.isEmpty()) {
                 map.forEach(metadata::addUserMetadata);
@@ -76,9 +76,8 @@ public class FileStoreServiceImplService implements FileStoreService {
     public void deleteFilesFromS3Bucket(final Object object) {
         final String folderName = getFolderName(object);
         try {
-            for(S3ObjectSummary file : s3.listObjects(bucketName, folderName).getObjectSummaries()) {
-                s3.deleteObject(bucketName, file.getKey());
-            }
+            final List<S3ObjectSummary> files = s3.listObjects(bucketName, folderName).getObjectSummaries();
+            files.forEach(file -> s3.deleteObject(bucketName, file.getKey()));
         } catch (SdkClientException e) {
             throw new AppException("Error al eliminar la imagen.", HttpStatus.INTERNAL_SERVER_ERROR);
         }

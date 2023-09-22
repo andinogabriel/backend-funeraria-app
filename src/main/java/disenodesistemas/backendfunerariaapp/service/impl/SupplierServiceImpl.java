@@ -24,7 +24,7 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 
 @Service
 @RequiredArgsConstructor
-public class SupplierServiceImplService implements SupplierService {
+public class SupplierServiceImpl implements SupplierService {
 
     private final SupplierRepository supplierRepository;
     private final ProjectionFactory projectionFactory;

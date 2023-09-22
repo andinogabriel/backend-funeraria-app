@@ -3,6 +3,7 @@ package disenodesistemas.backendfunerariaapp.entities;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.Hibernate;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -23,6 +24,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity(name = "users")
@@ -56,6 +58,9 @@ public class UserEntity implements Serializable {
 
     @Column
     private boolean enabled;
+
+    @Column(nullable = false)
+    private Boolean active;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -96,6 +101,73 @@ public class UserEntity implements Serializable {
         this.deceasedList = new ArrayList<>();
         this.incomes = new ArrayList<>();
         this.confirmationTokens = new ArrayList<>();
+    }
+
+    public void activate() {
+        this.active = true;
+    }
+
+    public void deactivate() {
+        this.active = false;
+    }
+
+    public void setMobileNumbers(final List<MobileNumberEntity> mobileNumbers) {
+        mobileNumbers.forEach(this::addMobileNumber);
+    }
+
+    public void addMobileNumber(final MobileNumberEntity mobileNumber) {
+        if(!this.mobileNumbers.contains(mobileNumber)) {
+            mobileNumbers.add(mobileNumber);
+            mobileNumber.setUserNumber(this);
+        }
+    }
+
+    public void removeMobileNumber(final MobileNumberEntity mobileNumber) {
+        mobileNumbers.remove(mobileNumber);
+        mobileNumber.setSupplierNumber(null);
+    }
+
+    public void setAddresses(final List<AddressEntity> addresses) {
+        addresses.forEach(this::addAddress);
+    }
+
+    public void addAddress(final AddressEntity address) {
+        if(!this.addresses.contains(address)) {
+            this.addresses.add(address);
+            address.setUserAddress(this);
+        }
+    }
+
+    public void removeAddress(final AddressEntity address) {
+        this.addresses.remove(address);
+        address.setSupplierAddress(null);
+    }
+
+    public void setRol(final List<RoleEntity> roleEntities) {
+        roleEntities.forEach(this::addRol);
+    }
+
+    public void addRol(final RoleEntity roleEntity) {
+        if(!this.roles.contains(roleEntity)) {
+            roles.add(roleEntity);
+        }
+    }
+
+    public void removeRol(final RoleEntity roleEntity) {
+        this.roles.remove(roleEntity);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        final UserEntity that = (UserEntity) o;
+        return id != null && Objects.equals(email, that.getEmail());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 
 

@@ -14,7 +14,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class GenderServiceImplService implements GenderService {
+public class GenderServiceImpl implements GenderService {
 
     private final GenderRepository genderRepository;
 

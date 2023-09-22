@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 import static java.util.Objects.nonNull;
@@ -30,7 +29,7 @@ import static java.util.Objects.nonNull;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class ItemServiceImplService implements ItemService {
+public class ItemServiceImpl implements ItemService {
 
     private final ItemRepository itemRepository;
     private final CategoryService categoryService;

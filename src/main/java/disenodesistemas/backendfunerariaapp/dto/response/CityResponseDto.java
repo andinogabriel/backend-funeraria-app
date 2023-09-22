@@ -5,13 +5,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public interface CityResponseDto {
 
-    long getId();
+    Long getId();
     String getName();
     String getZipCode();
     ProvinceEntity getProvince();
 
     interface ProvinceEntity {
-        long getId();
+        Long getId();
         String getName();
     }
 

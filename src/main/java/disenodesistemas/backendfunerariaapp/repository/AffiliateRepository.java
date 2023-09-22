@@ -15,4 +15,5 @@ public interface AffiliateRepository extends JpaRepository<AffiliateEntity, Long
     Boolean existsAffiliateEntitiesByDni(Integer dni);
     List<AffiliateResponseDto> findByUserOrderByStartDateDesc(final UserEntity userEntity);
     List<AffiliateResponseDto> findAllByOrderByStartDateDesc();
+    List<AffiliateResponseDto> findAllByDeceasedFalseOrderByStartDateDesc();
 }

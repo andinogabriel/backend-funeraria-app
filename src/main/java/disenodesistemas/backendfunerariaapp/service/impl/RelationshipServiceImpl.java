@@ -13,7 +13,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class RelationshipServiceImplService implements RelationshipService {
+public class RelationshipServiceImpl implements RelationshipService {
 
     private final RelationshipRepository relationshipRepository;
 

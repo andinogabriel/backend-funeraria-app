@@ -35,7 +35,7 @@ public class DeceasedRequestDto {
 
     @NotNull(message = "{deceased.error.empty.gender}") GenderDto gender;
 
-    @NotNull(message = "{deceased.error.empty.relationship}") RelationshipDto userRelationship;
+    @NotNull(message = "{deceased.error.empty.relationship}") RelationshipDto deceasedRelationship;
 
     @NotNull(message = "{deceased.error.empty.deathCause}") DeathCauseDto deathCause;
 

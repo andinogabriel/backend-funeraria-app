@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JAVA</ID>
+  <OriginalElement>D:/backend-funeraria-app/src/main/java/disenodesistemas/backendfunerariaapp/entities</OriginalElement>
+  <nodes>
+    <node x="1063.800375697843" y="1158.2619577783607">disenodesistemas.backendfunerariaapp.entities.ItemEntity</node>
+    <node x="1359.2105075728614" y="2362.526744610306">disenodesistemas.backendfunerariaapp.entities.IncomeDetailEntity</node>
+    <node x="1190.3341493003395" y="673.9259232643342">disenodesistemas.backendfunerariaapp.entities.ItemPlanEntity</node>
+    <node x="1874.3139990184532" y="5922.816292368358">disenodesistemas.backendfunerariaapp.entities.RoleEntity</node>
+    <node x="842.6870853130604" y="734.6677567423505">disenodesistemas.backendfunerariaapp.entities.BrandEntity</node>
+    <node x="676.5664183174068" y="-110.59793800651175">disenodesistemas.backendfunerariaapp.entities.Plan</node>
+    <node x="1526.9993290271289" y="4405.455187236729">disenodesistemas.backendfunerariaapp.entities.ProvinceEntity</node>
+    <node x="1690.7301080162817" y="2953.5857810310936">disenodesistemas.backendfunerariaapp.entities.IncomeEntity</node>
+    <node x="2118.8990018140016" y="5121.7060239854">disenodesistemas.backendfunerariaapp.entities.AddressEntity</node>
+    <node x="268.7671103259534" y="3534.615518449457">disenodesistemas.backendfunerariaapp.entities.AffiliateEntity</node>
+    <node x="631.3037389779893" y="4099.081739436446">disenodesistemas.backendfunerariaapp.entities.Funeral</node>
+    <node x="1013.8419416465556" y="3710.3010237977746">disenodesistemas.backendfunerariaapp.entities.ReceiptTypeEntity</node>
+    <node x="1538.489552069434" y="5091.640053409256">disenodesistemas.backendfunerariaapp.entities.CityEntity</node>
+    <node x="2370.240132996824" y="5977.52159484623">disenodesistemas.backendfunerariaapp.entities.ConfirmationTokenEntity</node>
+    <node x="1908.4428647808136" y="6365.766125751717">disenodesistemas.backendfunerariaapp.entities.UserEntity</node>
+    <node x="348.9446238912999" y="3088.627879733471">disenodesistemas.backendfunerariaapp.entities.GenderEntity</node>
+    <node x="283.3378045824233" y="4462.976955955709">disenodesistemas.backendfunerariaapp.entities.RelationshipEntity</node>
+    <node x="991.3292404824747" y="4457.369079193963">disenodesistemas.backendfunerariaapp.entities.DeathCauseEntity</node>
+    <node x="864.9705809638947" y="4943.345607179147">disenodesistemas.backendfunerariaapp.entities.DeceasedEntity</node>
+    <node x="1691.3592329184073" y="2001.9371250550412">disenodesistemas.backendfunerariaapp.entities.SupplierEntity</node>
+    <node x="1508.8785086647258" y="785.3461571308281">disenodesistemas.backendfunerariaapp.entities.CategoryEntity</node>
+    <node x="1575.1636736222176" y="157.2314194983864">disenodesistemas.backendfunerariaapp.entities.UserMain</node>
+    <node x="1390.0866777672582" y="7140.741445011379">disenodesistemas.backendfunerariaapp.entities.MobileNumberEntity</node>
+    <node x="1300.6136002562437" y="318.3425570253728">disenodesistemas.backendfunerariaapp.entities.ItemPlanId</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.CategoryEntity" target="disenodesistemas.backendfunerariaapp.entities.ItemEntity" relationship="TO_MANY">
+      <point x="-122.49950866472591" y="-1.5713082814272639E-4" />
+      <point x="1444.834" y="961.346" />
+      <point x="1444.834" y="1129.0" />
+      <point x="1239.3" y="1129.0" />
+      <point x="-3.7569784308288945E-4" y="-571.9999577783608" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.ItemEntity" target="disenodesistemas.backendfunerariaapp.entities.IncomeDetailEntity" relationship="TO_MANY">
+      <point x="-3.7569784308288945E-4" y="572.0000422216392" />
+      <point x="1239.3" y="2333.0" />
+      <point x="1500.5" y="2333.0" />
+      <point x="9.289492427138612" y="-283.99974461030615" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.SupplierEntity" target="disenodesistemas.backendfunerariaapp.entities.IncomeEntity" relationship="TO_MANY">
+      <point x="-187.5002329184074" y="-1.250550412805751E-4" />
+      <point x="1655.711" y="2393.937" />
+      <point x="1655.711" y="3513.586" />
+      <point x="-175.50010801628173" y="2.1896890621064813E-4" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.Plan" target="disenodesistemas.backendfunerariaapp.entities.Funeral" relationship="TO_MANY">
+      <point x="-4.183174067975415E-4" y="367.99993800651174" />
+      <point x="824.566" y="3015.0" />
+      <point x="948.0" y="3015.0" />
+      <point x="948.0" y="4491.082" />
+      <point x="150.0002610220107" y="2.6056355409309617E-4" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.MobileNumberEntity" target="disenodesistemas.backendfunerariaapp.entities.UserEntity" relationship="TO_ONE">
+      <point x="148.0" y="0.0" />
+      <point x="-214.5" y="450.9753192596627" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.DeceasedEntity" target="disenodesistemas.backendfunerariaapp.entities.DeathCauseEntity" relationship="TO_ONE">
+      <point x="-14.999580963894687" y="-536.0" />
+      <point x="-127.35824048247468" y="140.0" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.SupplierEntity" target="disenodesistemas.backendfunerariaapp.entities.MobileNumberEntity" relationship="TO_MANY">
+      <point x="-2.329184073914803E-4" y="391.9998749449587" />
+      <point x="1878.859" y="2923.027" />
+      <point x="2073.0" y="2923.027" />
+      <point x="2073.0" y="4575.5" />
+      <point x="2633.74" y="4575.5" />
+      <point x="2633.74" y="7455.266" />
+      <point x="148.00032223274184" y="102.52455498862037" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.ItemEntity" target="disenodesistemas.backendfunerariaapp.entities.ItemPlanEntity" relationship="TO_MANY">
+      <point x="-66.46637569784298" y="-571.9999577783608" />
+      <point x="1172.834" y="650.0" />
+      <point x="1308.834" y="650.0" />
+      <point x="-1.4930033944438037E-4" y="-211.99992326433414" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.Plan" target="disenodesistemas.backendfunerariaapp.entities.ItemPlanEntity" relationship="TO_MANY">
+      <point x="14.999581682593202" y="367.99993800651174" />
+      <point x="839.566" y="650.0" />
+      <point x="1308.834" y="650.0" />
+      <point x="-1.4930033944438037E-4" y="-211.99992326433414" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.DeceasedEntity" target="disenodesistemas.backendfunerariaapp.entities.UserEntity" relationship="TO_ONE">
+      <point x="4.190361053133529E-4" y="536.0003928208525" />
+      <point x="1043.971" y="6336.0" />
+      <point x="2122.943" y="6336.0" />
+      <point x="1.3521918663172983E-4" y="-536.000125751717" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.ReceiptTypeEntity" target="disenodesistemas.backendfunerariaapp.entities.Funeral" relationship="TO_MANY">
+      <point x="-140.4999416465555" y="-10.685023797774647" />
+      <point x="948.0" y="3899.616" />
+      <point x="948.0" y="4491.082" />
+      <point x="150.0002610220107" y="2.6056355409309617E-4" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.RelationshipEntity" target="disenodesistemas.backendfunerariaapp.entities.AffiliateEntity" relationship="TO_MANY">
+      <point x="143.50019541757666" y="4.404429091664497E-5" />
+      <point x="601.0" y="4602.977" />
+      <point x="601.0" y="3899.616" />
+      <point x="147.99988967404664" y="-14.9995184494569" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.IncomeEntity" target="disenodesistemas.backendfunerariaapp.entities.IncomeDetailEntity" relationship="TO_MANY">
+      <point x="-175.50010801628173" y="-14.99978103109379" />
+      <point x="1670.711" y="3498.586" />
+      <point x="1670.711" y="2333.0" />
+      <point x="1500.5" y="2333.0" />
+      <point x="9.289492427138612" y="-283.99974461030615" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.AffiliateEntity" target="disenodesistemas.backendfunerariaapp.entities.GenderEntity" relationship="TO_ONE">
+      <point x="147.99988967404664" y="15.0004815505431" />
+      <point x="586.0" y="3929.616" />
+      <point x="586.0" y="3483.586" />
+      <point x="601.0" y="3483.586" />
+      <point x="108.5553761087001" y="140.00012026652894" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.IncomeEntity" target="disenodesistemas.backendfunerariaapp.entities.ReceiptTypeEntity" relationship="TO_ONE">
+      <point x="-175.50010801628173" y="168.91421896890643" />
+      <point x="989.0" y="3682.5" />
+      <point x="989.0" y="3914.616" />
+      <point x="-140.4999416465555" y="4.314976202225353" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.BrandEntity" target="disenodesistemas.backendfunerariaapp.entities.ItemEntity" relationship="TO_MANY">
+      <point x="-8.531306048098486E-5" y="176.00024325764952" />
+      <point x="983.1869999999999" y="1129.0" />
+      <point x="1239.3" y="1129.0" />
+      <point x="-3.7569784308288945E-4" y="-571.9999577783608" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.DeceasedEntity" target="disenodesistemas.backendfunerariaapp.entities.GenderEntity" relationship="TO_ONE">
+      <point x="-178.9995809638947" y="-14.99960717914746" />
+      <point x="586.0" y="5464.346" />
+      <point x="586.0" y="3483.586" />
+      <point x="601.0" y="3483.586" />
+      <point x="108.5553761087001" y="140.00012026652894" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.ConfirmationTokenEntity" target="disenodesistemas.backendfunerariaapp.entities.UserEntity" relationship="TO_ONE">
+      <point x="-1.329968240497692E-4" y="164.00040515376986" />
+      <point x="2493.24" y="6336.0" />
+      <point x="2122.943" y="6336.0" />
+      <point x="1.3521918663172983E-4" y="-536.000125751717" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.ItemEntity" target="disenodesistemas.backendfunerariaapp.entities.BrandEntity" relationship="TO_ONE">
+      <point x="-175.5" y="0.0" />
+      <point x="963.8040000000001" y="1730.2619577783607" />
+      <point x="-19.383085313060292" y="176.00000000000006" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.UserEntity" target="disenodesistemas.backendfunerariaapp.entities.ConfirmationTokenEntity" relationship="TO_MANY">
+      <point x="214.5" y="0.0" />
+      <point x="2508.24" y="6901.766125751717" />
+      <point x="14.99986700317595" y="164.0" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.AddressEntity" target="disenodesistemas.backendfunerariaapp.entities.UserEntity" relationship="TO_ONE">
+      <point x="-149.00000181400173" y="-2.3985399820958264E-5" />
+      <point x="2088.0" y="5513.706" />
+      <point x="2088.0" y="6336.0" />
+      <point x="2122.943" y="6336.0" />
+      <point x="1.3521918663172983E-4" y="-536.000125751717" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.IncomeEntity" target="disenodesistemas.backendfunerariaapp.entities.SupplierEntity" relationship="TO_ONE">
+      <point x="-175.50010801628173" y="15.00021896890621" />
+      <point x="1510.0" y="3528.586" />
+      <point x="1510.0" y="3498.586" />
+      <point x="1640.711" y="3498.586" />
+      <point x="1640.711" y="2378.937" />
+      <point x="-187.5002329184074" y="-15.00012505504128" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.UserEntity" target="disenodesistemas.backendfunerariaapp.entities.AddressEntity" relationship="TO_MANY">
+      <point x="-14.999864780813368" y="-536.000125751717" />
+      <point x="2107.943" y="6234.0" />
+      <point x="2104.0" y="6234.0" />
+      <point x="2104.0" y="5498.706" />
+      <point x="-149.00000181400173" y="-15.000023985399821" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.UserEntity" target="disenodesistemas.backendfunerariaapp.entities.MobileNumberEntity" relationship="TO_MANY">
+      <point x="-74.12886478081373" y="-536.000125751717" />
+      <point x="2048.814" y="6249.0" />
+      <point x="2073.0" y="6249.0" />
+      <point x="2073.0" y="4575.5" />
+      <point x="2633.74" y="4575.5" />
+      <point x="2633.74" y="7455.266" />
+      <point x="148.00032223274184" y="102.52455498862037" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.DeceasedEntity" target="disenodesistemas.backendfunerariaapp.entities.RelationshipEntity" relationship="TO_ONE">
+      <point x="-178.9995809638947" y="15.00039282085254" />
+      <point x="617.0" y="5494.346" />
+      <point x="617.0" y="4587.977" />
+      <point x="143.50019541757666" y="-14.999955955709083" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.DeathCauseEntity" target="disenodesistemas.backendfunerariaapp.entities.DeceasedEntity" relationship="TO_MANY">
+      <point x="164.99975951752526" y="-7.919396375655197E-5" />
+      <point x="1356.0" y="4597.369" />
+      <point x="1356.0" y="4914.0" />
+      <point x="1043.971" y="4914.0" />
+      <point x="4.190361053133529E-4" y="-535.9996071791475" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.Funeral" target="disenodesistemas.backendfunerariaapp.entities.Plan" relationship="TO_ONE">
+      <point x="2.61022010704437E-4" y="-391.9997394364459" />
+      <point x="781.304" y="3929.616" />
+      <point x="657.0" y="3929.616" />
+      <point x="657.0" y="257.402" />
+      <point x="-148.0004183174068" y="-6.199348825930429E-5" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.GenderEntity" target="disenodesistemas.backendfunerariaapp.entities.AffiliateEntity" relationship="TO_MANY">
+      <point x="3.761087001521446E-4" y="140.00012026652894" />
+      <point x="492.44500000000005" y="3517.116" />
+      <point x="601.0" y="3517.116" />
+      <point x="601.0" y="3899.616" />
+      <point x="147.99988967404664" y="-14.9995184494569" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.ItemPlanEntity" target="disenodesistemas.backendfunerariaapp.entities.ItemPlanId" relationship="CREATE">
+      <point x="14.999850699660556" y="-212.0" />
+      <point x="-81.27960025624361" y="140.0" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.ItemPlanEntity" target="disenodesistemas.backendfunerariaapp.entities.ItemEntity" relationship="TO_ONE">
+      <point x="-1.4930033944438037E-4" y="212.0000767356659" />
+      <point x="1308.834" y="1129.0" />
+      <point x="1239.3" y="1129.0" />
+      <point x="-3.7569784308288945E-4" y="-571.9999577783608" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.AffiliateEntity" target="disenodesistemas.backendfunerariaapp.entities.RelationshipEntity" relationship="TO_ONE">
+      <point x="147.99988967404664" y="-29.9995184494569" />
+      <point x="617.0" y="3884.616" />
+      <point x="617.0" y="4587.977" />
+      <point x="143.50019541757666" y="-14.999955955709083" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.UserEntity" target="disenodesistemas.backendfunerariaapp.entities.RoleEntity" relationship="TO_MANY">
+      <point x="-157.62886576236042" y="-536.0" />
+      <point x="0.0" y="104.0" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.IncomeDetailEntity" target="disenodesistemas.backendfunerariaapp.entities.ItemEntity" relationship="TO_ONE">
+      <point x="-5.710507572861388" y="-283.99974461030615" />
+      <point x="1485.5" y="1129.0" />
+      <point x="1239.3" y="1129.0" />
+      <point x="-3.7569784308288945E-4" y="-571.9999577783608" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.ItemPlanEntity" target="disenodesistemas.backendfunerariaapp.entities.Plan" relationship="TO_ONE">
+      <point x="-118.50014930033944" y="-168.75792326433412" />
+      <point x="657.0" y="717.168" />
+      <point x="657.0" y="257.402" />
+      <point x="-148.0004183174068" y="-6.199348825930429E-5" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.ItemEntity" target="disenodesistemas.backendfunerariaapp.entities.CategoryEntity" relationship="TO_ONE">
+      <point x="175.5" y="0.0" />
+      <point x="1670.711" y="1730.2619577783607" />
+      <point x="39.3324913352742" y="176.0" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.MobileNumberEntity" target="disenodesistemas.backendfunerariaapp.entities.SupplierEntity" relationship="TO_ONE">
+      <point x="148.0" y="117.52455498862037" />
+      <point x="2648.74" y="7470.266" />
+      <point x="2648.74" y="2378.937" />
+      <point x="187.50000000000023" y="-15.00012505504128" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.ReceiptTypeEntity" target="disenodesistemas.backendfunerariaapp.entities.IncomeEntity" relationship="TO_MANY">
+      <point x="140.5000583534445" y="-2.3797774701961316E-5" />
+      <point x="1444.0" y="3910.301" />
+      <point x="1444.0" y="3513.586" />
+      <point x="-175.50010801628173" y="2.1896890621064813E-4" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.Funeral" target="disenodesistemas.backendfunerariaapp.entities.ReceiptTypeEntity" relationship="TO_ONE">
+      <point x="150.0002610220107" y="-56.58173943644579" />
+      <point x="989.0" y="4434.5" />
+      <point x="989.0" y="3914.616" />
+      <point x="-140.4999416465555" y="4.314976202225353" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.IncomeDetailEntity" target="disenodesistemas.backendfunerariaapp.entities.IncomeEntity" relationship="TO_ONE">
+      <point x="4.924271386244072E-4" y="284.00025538969385" />
+      <point x="1491.211" y="3513.586" />
+      <point x="-175.50010801628173" y="2.1896890621064813E-4" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.UserEntity" target="disenodesistemas.backendfunerariaapp.entities.DeceasedEntity" relationship="TO_MANY">
+      <point x="-214.4998647808136" y="14.99987424828305" />
+      <point x="1356.0" y="6916.766" />
+      <point x="1356.0" y="4914.0" />
+      <point x="1043.971" y="4914.0" />
+      <point x="4.190361053133529E-4" y="-535.9996071791475" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.Funeral" target="disenodesistemas.backendfunerariaapp.entities.DeceasedEntity" relationship="TO_ONE">
+      <point x="2.61022010704437E-4" y="392.00026056355455" />
+      <point x="781.304" y="4914.0" />
+      <point x="1043.971" y="4914.0" />
+      <point x="4.190361053133529E-4" y="-535.9996071791475" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.IncomeEntity" target="disenodesistemas.backendfunerariaapp.entities.UserEntity" relationship="TO_ONE">
+      <point x="175.49989198371827" y="2.1896890621064813E-4" />
+      <point x="2088.0" y="3513.586" />
+      <point x="2088.0" y="6336.0" />
+      <point x="2122.943" y="6336.0" />
+      <point x="1.3521918663172983E-4" y="-536.000125751717" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.DeceasedEntity" target="disenodesistemas.backendfunerariaapp.entities.Funeral" relationship="TO_ONE">
+      <point x="-178.9995809638947" y="3.928208525394439E-4" />
+      <point x="251.267" y="5479.346" />
+      <point x="251.267" y="3015.0" />
+      <point x="948.0" y="3015.0" />
+      <point x="948.0" y="4491.082" />
+      <point x="150.0002610220107" y="2.6056355409309617E-4" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.ProvinceEntity" target="disenodesistemas.backendfunerariaapp.entities.CityEntity" relationship="TO_MANY">
+      <point x="121.49967097287117" y="-1.872367292889976E-4" />
+      <point x="1833.0" y="4617.455" />
+      <point x="1833.0" y="5303.64" />
+      <point x="126.000447930566" y="-5.340925599739421E-5" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.SupplierEntity" target="disenodesistemas.backendfunerariaapp.entities.AddressEntity" relationship="TO_MANY">
+      <point x="187.4997670815926" y="-1.250550412805751E-4" />
+      <point x="2104.0" y="2393.937" />
+      <point x="2104.0" y="5498.706" />
+      <point x="-149.00000181400173" y="-15.000023985399821" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.AddressEntity" target="disenodesistemas.backendfunerariaapp.entities.SupplierEntity" relationship="TO_ONE">
+      <point x="-149.00000181400173" y="19.433976014600375" />
+      <point x="1510.0" y="5533.14" />
+      <point x="1510.0" y="3498.586" />
+      <point x="1640.711" y="3498.586" />
+      <point x="1640.711" y="2378.937" />
+      <point x="-187.5002329184074" y="-15.00012505504128" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.CityEntity" target="disenodesistemas.backendfunerariaapp.entities.ProvinceEntity" relationship="TO_ONE">
+      <point x="-15.99022304230516" y="-212.0" />
+      <point x="0.0" y="212.0" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.ItemPlanEntity" target="disenodesistemas.backendfunerariaapp.entities.ItemPlanId" relationship="TO_ONE">
+      <point x="96.27945095590417" y="-212.0" />
+      <point x="0.0" y="140.0" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.UserEntity" target="disenodesistemas.backendfunerariaapp.entities.AffiliateEntity" relationship="TO_MANY">
+      <point x="-214.4998647808136" y="29.99987424828305" />
+      <point x="601.0" y="6931.766" />
+      <point x="601.0" y="3899.616" />
+      <point x="147.99988967404664" y="-14.9995184494569" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.AffiliateEntity" target="disenodesistemas.backendfunerariaapp.entities.UserEntity" relationship="TO_ONE">
+      <point x="147.99988967404664" y="4.815505430997291E-4" />
+      <point x="963.8040000000001" y="3914.616" />
+      <point x="963.8040000000001" y="4387.955" />
+      <point x="2088.0" y="4387.955" />
+      <point x="2088.0" y="6336.0" />
+      <point x="2122.943" y="6336.0" />
+      <point x="1.3521918663172983E-4" y="-536.000125751717" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.AddressEntity" target="disenodesistemas.backendfunerariaapp.entities.CityEntity" relationship="TO_ONE">
+      <point x="-149.00000181400173" y="-358.20602398539995" />
+      <point x="1833.0" y="5155.5" />
+      <point x="1833.0" y="5303.64" />
+      <point x="126.000447930566" y="-5.340925599739421E-5" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.AddressEntity" target="disenodesistemas.backendfunerariaapp.entities.DeceasedEntity" relationship="TO_ONE">
+      <point x="-1.8140017346013337E-6" y="-392.0000239853998" />
+      <point x="2267.899" y="4914.0" />
+      <point x="1043.971" y="4914.0" />
+      <point x="4.190361053133529E-4" y="-535.9996071791475" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.DeceasedEntity" target="disenodesistemas.backendfunerariaapp.entities.AddressEntity" relationship="TO_ONE">
+      <point x="-14.999580963894687" y="536.0003928208525" />
+      <point x="1028.971" y="6234.0" />
+      <point x="2104.0" y="6234.0" />
+      <point x="2104.0" y="5498.706" />
+      <point x="-149.00000181400173" y="-15.000023985399821" />
+    </edge>
+    <edge source="disenodesistemas.backendfunerariaapp.entities.UserEntity" target="disenodesistemas.backendfunerariaapp.entities.IncomeEntity" relationship="TO_MANY">
+      <point x="-214.4998647808136" y="-1.2575171695061726E-4" />
+      <point x="1444.0" y="6901.766" />
+      <point x="1444.0" y="3513.586" />
+      <point x="-175.50010801628173" y="2.1896890621064813E-4" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic" zoom="1.0" showDependencies="true" x="1434.0" y="4146.5" />
+  <SelectedNodes>
+    <node>disenodesistemas.backendfunerariaapp.entities.MobileNumberEntity</node>
+  </SelectedNodes>
+  <Categories>
+    <Category>Fields</Category>
+    <Category>Methods</Category>
+  </Categories>
+  <SCOPE>All</SCOPE>
+  <VISIBILITY>private</VISIBILITY>
+</Diagram>
+

@@ -21,17 +21,17 @@ import javax.mail.internet.MimeMessage;
 import java.util.UUID;
 
 @Service
-public class EmailServiceImplService implements EmailService {
+public class EmailServiceImpl implements EmailService {
 
     private final ConfirmationTokenService confirmationTokenService;
     private final TemplateEngine templateEngine;
     private final JavaMailSender javaMailSender;
     private final UserService userService;
 
-    public EmailServiceImplService(final ConfirmationTokenService confirmationTokenService,
-                                   final TemplateEngine templateEngine,
-                                   final JavaMailSender javaMailSender,
-                                   @Lazy final UserService userService) {
+    public EmailServiceImpl(final ConfirmationTokenService confirmationTokenService,
+                            final TemplateEngine templateEngine,
+                            final JavaMailSender javaMailSender,
+                            @Lazy final UserService userService) {
         this.confirmationTokenService = confirmationTokenService;
         this.templateEngine = templateEngine;
         this.javaMailSender = javaMailSender;

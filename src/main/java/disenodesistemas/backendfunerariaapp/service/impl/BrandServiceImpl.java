@@ -17,7 +17,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class BrandServiceImplService implements BrandService {
+public class BrandServiceImpl implements BrandService {
 
     private final BrandRepository brandRepository;
     private final ProjectionFactory projectionFactory;

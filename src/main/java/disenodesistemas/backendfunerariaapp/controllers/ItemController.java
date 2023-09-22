@@ -75,7 +75,7 @@ public class ItemController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping(path = "{code}/image/upload", consumes = MULTIPART_FORM_DATA_VALUE, produces = APPLICATION_JSON_VALUE)
+    @PostMapping(path = "/{code}/image/upload", consumes = MULTIPART_FORM_DATA_VALUE, produces = APPLICATION_JSON_VALUE)
     public void uploadItemImage(@PathVariable final String code, @RequestParam("file") final MultipartFile file) {
         itemService.uploadItemImage(code, file);
     }

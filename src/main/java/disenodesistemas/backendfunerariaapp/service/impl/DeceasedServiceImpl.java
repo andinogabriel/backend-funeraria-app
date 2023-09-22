@@ -56,7 +56,7 @@ public class DeceasedServiceImpl implements DeceasedService {
                 deceasedRepository.existsByDni(deceasedRequest.getDni()))
             throw new ConflictException("deceased.dni.already.registered");
 
-        entityToUpdate.setDeceasedRelationship(mapper.map(deceasedRequest.getUserRelationship(), RelationshipEntity.class));
+        entityToUpdate.setDeceasedRelationship(mapper.map(deceasedRequest.getDeceasedRelationship(), RelationshipEntity.class));
         entityToUpdate.setBirthDate(deceasedRequest.getBirthDate());
         entityToUpdate.setDni(deceasedRequest.getDni());
         entityToUpdate.setDeathCause(mapper.map(deceasedRequest.getDeathCause(), DeathCauseEntity.class));

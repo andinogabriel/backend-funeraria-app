@@ -35,7 +35,7 @@ public class DeceasedConverter implements AbstractConverter<DeceasedEntity, Dece
                 .deathCause(mapper.map(dto.getDeathCause(), DeathCauseEntity.class))
                 .gender(mapper.map(dto.getGender(), GenderEntity.class))
                 .placeOfDeath(mapper.map(dto.getPlaceOfDeath(), AddressEntity.class))
-                .deceasedRelationship(mapper.map(dto.getUserRelationship(), RelationshipEntity.class))
+                .deceasedRelationship(mapper.map(dto.getDeceasedRelationship(), RelationshipEntity.class))
                 .firstName(dto.getFirstName())
                 .lastName(dto.getLastName())
                 .affiliated(Boolean.FALSE)

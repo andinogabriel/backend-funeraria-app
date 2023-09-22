@@ -2,7 +2,6 @@ package disenodesistemas.backendfunerariaapp.dto.request;
 
 import disenodesistemas.backendfunerariaapp.dto.GenderDto;
 import disenodesistemas.backendfunerariaapp.dto.RelationshipDto;
-import disenodesistemas.backendfunerariaapp.dto.UserDto;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.jackson.Jacksonized;

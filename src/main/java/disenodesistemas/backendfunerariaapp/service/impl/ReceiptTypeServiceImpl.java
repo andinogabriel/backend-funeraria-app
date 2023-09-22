@@ -10,7 +10,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class ReceiptTypeServiceImplService implements ReceiptTypeService {
+public class ReceiptTypeServiceImpl implements ReceiptTypeService {
 
     private final ReceiptTypeRepository receiptTypeRepository;
 

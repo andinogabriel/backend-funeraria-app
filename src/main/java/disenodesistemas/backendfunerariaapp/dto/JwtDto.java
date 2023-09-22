@@ -12,6 +12,8 @@ import java.util.Collection;
 @Builder(toBuilder = true)
 public class JwtDto {
     String authorization;
-    String email;
+    String refreshToken;
+    String tokenType = "Bearer";
+    Long expiryDuration;
     Collection<? extends GrantedAuthority> authorities;
 }

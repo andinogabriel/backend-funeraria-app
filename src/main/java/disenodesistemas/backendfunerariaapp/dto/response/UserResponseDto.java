@@ -15,6 +15,7 @@ public interface UserResponseDto {
     String getFirstName();
     String getLastName();
     String getEmail();
+    Boolean getActive();
 
     @JsonFormat(pattern="dd-MM-yyyy")
     LocalDate getStartDate();

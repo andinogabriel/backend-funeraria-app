@@ -3,12 +3,14 @@ package disenodesistemas.backendfunerariaapp.service.impl;
 import disenodesistemas.backendfunerariaapp.dto.request.DeceasedRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.FuneralRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.FuneralResponseDto;
+import disenodesistemas.backendfunerariaapp.entities.AffiliateEntity;
 import disenodesistemas.backendfunerariaapp.entities.DeceasedEntity;
 import disenodesistemas.backendfunerariaapp.entities.Funeral;
 import disenodesistemas.backendfunerariaapp.entities.Plan;
 import disenodesistemas.backendfunerariaapp.entities.ReceiptTypeEntity;
 import disenodesistemas.backendfunerariaapp.exceptions.ConflictException;
 import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
+import disenodesistemas.backendfunerariaapp.repository.AffiliateRepository;
 import disenodesistemas.backendfunerariaapp.repository.DeceasedRepository;
 import disenodesistemas.backendfunerariaapp.repository.FuneralRepository;
 import disenodesistemas.backendfunerariaapp.service.FuneralService;
@@ -24,6 +26,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNullElse;
 
@@ -33,6 +36,7 @@ public class FuneralServiceImpl implements FuneralService {
 
     private final FuneralRepository funeralRepository;
     private final DeceasedRepository deceasedRepository;
+    private final AffiliateRepository affiliateRepository;
     private final PlanService planService;
     private final ProjectionFactory projectionFactory;
     private final ModelMapper modelMapper;
@@ -43,8 +47,14 @@ public class FuneralServiceImpl implements FuneralService {
     @Transactional
     public FuneralResponseDto create(final FuneralRequestDto funeralRequest) {
         validateReceiptNumber(funeralRequest.getReceiptNumber());
+        validateDeceasedDniRequest(funeralRequest.getDeceased().getDni());
         final Plan funeralPlan = planService.findById(funeralRequest.getPlan().getId());
-        final DeceasedEntity deceased = saveDeceased(funeralRequest.getDeceased());
+        final Optional<AffiliateEntity> affiliateEntityOptional = affiliateRepository.findByDni(funeralRequest.getDeceased().getDni());
+        affiliateEntityOptional.ifPresent(affiliateEntity -> {
+            affiliateEntity.setDeceased(Boolean.TRUE);
+            affiliateRepository.save(affiliateEntity);
+        });
+        final DeceasedEntity deceased = saveDeceased(funeralRequest.getDeceased(), affiliateEntityOptional.isPresent());
         final BigDecimal tax = requireNonNullElse(funeralRequest.getTax(), DEFAULT_TAX);
         final Funeral funeral = buildFuneral(funeralRequest, funeralPlan, deceased, tax);
         funeral.setDeceased(deceased);
@@ -57,6 +67,7 @@ public class FuneralServiceImpl implements FuneralService {
     public FuneralResponseDto update(final Long id, final FuneralRequestDto funeralRequest) {
         final Funeral funeralToUpdate = findEntityById(id);
         validateUniqueReceiptNumber(funeralRequest.getReceiptNumber(), funeralToUpdate.getReceiptNumber());
+        validateDeceasedDniRequest(funeralRequest.getDeceased().getDni());
         funeralToUpdate.setFuneralDate(funeralToUpdate.getFuneralDate());
         funeralToUpdate.setReceiptSeries(funeralRequest.getReceiptSeries());
         final BigDecimal tax = requireNonNullElse(funeralRequest.getTax(), DEFAULT_TAX);
@@ -99,8 +110,16 @@ public class FuneralServiceImpl implements FuneralService {
         }
     }
 
-    private DeceasedEntity saveDeceased(final DeceasedRequestDto deceasedRequest) {
-        return deceasedRepository.save(deceasedConverter.fromDto(deceasedRequest));
+    private void validateDeceasedDniRequest(final Integer dni) {
+        if (deceasedRepository.existsByDni(dni) ||
+                affiliateRepository.findByDni(dni).isPresent())
+            throw new ConflictException("funeral.error.deceased.dni.already.exists");
+    }
+
+    private DeceasedEntity saveDeceased(final DeceasedRequestDto deceasedRequest, boolean affiliated) {
+        final DeceasedEntity deceased = deceasedConverter.fromDto(deceasedRequest);
+        deceased.setAffiliated(affiliated);
+        return deceasedRepository.save(deceased);
     }
 
     private BigDecimal getTotalAmount(final Plan funeralPlan, final BigDecimal tax) {

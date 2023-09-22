@@ -1,7 +1,7 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
 import disenodesistemas.backendfunerariaapp.dto.response.ReceiptTypeResponseDto;
-import disenodesistemas.backendfunerariaapp.service.impl.ReceiptTypeServiceImplService;
+import disenodesistemas.backendfunerariaapp.service.impl.ReceiptTypeServiceImpl;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,9 +12,9 @@ import java.util.List;
 @RequestMapping("/api/v1/receiptTypes")
 public class ReceiptTypeController {
 
-    private final ReceiptTypeServiceImplService receiptTypeServiceImpl;
+    private final ReceiptTypeServiceImpl receiptTypeServiceImpl;
 
-    public ReceiptTypeController(final ReceiptTypeServiceImplService receiptTypeServiceImpl) {
+    public ReceiptTypeController(final ReceiptTypeServiceImpl receiptTypeServiceImpl) {
         this.receiptTypeServiceImpl = receiptTypeServiceImpl;
     }
 

@@ -2,6 +2,7 @@ package disenodesistemas.backendfunerariaapp;
 
 import disenodesistemas.backendfunerariaapp.security.AppProperties;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.config.Configuration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -45,7 +46,9 @@ public class BackendFunerariaAppApplication {
 	//Para tener una instancia ModelMapper global para no estar instanciando cada rato
 	@Bean
 	public ModelMapper modelMapper() {
-		return new ModelMapper();
+		final ModelMapper modelMapper = new ModelMapper();
+		modelMapper.getConfiguration().setFieldMatchingEnabled(true).setFieldAccessLevel(Configuration.AccessLevel.PRIVATE);
+		return modelMapper;
 	}
 
 }

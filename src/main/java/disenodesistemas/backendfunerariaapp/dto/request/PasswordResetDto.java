@@ -11,7 +11,7 @@ import javax.validation.constraints.Size;
 @Value
 @Jacksonized
 @Builder(toBuilder = true)
-@ConfirmedField(originalField = "newPassword", confirmationField = "matchingNewPassword", message = "user.error.password.does.not.match")
+@ConfirmedField(originalField = "newPassword", confirmationField = "matchingNewPassword", message = "{user.error.password.does.not.match}")
 public class PasswordResetDto {
 
     @NotBlank(message = "{password.error.blank.field}")

@@ -60,10 +60,10 @@ public class AddressEntity implements Serializable {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
+        //if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
         final AddressEntity that = (AddressEntity) o;
-        return id != null && Objects.equals(city.getId(), that.getCity().getId()) && Objects.equals(streetName, that.getStreetName())
+        return Objects.equals(city.getId(), that.getCity().getId()) && Objects.equals(streetName, that.getStreetName())
                 && Objects.equals(blockStreet, that.getBlockStreet());
     }
 

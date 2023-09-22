@@ -18,6 +18,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -26,7 +27,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-public class DeceasedEntity {
+public class DeceasedEntity implements Serializable {
 
     @Id
     @Column(name = "id")
@@ -55,6 +56,7 @@ public class DeceasedEntity {
     @CreatedDate
     private LocalDateTime registerDate;
 
+    @Column(name = "affiliated", columnDefinition = "boolean default false")
     private boolean affiliated;
 
     @ManyToOne(fetch = FetchType.LAZY)

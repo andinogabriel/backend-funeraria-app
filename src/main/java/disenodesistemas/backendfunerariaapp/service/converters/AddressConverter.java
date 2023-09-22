@@ -7,7 +7,6 @@ import disenodesistemas.backendfunerariaapp.entities.AddressEntity;
 import disenodesistemas.backendfunerariaapp.entities.CityEntity;
 import disenodesistemas.backendfunerariaapp.entities.ProvinceEntity;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -17,8 +16,6 @@ import static java.util.Objects.nonNull;
 @Component(value = "addressConverter")
 @RequiredArgsConstructor
 public class AddressConverter implements AbstractConverter<AddressEntity, AddressRequestDto> {
-
-    private final ModelMapper modelMapper;
 
     @Override
     public AddressEntity fromDto(final AddressRequestDto dto) {
@@ -32,12 +29,12 @@ public class AddressConverter implements AbstractConverter<AddressEntity, Addres
                                 .zipCode(dto.getCity().getZipCode())
                                 .name(dto.getCity().getName())
                                 .province(ProvinceEntity.builder()
-                                        .code31662(dto.getCity().getProvince().getCode31662())
-                                        .name(dto.getCity().getProvince().getName())
-                                        .id(dto.getCity().getProvince().getId())
+                                        .code31662(nonNull(dto.getCity().getProvince()) ? dto.getCity().getProvince().getCode31662() : null)
+                                        .name(nonNull(dto.getCity().getProvince()) ? dto.getCity().getProvince().getName(): null)
+                                        .id(nonNull(dto.getCity().getProvince()) ? dto.getCity().getProvince().getId(): null)
                                         .build())
                                 .build())
-                        .id(dto.getId())
+                        .id(nonNull(dto.getId()) ? dto.getId() : null)
                         .streetName(dto.getStreetName())
                         .build()
                 : null;

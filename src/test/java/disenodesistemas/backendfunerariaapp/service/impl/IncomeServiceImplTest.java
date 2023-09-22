@@ -19,6 +19,7 @@ import disenodesistemas.backendfunerariaapp.entities.UserEntityMother;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.IncomeRepository;
 import disenodesistemas.backendfunerariaapp.repository.ItemRepository;
+import disenodesistemas.backendfunerariaapp.service.InvoiceService;
 import disenodesistemas.backendfunerariaapp.service.SupplierService;
 import disenodesistemas.backendfunerariaapp.service.UserService;
 import disenodesistemas.backendfunerariaapp.service.converters.AbstractConverter;
@@ -63,6 +64,8 @@ class IncomeServiceImplTest {
     @Mock
     private ItemRepository itemRepository;
     @Mock
+    private InvoiceService invoiceService;
+    @Mock
     private UserService userService;
     @Mock
     private SupplierService supplierService;
@@ -92,6 +95,7 @@ class IncomeServiceImplTest {
                 .incomeDetails(IncomeDetailRequestDtoMother.getIncomeDetails())
                 .build();
 
+
         given(userService.getUserByEmail(UserDtoMother.getUserDto().getEmail())).willReturn(UserEntityMother.getUser());
         given(modelMapper.map(ReceiptTypeDtoMother.getReciboDeCaja(), ReceiptTypeEntity.class))
                 .willReturn(ReceiptTypeEntityMother.getReceipt());
@@ -104,6 +108,8 @@ class IncomeServiceImplTest {
 
     @Test
     void create() {
+        given(invoiceService.createSerialNumber()).willReturn(321L);
+        given(invoiceService.createReceiptNumber()).willReturn(123456789L);
         given(itemRepository.findAll()).willReturn(List.of(ItemEntityMother.getItem()));
         given(modelMapper.map(IncomeDetailRequestDtoMother.getIncomeDetail(),IncomeDetailEntity.class))
                 .willReturn(IncomeDetailEntityMother.getIncomeDetail());

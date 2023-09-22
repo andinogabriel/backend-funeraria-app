@@ -19,17 +19,22 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class AffiliateServiceImplService implements AffiliateService {
+public class AffiliateServiceImpl implements AffiliateService {
 
     private final AffiliateRepository affiliateRepository;
     private final UserService userService;
     private final ModelMapper mapper;
     private final ProjectionFactory projectionFactory;
+    @PersistenceContext
+    private final EntityManager entityManager;
 
     @Override
     @Transactional
@@ -77,6 +82,11 @@ public class AffiliateServiceImplService implements AffiliateService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<AffiliateResponseDto> findAllByDeceasedFalse() {
+        return affiliateRepository.findAllByDeceasedFalseOrderByStartDateDesc();
+    }
+
+    @Override
     public List<AffiliateResponseDto> findAll() {
         return affiliateRepository.findAllByOrderByStartDateDesc();
     }
@@ -87,6 +97,23 @@ public class AffiliateServiceImplService implements AffiliateService {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final UserEntity userEntity = userService.getUserByEmail(authentication.getName());
         return affiliateRepository.findByUserOrderByStartDateDesc(userEntity);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AffiliateResponseDto> findAffiliatesByFirstNameOrLastNameOrDniContaining(final String valueToSearch) {
+        final String query = "SELECT a FROM affiliates a " +
+                "WHERE lower(a.firstName) LIKE lower(:valueToSearch) " +
+                "OR lower(a.lastName) LIKE lower(:valueToSearch) " +
+                "OR CAST(a.dni AS string) LIKE :valueToSearch";
+
+        final List<AffiliateEntity>  affiliateEntities = entityManager.createQuery(query, AffiliateEntity.class)
+                .setParameter("valueToSearch", "%" + valueToSearch + "%")
+                .getResultList();
+
+        return affiliateEntities.stream()
+                .map(affiliateEntity -> projectionFactory.createProjection(AffiliateResponseDto.class, affiliateEntity))
+                .collect(Collectors.toUnmodifiableList());
     }
 
 

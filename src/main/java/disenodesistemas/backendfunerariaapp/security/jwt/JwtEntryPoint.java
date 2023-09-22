@@ -14,7 +14,7 @@ import java.io.IOException;
 @Component @Slf4j
 public class JwtEntryPoint implements AuthenticationEntryPoint {
 
-    //Metodo implementado de AuthenticationEntryPoint
+
     @Override
     public void commence(final HttpServletRequest request,
                          final HttpServletResponse response,
