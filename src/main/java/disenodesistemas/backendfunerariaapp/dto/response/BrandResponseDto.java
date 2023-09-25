@@ -6,4 +6,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public interface BrandResponseDto {
     Long getId();
     String getName();
+    String getWebPage();
 }

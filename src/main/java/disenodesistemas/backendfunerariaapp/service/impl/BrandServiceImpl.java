@@ -3,13 +3,12 @@ package disenodesistemas.backendfunerariaapp.service.impl;
 import disenodesistemas.backendfunerariaapp.dto.request.BrandRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.BrandResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.BrandEntity;
-import disenodesistemas.backendfunerariaapp.exceptions.AppException;
+import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
 import disenodesistemas.backendfunerariaapp.repository.BrandRepository;
 import disenodesistemas.backendfunerariaapp.service.BrandService;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.data.projection.ProjectionFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +31,7 @@ public class BrandServiceImpl implements BrandService {
     @Override
     @Transactional(readOnly = true)
     public BrandEntity getBrandById(final Long id) {
-        return brandRepository.findById(id).orElseThrow(() -> new AppException("brand.error.not.found",HttpStatus.NOT_FOUND));
+        return brandRepository.findById(id).orElseThrow(() -> new NotFoundException("brand.error.not.found"));
     }
 
     @Override

@@ -3,7 +3,7 @@ package disenodesistemas.backendfunerariaapp.service.impl;
 import disenodesistemas.backendfunerariaapp.dto.request.CategoryRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.CategoryResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.CategoryEntity;
-import disenodesistemas.backendfunerariaapp.exceptions.AppException;
+import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
 import disenodesistemas.backendfunerariaapp.repository.CategoryRepository;
 import disenodesistemas.backendfunerariaapp.service.CategoryService;
 import lombok.RequiredArgsConstructor;
@@ -56,7 +56,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional(readOnly = true)
     public CategoryEntity findCategoryById(final Long id) {
-        return categoryRepository.findById(id).orElseThrow(() -> new AppException("category.error.not.found", HttpStatus.NOT_FOUND));
+        return categoryRepository.findById(id).orElseThrow(() -> new NotFoundException("category.error.not.found"));
     }
 
 }

@@ -20,6 +20,7 @@ import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.IncomeRepository;
 import disenodesistemas.backendfunerariaapp.repository.ItemRepository;
 import disenodesistemas.backendfunerariaapp.service.InvoiceService;
+import disenodesistemas.backendfunerariaapp.service.PlanService;
 import disenodesistemas.backendfunerariaapp.service.SupplierService;
 import disenodesistemas.backendfunerariaapp.service.UserService;
 import disenodesistemas.backendfunerariaapp.service.converters.AbstractConverter;
@@ -65,6 +66,8 @@ class IncomeServiceImplTest {
     private ItemRepository itemRepository;
     @Mock
     private InvoiceService invoiceService;
+    @Mock
+    private PlanService planService;
     @Mock
     private UserService userService;
     @Mock
