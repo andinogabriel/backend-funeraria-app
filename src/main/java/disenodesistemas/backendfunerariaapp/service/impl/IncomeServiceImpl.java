@@ -117,8 +117,7 @@ public class IncomeServiceImpl implements IncomeService {
         if (!isEmpty(incomeRequestDto.getIncomeDetails())) {
             incomeRepository.save(incomeEntity);
             incomeEntity.setIncomeDetails(incomeDetailConverter.fromDTOs(incomeRequestDto.getIncomeDetails()));
-            setItemsPrice(incomeEntity.getIncomeDetails());
-            setItemsStock(incomeEntity.getIncomeDetails());
+            setItemsPriceAndStock(incomeEntity.getIncomeDetails());
             incomeEntity.setTotalAmount(totalAmountCalculator(incomeEntity.getIncomeDetails(), incomeRequestDto));
         }
     }
@@ -128,8 +127,7 @@ public class IncomeServiceImpl implements IncomeService {
             final List<IncomeDetailEntity> incomeDetailEntities = getDeletedIncomeDetails(incomeEntity, incomeRequestDto);
             incomeDetailEntities.forEach(incomeEntity::removeIncomeDetail);
             incomeEntity.setIncomeDetails(incomeDetailConverter.fromDTOs(incomeRequestDto.getIncomeDetails()));
-            setItemsPrice(incomeEntity.getIncomeDetails());
-            setItemsStock(incomeEntity.getIncomeDetails());
+            setItemsPriceAndStock(incomeEntity.getIncomeDetails());
             incomeEntity.setTotalAmount(totalAmountCalculator(incomeEntity.getIncomeDetails(), incomeRequestDto));
         }
     }
@@ -154,26 +152,18 @@ public class IncomeServiceImpl implements IncomeService {
         return incomeRepository.findByReceiptNumber(receiptNumber).orElseThrow(() -> new AppException("income.error.not.found", HttpStatus.NOT_FOUND));
     }
 
-    private void setItemsPrice(final List<IncomeDetailEntity> incomeDetails) {
-        final List<ItemEntity> itemsToUpdatePrice = incomeDetails.stream().filter(Objects::nonNull)
+    private void setItemsPriceAndStock(final List<IncomeDetailEntity> incomeDetails) {
+        final List<ItemEntity> itemsToUpdate = incomeDetails.stream()
+                .filter(Objects::nonNull)
                 .map(incomeDetail -> {
-                    incomeDetail.getItem().setPrice(incomeDetail.getSalePrice());
-                    return incomeDetail.getItem();
-                }).collect(Collectors.toUnmodifiableList());
-        itemRepository.saveAll(itemsToUpdatePrice);
-        planService.updatePlansPrice(itemsToUpdatePrice);
-    }
-
-    private void setItemsStock(final List<IncomeDetailEntity> incomeDetails) {
-        final List<ItemEntity> itemsToUpdateStock = incomeDetails.stream()
-                .map(incomeDetail -> {
-                    incomeDetail.getItem().setStock( nonNull(incomeDetail.getItem().getStock()) ?
-                            incomeDetail.getItem().getStock() + incomeDetail.getQuantity()
-                            : incomeDetail.getQuantity()
-                    );
-                    return incomeDetail.getItem();
-                }).collect(Collectors.toUnmodifiableList());
-        itemRepository.saveAll(itemsToUpdateStock);
+                    final ItemEntity item = incomeDetail.getItem();
+                    item.setPrice(incomeDetail.getSalePrice());
+                    item.setStock(nonNull(item.getStock()) ? item.getStock() + incomeDetail.getQuantity() : incomeDetail.getQuantity());
+                    return item;
+                })
+                .collect(Collectors.toUnmodifiableList());
+        itemRepository.saveAll(itemsToUpdate);
+        planService.updatePlansPrice(itemsToUpdate);
     }
 
     private void preUpdateItemsStock(final List<IncomeDetailEntity> incomeDetails) {

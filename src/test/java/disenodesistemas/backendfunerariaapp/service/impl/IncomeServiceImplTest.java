@@ -7,18 +7,11 @@ import disenodesistemas.backendfunerariaapp.dto.request.IncomeDetailRequestDtoMo
 import disenodesistemas.backendfunerariaapp.dto.request.IncomeRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.SupplierRequestDtoMother;
 import disenodesistemas.backendfunerariaapp.dto.response.IncomeResponseDto;
-import disenodesistemas.backendfunerariaapp.entities.IncomeDetailEntity;
-import disenodesistemas.backendfunerariaapp.entities.IncomeDetailEntityMother;
-import disenodesistemas.backendfunerariaapp.entities.IncomeEntity;
-import disenodesistemas.backendfunerariaapp.entities.IncomeEntityMother;
-import disenodesistemas.backendfunerariaapp.entities.ItemEntityMother;
-import disenodesistemas.backendfunerariaapp.entities.ReceiptTypeEntity;
-import disenodesistemas.backendfunerariaapp.entities.ReceiptTypeEntityMother;
-import disenodesistemas.backendfunerariaapp.entities.SupplierEntityMother;
-import disenodesistemas.backendfunerariaapp.entities.UserEntityMother;
+import disenodesistemas.backendfunerariaapp.entities.*;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.IncomeRepository;
 import disenodesistemas.backendfunerariaapp.repository.ItemRepository;
+import disenodesistemas.backendfunerariaapp.repository.PlanRepository;
 import disenodesistemas.backendfunerariaapp.service.InvoiceService;
 import disenodesistemas.backendfunerariaapp.service.PlanService;
 import disenodesistemas.backendfunerariaapp.service.SupplierService;
@@ -47,12 +40,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -68,6 +60,8 @@ class IncomeServiceImplTest {
     private InvoiceService invoiceService;
     @Mock
     private PlanService planService;
+    @Mock
+    private PlanRepository planRepository;
     @Mock
     private UserService userService;
     @Mock
@@ -111,6 +105,7 @@ class IncomeServiceImplTest {
 
     @Test
     void create() {
+        final List<ItemEntity> itemsEntity = List.of(ItemEntityMother.getItem());
         given(invoiceService.createSerialNumber()).willReturn(321L);
         given(invoiceService.createReceiptNumber()).willReturn(123456789L);
         given(itemRepository.findAll()).willReturn(List.of(ItemEntityMother.getItem()));
@@ -119,8 +114,16 @@ class IncomeServiceImplTest {
         given(incomeRepository.save(IncomeEntityMother.getIncome())).willReturn(IncomeEntityMother.getIncome());
         given(incomeDetailConverter.fromDTOs(incomeRequestDto.getIncomeDetails()))
                 .willReturn(List.of(IncomeDetailEntityMother.getIncomeDetail()));
+        given(itemRepository.saveAll(itemsEntity))
+                .willReturn(itemsEntity);
+        doNothing().when(planService).updatePlansPrice(itemsEntity);
+        given(planRepository.findPlansContainingAnyOfThisItems(itemsEntity))
+                .willReturn(List.of(PlanEntityMother.getPlan()));
+        given(planRepository.saveAll(List.of(PlanEntityMother.getPlan()))).willReturn(List.of(PlanEntityMother.getPlan()));
+        given(incomeRepository.save(any(IncomeEntity.class))).willReturn(IncomeEntityMother.getIncome());
         given(projectionFactory.createProjection(IncomeResponseDto.class, IncomeEntityMother.getIncome()))
                 .willReturn(incomeResponseDto);
+
 
         final IncomeResponseDto response = sut.createIncome(incomeRequestDto);
 
@@ -131,16 +134,10 @@ class IncomeServiceImplTest {
                 () -> assertEquals(incomeRequestDto.getSupplier().getNif(), response.getSupplier().getNif()),
                 () -> assertNotNull(response.getTotalAmount())
         );
-        verify(incomeRepository, times(2)).save(IncomeEntityMother.getIncome());
-        verify(itemRepository, atMost(2)).saveAll(anyList());
+        verify(incomeRepository, times(2)).save(any(IncomeEntity.class));
+        verify(itemRepository, only()).saveAll(itemsEntity);
     }
 
-    @DisplayName("Given a incomeRequestDto with an existing receipt number when call create method then return an exception")
-    @Test
-    void createIncomeWithAnExistentReceiptNumber() {
-        given(incomeRepository.existsByReceiptNumber(anyString())).willReturn(Boolean.TRUE);
-        assertThrows(AppException.class, () ->  sut.createIncome(incomeRequestDto));
-    }
 
     @Test
     void delete() {

@@ -19,12 +19,10 @@ public class BackendFunerariaAppApplication {
 		SpringApplication.run(BackendFunerariaAppApplication.class, args);
 	}
 
-	//Creamos una sola instancia de esta clase para poder utilizarlas en todas partes
 	@Bean
 	public BCryptPasswordEncoder bCryptPasswordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
-
 
 	@Bean
 	public SpringApplicationContext springApplicationContext() {
@@ -41,13 +39,12 @@ public class BackendFunerariaAppApplication {
 		return new SpelAwareProxyProjectionFactory();
 	}
 
-
-
-	//Para tener una instancia ModelMapper global para no estar instanciando cada rato
 	@Bean
 	public ModelMapper modelMapper() {
 		final ModelMapper modelMapper = new ModelMapper();
-		modelMapper.getConfiguration().setFieldMatchingEnabled(true).setFieldAccessLevel(Configuration.AccessLevel.PRIVATE);
+		modelMapper.getConfiguration()
+				.setFieldMatchingEnabled(true)
+				.setFieldAccessLevel(Configuration.AccessLevel.PRIVATE);
 		return modelMapper;
 	}
 

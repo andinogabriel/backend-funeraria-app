@@ -11,6 +11,11 @@ INSERT INTO genders (id, name) VALUES
 	(3, 'Otro')
 	ON CONFLICT (id) DO NOTHING;
 
+INSERT INTO roles (id, name) VALUES
+   (1, 'ROLE_ADMIN'),
+   (2, 'ROLE_USER'),
+    ON CONFLICT (id) DO NOTHING;
+
 INSERT INTO relationships (id, name) VALUES
 	(1, 'Padre'),
 	(2, 'Madre'),

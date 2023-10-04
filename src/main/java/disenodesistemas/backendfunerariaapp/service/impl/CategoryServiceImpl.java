@@ -8,8 +8,8 @@ import disenodesistemas.backendfunerariaapp.repository.CategoryRepository;
 import disenodesistemas.backendfunerariaapp.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.projection.ProjectionFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +32,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public CategoryResponseDto createCategory(final CategoryRequestDto category) {
         val categoryEntity = new CategoryEntity(
-                category.getName(),
+                StringUtils.capitalize(category.getName()),
                 category.getDescription()
         );
         return projectionFactory.createProjection(CategoryResponseDto.class, categoryRepository.save(categoryEntity));
