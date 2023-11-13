@@ -60,7 +60,7 @@ public class ItemServiceImpl implements ItemService {
                 .price(itemRequestDto.getPrice())
                 .itemHeight(itemRequestDto.getItemHeight())
                 .itemLength(itemRequestDto.getItemLength())
-                .itemHeight(itemRequestDto.getItemHeight())
+                .itemWidth(itemRequestDto.getItemWidth())
                 .build();
         return projectionFactory.createProjection(ItemResponseDto.class, itemRepository.save(itemRepository.save(itemEntity)));
     }

@@ -3,6 +3,7 @@ package disenodesistemas.backendfunerariaapp.service.impl;
 import disenodesistemas.backendfunerariaapp.dto.request.CategoryRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.CategoryResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.CategoryEntity;
+import disenodesistemas.backendfunerariaapp.exceptions.ConflictException;
 import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
 import disenodesistemas.backendfunerariaapp.repository.CategoryRepository;
 import disenodesistemas.backendfunerariaapp.service.CategoryService;
@@ -50,7 +51,10 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public void deleteCategory(final Long id) {
-        categoryRepository.delete(findCategoryById(id));
+        final CategoryEntity categoryEntity = findCategoryById(id);
+        if (!categoryEntity.getItems().isEmpty())
+            throw new ConflictException("category.error.invalid.delete");
+        categoryRepository.delete(categoryEntity);
     }
 
     @Override

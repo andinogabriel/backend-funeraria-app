@@ -15,6 +15,7 @@ public interface AffiliateResponseDto {
     LocalDate getBirthDate();
     @JsonFormat(pattern="dd-MM-yyyy")
     LocalDate getStartDate();
+    Boolean getDeceased();
     GenderResponseDto getGender();
     RelationshipResponseDto getRelationship();
     UserEntity getUser();

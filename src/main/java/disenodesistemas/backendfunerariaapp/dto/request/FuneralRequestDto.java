@@ -22,14 +22,16 @@ public class FuneralRequestDto {
     @FutureOrPresent(message = "{funeral.error.invalid.date}")
     LocalDateTime funeralDate;
 
-    @NotBlank(message = "{funeral.error.receiptNumber.blank}") String receiptNumber;
-    @NotBlank(message = "{funeral.error.receiptSeries.blank}") String receiptSeries;
+    //@NotBlank(message = "{funeral.error.receiptNumber.blank}")
+    String receiptNumber;
+    //@NotBlank(message = "{funeral.error.receiptSeries.blank}")
+    String receiptSeries;
 
     @Digits(integer=7, fraction=2, message = "{funeral.error.digits.tax.percentage}")
     @Positive(message = "{funeral.error.negative.profit.percentage}")
     BigDecimal tax;
 
-    @NotNull(message = "{funeral.error.receiptType.null}")
+    //@NotNull(message = "{funeral.error.receiptType.null}")
     ReceiptTypeDto receiptType;
 
     @NotNull(message = "{funeral.error.deceased.null}")

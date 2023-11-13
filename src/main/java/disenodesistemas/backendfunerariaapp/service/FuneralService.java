@@ -11,4 +11,5 @@ public interface FuneralService {
     void delete(Long id);
     List<FuneralResponseDto> findAll();
     FuneralResponseDto findById(Long id);
+    List<FuneralResponseDto> findFuneralsByUser();
 }

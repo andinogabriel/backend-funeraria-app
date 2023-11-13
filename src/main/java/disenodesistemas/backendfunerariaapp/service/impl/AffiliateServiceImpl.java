@@ -51,6 +51,7 @@ public class AffiliateServiceImpl implements AffiliateService {
                 .firstName(affiliate.getFirstName())
                 .birthDate(affiliate.getBirthDate())
                 .user(userEntity)
+                .deceased(Boolean.FALSE)
                 .build();
 
         return projectionFactory.createProjection(AffiliateResponseDto.class, affiliateRepository.save(affiliateEntity));
@@ -87,6 +88,7 @@ public class AffiliateServiceImpl implements AffiliateService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<AffiliateResponseDto> findAll() {
         return affiliateRepository.findAllByOrderByStartDateDesc();
     }

@@ -6,6 +6,7 @@ import disenodesistemas.backendfunerariaapp.dto.response.PlanResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.ItemEntity;
 import disenodesistemas.backendfunerariaapp.entities.ItemPlanEntity;
 import disenodesistemas.backendfunerariaapp.entities.Plan;
+import disenodesistemas.backendfunerariaapp.exceptions.ConflictException;
 import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
 import disenodesistemas.backendfunerariaapp.repository.ItemRepository;
 import disenodesistemas.backendfunerariaapp.repository.ItemsPlanRepository;
@@ -128,6 +129,9 @@ public class PlanServiceImpl implements PlanService {
     }
 
     private BigDecimal priceCalculator(final BigDecimal profitPercentage, final Set<ItemPlanEntity> itemPlanEntities) {
+        if (itemPlanEntities.stream().anyMatch(itemPlanEntity -> itemPlanEntity.getItem().getPrice() == null))
+            throw new ConflictException("plan.error.price.calculator");
+
         final BigDecimal subTotal = itemPlanEntities.stream()
                 .map(itemPlan -> itemPlan.getItem().getPrice().multiply(BigDecimal.valueOf(itemPlan.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

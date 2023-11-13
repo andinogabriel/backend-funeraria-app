@@ -15,4 +15,6 @@ public interface ReceiptTypeRepository extends JpaRepository<ReceiptTypeEntity, 
 
     Optional<ReceiptTypeEntity> findById(Long id);
 
+    Optional<ReceiptTypeEntity> findByNameIsContainingIgnoreCase(String name);
+
 }

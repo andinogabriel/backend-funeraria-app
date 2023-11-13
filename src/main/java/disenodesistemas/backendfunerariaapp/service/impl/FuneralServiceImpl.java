@@ -14,11 +14,15 @@ import disenodesistemas.backendfunerariaapp.repository.AffiliateRepository;
 import disenodesistemas.backendfunerariaapp.repository.DeceasedRepository;
 import disenodesistemas.backendfunerariaapp.repository.FuneralRepository;
 import disenodesistemas.backendfunerariaapp.service.FuneralService;
+import disenodesistemas.backendfunerariaapp.service.InvoiceService;
 import disenodesistemas.backendfunerariaapp.service.PlanService;
+import disenodesistemas.backendfunerariaapp.service.ReceiptTypeService;
 import disenodesistemas.backendfunerariaapp.service.converters.AbstractConverter;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,8 +44,11 @@ public class FuneralServiceImpl implements FuneralService {
     private final PlanService planService;
     private final ProjectionFactory projectionFactory;
     private final ModelMapper modelMapper;
+    private final InvoiceService invoiceService;
+    private final ReceiptTypeService receiptTypeService;
     private final AbstractConverter<DeceasedEntity, DeceasedRequestDto> deceasedConverter;
-    public static final BigDecimal DEFAULT_TAX = BigDecimal.valueOf(21);
+    private static final BigDecimal DEFAULT_TAX = BigDecimal.valueOf(21);
+    private static final String DEFAULT_RECEIPT_TYPE = "Egreso";
 
     @Override
     @Transactional
@@ -94,6 +101,13 @@ public class FuneralServiceImpl implements FuneralService {
         return projectionFactory.createProjection(FuneralResponseDto.class, findEntityById(id));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<FuneralResponseDto> findFuneralsByUser() {
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return funeralRepository.findFuneralsByUserEmail(authentication.getName());
+    }
+
     private Funeral findEntityById(final Long id) {
         return funeralRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("funeral.error.not.found"));
@@ -111,8 +125,7 @@ public class FuneralServiceImpl implements FuneralService {
     }
 
     private void validateDeceasedDniRequest(final Integer dni) {
-        if (deceasedRepository.existsByDni(dni) ||
-                affiliateRepository.findByDni(dni).isPresent())
+        if (deceasedRepository.existsByDni(dni))
             throw new ConflictException("funeral.error.deceased.dni.already.exists");
     }
 
@@ -136,10 +149,19 @@ public class FuneralServiceImpl implements FuneralService {
                                  final DeceasedEntity deceased, final BigDecimal tax) {
         return Funeral.builder()
                 .funeralDate(funeralRequest.getFuneralDate())
-                .receiptSeries(funeralRequest.getReceiptSeries())
+                .receiptSeries(funeralRequest.getReceiptSeries() == null
+                    ? invoiceService.createSerialNumber().toString()
+                    : funeralRequest.getReceiptSeries()
+                )
                 .tax(tax)
-                .receiptType(modelMapper.map(funeralRequest.getReceiptType(), ReceiptTypeEntity.class))
-                .receiptNumber(funeralRequest.getReceiptNumber())
+                .receiptType(funeralRequest.getReceiptType() == null
+                    ? receiptTypeService.findByNameIsContainingIgnoreCase(DEFAULT_RECEIPT_TYPE)
+                    : modelMapper.map(funeralRequest.getReceiptType(), ReceiptTypeEntity.class)
+                )
+                .receiptNumber(funeralRequest.getReceiptNumber() == null
+                    ? invoiceService.createReceiptNumber().toString()
+                    : funeralRequest.getReceiptNumber()
+                )
                 .plan(funeralPlan)
                 .deceased(deceased)
                 .totalAmount(getTotalAmount(funeralPlan, tax))

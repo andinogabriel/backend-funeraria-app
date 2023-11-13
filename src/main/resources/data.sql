@@ -13,7 +13,7 @@ INSERT INTO genders (id, name) VALUES
 
 INSERT INTO roles (id, name) VALUES
    (1, 'ROLE_ADMIN'),
-   (2, 'ROLE_USER'),
+   (2, 'ROLE_USER')
     ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO relationships (id, name) VALUES
@@ -123,4 +123,3 @@ INSERT INTO cities (id, province_id, name, zip_code) VALUES
 	(12486,2,'MORON','1708'),
 	(12480,2,'HURLINGHAM','1686')
     ON CONFLICT (id) DO NOTHING;
-    

@@ -1,6 +1,7 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
 import disenodesistemas.backendfunerariaapp.dto.request.FuneralRequestDto;
+import disenodesistemas.backendfunerariaapp.dto.response.AffiliateResponseDto;
 import disenodesistemas.backendfunerariaapp.dto.response.FuneralResponseDto;
 import disenodesistemas.backendfunerariaapp.service.FuneralService;
 import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
@@ -62,5 +63,11 @@ public class FuneralController {
                         .result("SUCCESS")
                         .build()
         );
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/by-user")
+    public ResponseEntity<List<FuneralResponseDto>> findFuneralsByUser() {
+        return ResponseEntity.ok(funeralService.findFuneralsByUser());
     }
 }

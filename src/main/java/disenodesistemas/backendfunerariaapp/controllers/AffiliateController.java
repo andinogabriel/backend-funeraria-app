@@ -46,7 +46,7 @@ public class AffiliateController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<AffiliateResponseDto>> findAllByDeceasedFalse() {
-        return ResponseEntity.ok(affiliateService.findAllByDeceasedFalse());
+            return ResponseEntity.ok(affiliateService.findAllByDeceasedFalse());
     }
 
     @PreAuthorize("hasRole('ADMIN')")

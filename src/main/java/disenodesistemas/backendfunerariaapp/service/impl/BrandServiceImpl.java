@@ -3,6 +3,7 @@ package disenodesistemas.backendfunerariaapp.service.impl;
 import disenodesistemas.backendfunerariaapp.dto.request.BrandRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.BrandResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.BrandEntity;
+import disenodesistemas.backendfunerariaapp.exceptions.ConflictException;
 import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
 import disenodesistemas.backendfunerariaapp.repository.BrandRepository;
 import disenodesistemas.backendfunerariaapp.service.BrandService;
@@ -20,7 +21,6 @@ public class BrandServiceImpl implements BrandService {
 
     private final BrandRepository brandRepository;
     private final ProjectionFactory projectionFactory;
-
 
     @Override
     @Transactional(readOnly = true)
@@ -56,7 +56,10 @@ public class BrandServiceImpl implements BrandService {
     @Override
     @Transactional
     public void deleteBrand(final Long id) {
-        brandRepository.delete(getBrandById(id));
+        final BrandEntity brand = getBrandById(id);
+        if (!brand.getBrandItems().isEmpty())
+            throw new ConflictException("brand.error.invalid.delete");
+        brandRepository.delete(brand);
     }
 
 }
