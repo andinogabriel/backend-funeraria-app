@@ -12,11 +12,13 @@ import disenodesistemas.backendfunerariaapp.security.jwt.JwtProvider;
 import disenodesistemas.backendfunerariaapp.service.RefreshTokenService;
 import disenodesistemas.backendfunerariaapp.service.UserDeviceService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.springframework.http.HttpStatus.EXPECTATION_FAILED;
 
@@ -81,7 +83,8 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         return JwtDto.builder()
                 .authorization(SecurityConstants.TOKEN_PREFIX + generatedToken)
                 .refreshToken(refreshToken.getToken())
-                .authorities(SecurityContextHolder.getContext().getAuthentication().getAuthorities())
+                .authorities(SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+                        .stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
                 .expiryDuration(jwtProvider.getExpiryDuration())
                 .build();
     }

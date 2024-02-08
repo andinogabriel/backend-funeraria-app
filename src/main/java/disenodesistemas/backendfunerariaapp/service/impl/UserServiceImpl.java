@@ -54,6 +54,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -160,7 +161,8 @@ public class UserServiceImpl implements UserService {
                 .authorization(SecurityConstants.TOKEN_PREFIX + jwtToken)
                 .refreshToken(refreshTokenCreated.getToken())
                 .expiryDuration(jwtProvider.getExpiryDuration())
-                .authorities(authentication.getAuthorities())
+                .authorities(authentication.getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority).collect(Collectors.toUnmodifiableList()))
                 .build();
     }
 
