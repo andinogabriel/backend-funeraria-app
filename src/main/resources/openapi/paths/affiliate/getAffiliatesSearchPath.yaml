@@ -1,0 +1,18 @@
+get:
+  summary: "GET affiliates by firstName, lastName or dni containing in a given query parameter"
+  operationId: "findAffiliatesByFirstNameOrLastNameOrDniContaining"
+  parameters:
+    - in: query
+      name: value
+      schema:
+        type: string
+      description: Search for affiliates by dni, last name or first name without taking into account upper o lower case
+  responses:
+    "200":
+      description: "OK"
+      content:
+        '*/*':
+          schema:
+            type: "array"
+            items:
+              $ref: "../../schemas/AffiliateResponseDto.yaml"

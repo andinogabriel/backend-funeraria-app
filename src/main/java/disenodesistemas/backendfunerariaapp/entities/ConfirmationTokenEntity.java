@@ -16,26 +16,27 @@ import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = "confirmation_tokens")
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 public class ConfirmationTokenEntity implements Serializable {
 
-    @Id
-    @GeneratedValue
-    private Long id;
+  @Id @GeneratedValue private Long id;
 
-    @Column(nullable = false, length = 100)
-    private String token;
+  @Column(nullable = false, length = 100)
+  private String token;
 
-    private Instant expiryDate;
+  private Instant expiryDate;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties(value = {"confirmationTokens", "handler","hibernateLazyInitializer"}, allowSetters = true)
-    @JoinColumn(nullable = false, name = "user_id")
-    private UserEntity user;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JsonIgnoreProperties(
+      value = {"confirmationTokens", "handler", "hibernateLazyInitializer"},
+      allowSetters = true)
+  @JoinColumn(nullable = false, name = "user_id")
+  private UserEntity user;
 
-    public ConfirmationTokenEntity(final UserEntity user, final String token) {
-        this.user = user;
-        this.token = token;
-    }
+  public ConfirmationTokenEntity(final UserEntity user, final String token) {
+    this.user = user;
+    this.token = token;
+  }
 }

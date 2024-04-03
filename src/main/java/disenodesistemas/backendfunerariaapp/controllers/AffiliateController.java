@@ -24,59 +24,60 @@ import java.util.List;
 @RequestMapping("api/v1/affiliates")
 public class AffiliateController {
 
-    private final AffiliateService affiliateService;
+  private final AffiliateService affiliateService;
 
-    public AffiliateController(final AffiliateService affiliateService) {
-        this.affiliateService = affiliateService;
-    }
+  public AffiliateController(final AffiliateService affiliateService) {
+    this.affiliateService = affiliateService;
+  }
 
-    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-    @PostMapping
-    public ResponseEntity<AffiliateResponseDto> createAffiliate(@RequestBody @Valid final AffiliateRequestDto affiliateRequestDto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(affiliateService.createAffiliate(affiliateRequestDto));
-    }
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  @PostMapping
+  public ResponseEntity<AffiliateResponseDto> createAffiliate(
+      @RequestBody @Valid final AffiliateRequestDto affiliateRequestDto) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(affiliateService.createAffiliate(affiliateRequestDto));
+  }
 
-    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-    @GetMapping("/search")
-    public ResponseEntity<List<AffiliateResponseDto>> findAffiliatesByFirstNameOrLastNameOrDniContaining(
-            @RequestParam(name = "value") final String value) {
-        return ResponseEntity.ok(affiliateService.findAffiliatesByFirstNameOrLastNameOrDniContaining(value));
-    }
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  @GetMapping("/search")
+  public ResponseEntity<List<AffiliateResponseDto>>
+      findAffiliatesByFirstNameOrLastNameOrDniContaining(
+          @RequestParam(name = "value") final String value) {
+    return ResponseEntity.ok(
+        affiliateService.findAffiliatesByFirstNameOrLastNameOrDniContaining(value));
+  }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping
-    public ResponseEntity<List<AffiliateResponseDto>> findAllByDeceasedFalse() {
-            return ResponseEntity.ok(affiliateService.findAllByDeceasedFalse());
-    }
+  @PreAuthorize("hasRole('ADMIN')")
+  @GetMapping
+  public ResponseEntity<List<AffiliateResponseDto>> findAllByDeceasedFalse() {
+    return ResponseEntity.ok(affiliateService.findAllByDeceasedFalse());
+  }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/deceased")
-    public ResponseEntity<List<AffiliateResponseDto>> findAll() {
-        return ResponseEntity.ok(affiliateService.findAll());
-    }
+  @PreAuthorize("hasRole('ADMIN')")
+  @GetMapping("/deceased")
+  public ResponseEntity<List<AffiliateResponseDto>> findAll() {
+    return ResponseEntity.ok(affiliateService.findAll());
+  }
 
-    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-    @GetMapping("/by-user")
-    public ResponseEntity<List<AffiliateResponseDto>> findAffiliatesByUser() {
-        return ResponseEntity.ok(affiliateService.findAffiliatesByUser());
-    }
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  @GetMapping("/by-user")
+  public ResponseEntity<List<AffiliateResponseDto>> findAffiliatesByUser() {
+    return ResponseEntity.ok(affiliateService.findAffiliatesByUser());
+  }
 
-    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-    @DeleteMapping("/{dni}")
-    public ResponseEntity<OperationStatusModel> deleteAffiliate(@PathVariable final Integer dni) {
-        affiliateService.delete(dni);
-        return ResponseEntity.ok(OperationStatusModel.builder()
-                .name("DELETE AFFILIATE")
-                .result("SUCCESS")
-                .build());
-    }
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  @DeleteMapping("/{dni}")
+  public ResponseEntity<OperationStatusModel> deleteAffiliate(@PathVariable final Integer dni) {
+    affiliateService.delete(dni);
+    return ResponseEntity.ok(
+        OperationStatusModel.builder().name("DELETE AFFILIATE").result("SUCCESS").build());
+  }
 
-    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-    @PutMapping("/{dni}")
-    public ResponseEntity<AffiliateResponseDto> updateAffiliate(@PathVariable final Integer dni,
-                                                   @RequestBody @Valid final AffiliateRequestDto affiliateRequestDto) {
-        return ResponseEntity.ok(affiliateService.update(dni, affiliateRequestDto));
-    }
-
-
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  @PutMapping("/{dni}")
+  public ResponseEntity<AffiliateResponseDto> updateAffiliate(
+      @PathVariable final Integer dni,
+      @RequestBody @Valid final AffiliateRequestDto affiliateRequestDto) {
+    return ResponseEntity.ok(affiliateService.update(dni, affiliateRequestDto));
+  }
 }

@@ -1,0 +1,12 @@
+get:
+  summary: "GET affiliates whose deceased status is true"
+  operationId: "findAll"
+  responses:
+    "200":
+      description: "OK"
+      content:
+        '*/*':
+          schema:
+            type: "array"
+            items:
+              $ref: "../../schemas/AffiliateResponseDto.yaml"

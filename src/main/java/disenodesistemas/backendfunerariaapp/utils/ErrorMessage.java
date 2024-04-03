@@ -12,10 +12,11 @@ import java.time.LocalDateTime;
 @Jacksonized
 @Builder(toBuilder = true)
 public class ErrorMessage {
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern="dd-MM-yyyy HH:mm")
-    LocalDateTime timestamp;
-    String message;
-    String id;
-    HttpStatus status;
-    int code;
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
+  LocalDateTime timestamp;
+
+  String message;
+  String id;
+  HttpStatus status;
+  int code;
 }

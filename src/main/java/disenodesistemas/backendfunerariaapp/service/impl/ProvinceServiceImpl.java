@@ -15,16 +15,17 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProvinceServiceImpl implements ProvinceService {
 
-    private final ProvinceRepository provinceRepository;
+  private final ProvinceRepository provinceRepository;
 
-    @Override
-    public List<ProvinceResponseDto> getAllProvinces() {
-        return provinceRepository.findAllByOrderByName();
-    }
+  @Override
+  public List<ProvinceResponseDto> getAllProvinces() {
+    return provinceRepository.findAllByOrderByName();
+  }
 
-    @Override
-    public ProvinceEntity getProvinceById(final Long id) {
-        return provinceRepository.findById(id).orElseThrow(() -> new AppException("province.error.not.found", HttpStatus.NOT_FOUND));
-    }
-
+  @Override
+  public ProvinceEntity getProvinceById(final Long id) {
+    return provinceRepository
+        .findById(id)
+        .orElseThrow(() -> new AppException("province.error.not.found", HttpStatus.NOT_FOUND));
+  }
 }

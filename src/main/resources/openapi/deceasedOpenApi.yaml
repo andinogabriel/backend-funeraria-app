@@ -1,0 +1,94 @@
+get:
+  summary: "GET api/v1/deceased"
+  operationId: "findAll"
+  responses:
+    "200":
+      description: "OK"
+      content:
+        '*/*':
+          schema:
+            type: "array"
+            items:
+              $ref: "./schemas/DeceasedResponseDto.yaml"
+post:
+  summary: "POST api/v1/deceased"
+  operationId: "create"
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: "./schemas/DeceasedRequestDto.yaml"
+    required: true
+  responses:
+    200:
+      description: OK
+      content:
+        '*/*':
+          schema:
+            $ref: "./schemas/DeceasedResponseDto.yaml"
+    400:
+      description: a field or several required fields for a deceased weren't sent in the request.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/ValidationErrors.yaml"
+put:
+  summary: "PUT api/v1/deceased/{dni}"
+  operationId: "update"
+  parameters:
+    - name: "dni"
+      in: "path"
+      required: true
+      description: Numeric ID of the deceased to update.
+      schema:
+        type: "integer"
+        format: "int32"
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: "./schemas/DeceasedRequestDto.yaml"
+    required: true
+  responses:
+    200:
+      description: OK
+      content:
+        '*/*':
+          schema:
+            $ref: "./schemas/DeceasedResponseDto.yaml"
+    400:
+      description: a field or several required fields for a deceased weren't sent in the request.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/ValidationErrors.yaml"
+    404:
+      description: A deceased with the specified dni was not found.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/NotFoundException.yaml"
+delete:
+  summary: "DELETE api/v1/deceased/{dni}"
+  operationId: "delete"
+  parameters:
+    - name: "dni"
+      in: "path"
+      required: true
+      description: Numeric ID of the deceased to delete.
+      schema:
+        type: "integer"
+        format: "int32"
+  responses:
+    200:
+      description: OK
+      content:
+        '*/*':
+          schema:
+            $ref: "./schemas/OperationStatusModel.yaml"
+    404:
+      description: A deceased with the specified dni was not found.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/NotFoundException.yaml"

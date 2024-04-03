@@ -1,0 +1,16 @@
+type: "object"
+properties:
+  funeralDate:
+    type: "string"
+    format: "date"
+    example: 12-07-2024
+  tax:
+    type: "number"
+    format: "double"
+    example: 21
+  receiptType:
+    $ref: "./ReceiptTypeDto.yaml"
+  deceased:
+    $ref: "./DeceasedResponseDto.yaml"
+  plan:
+    $ref: "./PlanResponseDto.yaml"

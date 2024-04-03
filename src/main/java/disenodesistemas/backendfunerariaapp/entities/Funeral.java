@@ -24,63 +24,65 @@ import java.time.LocalDateTime;
 
 @Entity(name = "funeral")
 @EntityListeners(AuditingEntityListener.class)
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 public class Funeral implements Serializable {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false)
-    private Long id;
-    
-    @Column(nullable = false)
-    private LocalDateTime funeralDate;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(nullable = false)
+  private Long id;
 
-    @Column(nullable = false, length = 50, unique = true)
-    private String receiptNumber;
+  @Column(nullable = false)
+  private LocalDateTime funeralDate;
 
-    @Column(nullable = false, length = 50)
-    private String receiptSeries;
+  @Column(nullable = false, length = 50, unique = true)
+  private String receiptNumber;
 
-    @Digits(integer = 3, fraction = 2)
-    private BigDecimal tax;
+  @Column(nullable = false, length = 50)
+  private String receiptSeries;
 
-    @Column(nullable = false)
-    @Digits(integer = 9, fraction = 2)
-    private BigDecimal totalAmount;
+  @Digits(integer = 3, fraction = 2)
+  private BigDecimal tax;
 
-    private LocalDateTime registerDate;
+  @Column(nullable = false)
+  @Digits(integer = 9, fraction = 2)
+  private BigDecimal totalAmount;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "receipt_type_id")
-    private ReceiptTypeEntity receiptType;
+  private LocalDateTime registerDate;
 
-    //@MapsId
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "deceased_id", referencedColumnName = "id")
-    private DeceasedEntity deceased;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "receipt_type_id")
+  private ReceiptTypeEntity receiptType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "plan_id")
-    private Plan plan;
+  // @MapsId
+  @OneToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = "deceased_id", referencedColumnName = "id")
+  private DeceasedEntity deceased;
 
-    @Builder
-    public Funeral(final LocalDateTime funeralDate,
-                   final String receiptNumber,
-                   final String receiptSeries,
-                   final BigDecimal tax,
-                   final BigDecimal totalAmount,
-                   final ReceiptTypeEntity receiptType,
-                   final DeceasedEntity deceased,
-                   final Plan plan) {
-        this.funeralDate = funeralDate;
-        this.receiptNumber = receiptNumber;
-        this.receiptSeries = receiptSeries;
-        this.tax = tax;
-        this.totalAmount = totalAmount;
-        this.registerDate = LocalDateTime.now();
-        this.receiptType = receiptType;
-        this.deceased = deceased;
-        this.plan = plan;
-    }
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "plan_id")
+  private Plan plan;
+
+  @Builder
+  public Funeral(
+      final LocalDateTime funeralDate,
+      final String receiptNumber,
+      final String receiptSeries,
+      final BigDecimal tax,
+      final BigDecimal totalAmount,
+      final ReceiptTypeEntity receiptType,
+      final DeceasedEntity deceased,
+      final Plan plan) {
+    this.funeralDate = funeralDate;
+    this.receiptNumber = receiptNumber;
+    this.receiptSeries = receiptSeries;
+    this.tax = tax;
+    this.totalAmount = totalAmount;
+    this.registerDate = LocalDateTime.now();
+    this.receiptType = receiptType;
+    this.deceased = deceased;
+    this.plan = plan;
+  }
 }

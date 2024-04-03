@@ -16,17 +16,24 @@ import java.time.LocalDate;
 @Jacksonized
 public class AffiliateRequestDto {
 
-    Long id;
-    @NotBlank(message = "{affiliate.error.firstName.blank}") String firstName;
+  Long id;
 
-    @NotBlank(message = "{affiliate.error.lastName.blank}") String lastName;
+  @NotBlank(message = "{affiliate.error.firstName.blank}")
+  String firstName;
 
-    @Past(message = "affiliate.error.birthDate.past")
-    @NotNull(message = "{affiliate.error.birthDate.empty}") LocalDate birthDate;
+  @NotBlank(message = "{affiliate.error.lastName.blank}")
+  String lastName;
 
-    @NotNull(message = "{affiliate.error.dni.empty}") Integer dni;
+  @Past(message = "affiliate.error.birthDate.past")
+  @NotNull(message = "{affiliate.error.birthDate.empty}")
+  LocalDate birthDate;
 
-    @NotNull(message = "{affiliate.error.relationship.empty}") RelationshipDto relationship;
+  @NotNull(message = "{affiliate.error.dni.empty}")
+  Integer dni;
 
-    @NotNull(message = "{affiliate.error.gender.empty}") GenderDto gender;
+  @NotNull(message = "{affiliate.error.relationship.empty}")
+  RelationshipDto relationship;
+
+  @NotNull(message = "{affiliate.error.gender.empty}")
+  GenderDto gender;
 }

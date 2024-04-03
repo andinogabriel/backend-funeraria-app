@@ -1,0 +1,92 @@
+get:
+  summary: "GET api/v1/funerals"
+  operationId: "getAll"
+  responses:
+    200:
+      description: "OK"
+      content:
+        '*/*':
+          schema:
+            type: "array"
+            items:
+              $ref: "./schemas/FuneralResponseDto.yaml"
+post:
+  summary: "POST api/v1/funerals"
+  operationId: "create"
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: "./schemas/FuneralRequestDto.yaml"
+    required: true
+  responses:
+    200:
+      description: OK
+      content:
+        '*/*':
+          schema:
+            $ref: "./schemas/FuneralResponseDto.yaml"
+    400:
+      description: a field or several required fields for funeral weren't sent in the request.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/ValidationErrors.yaml"
+put:
+  summary: "PUT api/v1/funerals/{id}"
+  operationId: "update"
+  parameters:
+    - name: "id"
+      in: "path"
+      required: true
+      schema:
+        type: "integer"
+        format: "int64"
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: "./schemas/FuneralRequestDto.yaml"
+    required: true
+  responses:
+    200:
+      description: OK
+      content:
+        '*/*':
+          schema:
+            $ref: "./schemas/FuneralResponseDto.yaml"
+    400:
+      description: a field or several required fields for funeral weren't sent in the request.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/ValidationErrors.yaml"
+    404:
+      description: A funeral with the specified id was not found.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/NotFoundException.yaml"
+delete:
+  summary: "DELETE api/v1/funerals/{id}"
+  operationId: "delete"
+  parameters:
+    - name: "id"
+      in: "path"
+      required: true
+      schema:
+        type: "integer"
+        format: "int64"
+  responses:
+    200:
+      description: OK
+      content:
+        '*/*':
+          schema:
+            $ref: "./schemas/OperationStatusModel.yaml"
+    404:
+      description: A funeral with the specified id was not found.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/NotFoundException.yaml"

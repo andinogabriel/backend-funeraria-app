@@ -1,0 +1,23 @@
+get:
+  summary: "GET an income by its receipt number"
+  operationId: "getIncomeById"
+  parameters:
+    - name: "receiptNumber"
+      in: "path"
+      required: true
+      schema:
+        type: "integer"
+        format: "int64"
+  responses:
+    200:
+      description: OK
+      content:
+        '*/*':
+          schema:
+            $ref: "../../schemas/IncomeResponseDto.yaml"
+    404:
+      description: An income with the specified receiptNumber was not found.
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/NotFoundException.yaml"

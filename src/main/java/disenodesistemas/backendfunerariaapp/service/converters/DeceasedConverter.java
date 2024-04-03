@@ -19,31 +19,32 @@ import static java.util.Objects.nonNull;
 @RequiredArgsConstructor
 public class DeceasedConverter implements AbstractConverter<DeceasedEntity, DeceasedRequestDto> {
 
-    private final UserService userService;
-    private final ModelMapper mapper;
+  private final UserService userService;
+  private final ModelMapper mapper;
 
-    @Override
-    public DeceasedEntity fromDto(final DeceasedRequestDto dto) {
-        val authentication = SecurityContextHolder.getContext().getAuthentication();
-        return DeceasedEntity.builder()
-                .dni(dto.getDni())
-                .birthDate(dto.getBirthDate())
-                .deathDate(dto.getDeathDate())
-                .deceasedUser(nonNull(dto.getUser()) ? userService.getUserByEmail(dto.getUser().getEmail()) :
-                        userService.getUserByEmail(authentication.getName())
-                )
-                .deathCause(mapper.map(dto.getDeathCause(), DeathCauseEntity.class))
-                .gender(mapper.map(dto.getGender(), GenderEntity.class))
-                .placeOfDeath(mapper.map(dto.getPlaceOfDeath(), AddressEntity.class))
-                .deceasedRelationship(mapper.map(dto.getDeceasedRelationship(), RelationshipEntity.class))
-                .firstName(dto.getFirstName())
-                .lastName(dto.getLastName())
-                .affiliated(Boolean.FALSE)
-                .build();
-    }
+  @Override
+  public DeceasedEntity fromDto(final DeceasedRequestDto dto) {
+    val authentication = SecurityContextHolder.getContext().getAuthentication();
+    return DeceasedEntity.builder()
+        .dni(dto.getDni())
+        .birthDate(dto.getBirthDate())
+        .deathDate(dto.getDeathDate())
+        .deceasedUser(
+            nonNull(dto.getUser())
+                ? userService.getUserByEmail(dto.getUser().getEmail())
+                : userService.getUserByEmail(authentication.getName()))
+        .deathCause(mapper.map(dto.getDeathCause(), DeathCauseEntity.class))
+        .gender(mapper.map(dto.getGender(), GenderEntity.class))
+        .placeOfDeath(mapper.map(dto.getPlaceOfDeath(), AddressEntity.class))
+        .deceasedRelationship(mapper.map(dto.getDeceasedRelationship(), RelationshipEntity.class))
+        .firstName(dto.getFirstName())
+        .lastName(dto.getLastName())
+        .affiliated(Boolean.FALSE)
+        .build();
+  }
 
-    @Override
-    public DeceasedRequestDto toDTO(final DeceasedEntity entity) {
-        return null;
-    }
+  @Override
+  public DeceasedRequestDto toDTO(final DeceasedEntity entity) {
+    return null;
+  }
 }

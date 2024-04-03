@@ -13,10 +13,12 @@ import java.util.Map;
 @Jacksonized
 @Builder(toBuilder = true)
 public class ValidationErrors {
-    Map<String, String> errors;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern="dd-MM-yyyy HH:mm")
-    LocalDateTime timestamp;
-    String id;
-    HttpStatus status;
-    int code;
+  Map<String, String> errors;
+
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
+  LocalDateTime timestamp;
+
+  String id;
+  HttpStatus status;
+  int code;
 }

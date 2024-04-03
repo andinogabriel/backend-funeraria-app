@@ -24,41 +24,40 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SupplierController {
 
-    private final SupplierService supplierService;
-    private final ProjectionFactory projectionFactory;
+  private final SupplierService supplierService;
+  private final ProjectionFactory projectionFactory;
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping
-    public List<SupplierResponseDto> getSuppliers() {
-        return supplierService.getSuppliers();
-    }
+  @PreAuthorize("hasRole('ADMIN')")
+  @GetMapping
+  public List<SupplierResponseDto> getSuppliers() {
+    return supplierService.getSuppliers();
+  }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping
-    public SupplierResponseDto createSupplier(@RequestBody @Valid final SupplierRequestDto supplier) {
-        return supplierService.createSupplier(supplier);
-    }
+  @PreAuthorize("hasRole('ADMIN')")
+  @PostMapping
+  public SupplierResponseDto createSupplier(@RequestBody @Valid final SupplierRequestDto supplier) {
+    return supplierService.createSupplier(supplier);
+  }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping(path = "/{nif}")
-    public SupplierResponseDto getSupplierByNif(@PathVariable final String nif) {
-        return projectionFactory.createProjection(SupplierResponseDto.class, supplierService.findSupplierByNif(nif));
-    }
+  @PreAuthorize("hasRole('ADMIN')")
+  @GetMapping(path = "/{nif}")
+  public SupplierResponseDto getSupplierByNif(@PathVariable final String nif) {
+    return projectionFactory.createProjection(
+        SupplierResponseDto.class, supplierService.findSupplierByNif(nif));
+  }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping(path = "/{nif}")
-    public OperationStatusModel deleteSupplier(@PathVariable final String nif) {
-        supplierService.deleteSupplier(nif);
-        return OperationStatusModel.builder()
-                .name("DELETE")
-                .result("SUCCESSFUL")
-                .build();
-    }
+  @PreAuthorize("hasRole('ADMIN')")
+  @DeleteMapping(path = "/{nif}")
+  public OperationStatusModel deleteSupplier(@PathVariable final String nif) {
+    supplierService.deleteSupplier(nif);
+    return OperationStatusModel.builder().name("DELETE").result("SUCCESSFUL").build();
+  }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping(path = "/{nif}")
-    public SupplierResponseDto updateSupplier(@PathVariable final String nif, @RequestBody @Valid final SupplierRequestDto supplierRequestDto) {
-        return supplierService.updateSupplier(nif, supplierRequestDto);
-    }
-
+  @PreAuthorize("hasRole('ADMIN')")
+  @PutMapping(path = "/{nif}")
+  public SupplierResponseDto updateSupplier(
+      @PathVariable final String nif,
+      @RequestBody @Valid final SupplierRequestDto supplierRequestDto) {
+    return supplierService.updateSupplier(nif, supplierRequestDto);
+  }
 }

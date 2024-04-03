@@ -27,62 +27,65 @@ import java.util.Objects;
 @Slf4j
 public class DeceasedServiceImpl implements DeceasedService {
 
-    private final DeceasedRepository deceasedRepository;
-    private final ProjectionFactory projectionFactory;
-    private final ModelMapper mapper;
-    private final AbstractConverter<DeceasedEntity, DeceasedRequestDto> converter;
+  private final DeceasedRepository deceasedRepository;
+  private final ProjectionFactory projectionFactory;
+  private final ModelMapper mapper;
+  private final AbstractConverter<DeceasedEntity, DeceasedRequestDto> converter;
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<DeceasedResponseDto> findAll() {
-        return deceasedRepository.findAllByOrderByRegisterDateDesc();
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public List<DeceasedResponseDto> findAll() {
+    return deceasedRepository.findAllByOrderByRegisterDateDesc();
+  }
 
-    @Override
-    @Transactional
-    public DeceasedResponseDto create(final DeceasedRequestDto deceasedRequest) {
-        return projectionFactory.createProjection
-                (DeceasedResponseDto.class,
-                deceasedRepository.save(converter.fromDto(deceasedRequest))
-        );
-    }
+  @Override
+  @Transactional
+  public DeceasedResponseDto create(final DeceasedRequestDto deceasedRequest) {
+    return projectionFactory.createProjection(
+        DeceasedResponseDto.class, deceasedRepository.save(converter.fromDto(deceasedRequest)));
+  }
 
-    @Override
-    @Transactional
-    public DeceasedResponseDto update(final Integer dni, final DeceasedRequestDto deceasedRequest) {
-        final DeceasedEntity entityToUpdate = getDeceasedByDni(dni);
+  @Override
+  @Transactional
+  public DeceasedResponseDto update(final Integer dni, final DeceasedRequestDto deceasedRequest) {
+    final DeceasedEntity entityToUpdate = getDeceasedByDni(dni);
 
-        if (!Objects.equals(entityToUpdate.getDni(), deceasedRequest.getDni()) &&
-                deceasedRepository.existsByDni(deceasedRequest.getDni()))
-            throw new ConflictException("deceased.dni.already.registered");
+    if (!Objects.equals(entityToUpdate.getDni(), deceasedRequest.getDni())
+        && deceasedRepository.existsByDni(deceasedRequest.getDni()))
+      throw new ConflictException("deceased.dni.already.registered");
 
-        entityToUpdate.setDeceasedRelationship(mapper.map(deceasedRequest.getDeceasedRelationship(), RelationshipEntity.class));
-        entityToUpdate.setBirthDate(deceasedRequest.getBirthDate());
-        entityToUpdate.setDni(deceasedRequest.getDni());
-        entityToUpdate.setDeathCause(mapper.map(deceasedRequest.getDeathCause(), DeathCauseEntity.class));
-        entityToUpdate.setDeathDate(deceasedRequest.getDeathDate());
-        entityToUpdate.setFirstName(deceasedRequest.getFirstName());
-        entityToUpdate.setLastName(deceasedRequest.getLastName());
-        entityToUpdate.setGender(mapper.map(deceasedRequest.getGender(), GenderEntity.class));
-        entityToUpdate.setPlaceOfDeath(mapper.map(deceasedRequest.getPlaceOfDeath(), AddressEntity.class));
-        return projectionFactory.createProjection(DeceasedResponseDto.class, deceasedRepository.save(entityToUpdate));
-    }
+    entityToUpdate.setDeceasedRelationship(
+        mapper.map(deceasedRequest.getDeceasedRelationship(), RelationshipEntity.class));
+    entityToUpdate.setBirthDate(deceasedRequest.getBirthDate());
+    entityToUpdate.setDni(deceasedRequest.getDni());
+    entityToUpdate.setDeathCause(
+        mapper.map(deceasedRequest.getDeathCause(), DeathCauseEntity.class));
+    entityToUpdate.setDeathDate(deceasedRequest.getDeathDate());
+    entityToUpdate.setFirstName(deceasedRequest.getFirstName());
+    entityToUpdate.setLastName(deceasedRequest.getLastName());
+    entityToUpdate.setGender(mapper.map(deceasedRequest.getGender(), GenderEntity.class));
+    entityToUpdate.setPlaceOfDeath(
+        mapper.map(deceasedRequest.getPlaceOfDeath(), AddressEntity.class));
+    return projectionFactory.createProjection(
+        DeceasedResponseDto.class, deceasedRepository.save(entityToUpdate));
+  }
 
-    @Override
-    @Transactional
-    public void delete(final Integer dni) {
-        deceasedRepository.delete(getDeceasedByDni(dni));
-    }
+  @Override
+  @Transactional
+  public void delete(final Integer dni) {
+    deceasedRepository.delete(getDeceasedByDni(dni));
+  }
 
-    @Override
-    @Transactional(readOnly = true)
-    public DeceasedResponseDto findByDni(final Integer dni) {
-        final DeceasedEntity entity = getDeceasedByDni(dni);
-        return projectionFactory.createProjection(DeceasedResponseDto.class, entity);
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public DeceasedResponseDto findByDni(final Integer dni) {
+    final DeceasedEntity entity = getDeceasedByDni(dni);
+    return projectionFactory.createProjection(DeceasedResponseDto.class, entity);
+  }
 
-    private DeceasedEntity getDeceasedByDni(final Integer dni) {
-        return deceasedRepository.findByDni(dni)
-                .orElseThrow(() -> new NotFoundException("deceased.not.found"));
-    }
+  private DeceasedEntity getDeceasedByDni(final Integer dni) {
+    return deceasedRepository
+        .findByDni(dni)
+        .orElseThrow(() -> new NotFoundException("deceased.not.found"));
+  }
 }

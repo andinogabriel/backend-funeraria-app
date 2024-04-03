@@ -12,15 +12,14 @@ import java.util.List;
 @RequestMapping("api/v1/relationships")
 public class RelationshipController {
 
-    private final RelationshipServiceImpl relationshipService;
+  private final RelationshipServiceImpl relationshipService;
 
-    public RelationshipController(final RelationshipServiceImpl relationshipService) {
-        this.relationshipService = relationshipService;
-    }
+  public RelationshipController(final RelationshipServiceImpl relationshipService) {
+    this.relationshipService = relationshipService;
+  }
 
-    @GetMapping
-    public List<RelationshipResponseDto> getRelationships() {
-        return relationshipService.getRelationships();
-    }
-
+  @GetMapping
+  public List<RelationshipResponseDto> getRelationships() {
+    return relationshipService.getRelationships();
+  }
 }

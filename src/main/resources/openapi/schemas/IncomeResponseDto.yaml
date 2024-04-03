@@ -1,0 +1,61 @@
+type: "object"
+properties:
+  receiptNumber:
+    type: "string"
+    example: 20240711172326858499
+  receiptSeries:
+    type: "string"
+    example: 1
+  incomeDate:
+    type: "string"
+    format: "date"
+    example: 12-11-2024 18:25
+  lastModifiedDate:
+    type: "string"
+    format: "date"
+    example: 12-11-2024 18:25
+  tax:
+    type: "number"
+    format: "double"
+    example: 21
+  totalAmount:
+    type: "number"
+    format: "double"
+    example: 130680.00
+  receiptType:
+    $ref: "./ReceiptTypeDto.yaml"
+  incomeDetails:
+    type: array
+    items:
+      $ref: './IncomeDetailsResponseDto.yaml'
+  supplier:
+    type: "object"
+    properties:
+      name:
+        type: "string"
+        example: Supplier name
+      nif:
+        type: "string"
+        example: Y1234567Z
+      webPage:
+        type: "string"
+        example: www.example.com
+      email:
+        type: "string"
+        example: email.example@example.com
+  incomeUser:
+    type: "object"
+    properties:
+      email:
+        type: "string"
+        example: email.example@example.com
+      firstName:
+        type: "string"
+        example: Income user first name
+      lastName:
+        type: "string"
+        example: Income user last name
+
+
+
+

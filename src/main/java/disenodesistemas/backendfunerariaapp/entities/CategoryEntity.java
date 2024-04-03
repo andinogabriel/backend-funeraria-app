@@ -1,18 +1,17 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity(name = "categories")
 @Getter
@@ -20,23 +19,21 @@ import java.util.List;
 @NoArgsConstructor
 public class CategoryEntity implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue
-    private Long id;
+  @Id @GeneratedValue private Long id;
 
-    @Column(nullable = false, length = 75)
-    private String name;
+  @Column(nullable = false, length = 75)
+  private String name;
 
-    private String description;
+  private String description;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "category", orphanRemoval = true)
-    private List<ItemEntity> items;
+  @OneToMany(cascade = CascadeType.ALL, mappedBy = "category", orphanRemoval = true)
+  private List<ItemEntity> items;
 
-    public CategoryEntity(final String name, final String description) {
-        this.name = name;
-        this.description = description;
-        this.items = new ArrayList<>();
-    }
+  public CategoryEntity(final String name, final String description) {
+    this.name = name;
+    this.description = description;
+    this.items = new ArrayList<>();
+  }
 }

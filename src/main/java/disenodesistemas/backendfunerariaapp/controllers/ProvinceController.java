@@ -12,15 +12,14 @@ import java.util.List;
 @RequestMapping("api/v1/provinces")
 public class ProvinceController {
 
-    private final ProvinceService provinceService;
+  private final ProvinceService provinceService;
 
-    public ProvinceController(final ProvinceService provinceService) {
-        this.provinceService = provinceService;
-    }
+  public ProvinceController(final ProvinceService provinceService) {
+    this.provinceService = provinceService;
+  }
 
-    @GetMapping
-    public List<ProvinceResponseDto> getAllProvinces() {
-        return provinceService.getAllProvinces();
-    }
-
+  @GetMapping
+  public List<ProvinceResponseDto> getAllProvinces() {
+    return provinceService.getAllProvinces();
+  }
 }

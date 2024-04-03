@@ -1,0 +1,29 @@
+type: "object"
+properties:
+  tax:
+    type: "number"
+    format: "double"
+    example: 21.00
+  receiptType:
+    $ref: "./ReceiptTypeDto.yaml"
+  supplier:
+    $ref: "./SupplierRequestDto.yaml"
+  incomeDetails:
+    type: array
+    items:
+      $ref: './IncomeDetailRequestDto.yaml'
+  incomeUser:
+    type: "object"
+    properties:
+      email:
+        type: "string"
+        example: income.email@gmail.com
+      lastName:
+        type: "string"
+        example: Perez
+      firstName:
+        type: "string"
+        example: Juan
+
+
+

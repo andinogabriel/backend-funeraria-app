@@ -29,110 +29,109 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.STRICT_STUBS)
 class CategoryServiceImplTest {
 
-    @Mock
-    private CategoryRepository categoryRepository;
-    @Mock
-    private ProjectionFactory projectionFactory;
-    @InjectMocks
-    private CategoryServiceImpl sut;
+  @Mock private CategoryRepository categoryRepository;
+  @Mock private ProjectionFactory projectionFactory;
+  @InjectMocks private CategoryServiceImpl sut;
 
-    private CategoryResponseDto categoryResponseDto;
+  private CategoryResponseDto categoryResponseDto;
 
-    @BeforeEach
-    void setUp() {
-        final ProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
-        categoryResponseDto = projectionFactory.createProjection(CategoryResponseDto.class, CategoryEntityMother.getCategoryEntity());
-    }
+  @BeforeEach
+  void setUp() {
+    final ProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
+    categoryResponseDto =
+        projectionFactory.createProjection(
+            CategoryResponseDto.class, CategoryEntityMother.getCategoryEntity());
+  }
 
-    @Test
-    void getAllCategories() {
-        final List<CategoryResponseDto> expected = List.of(categoryResponseDto);
-        given(categoryRepository.findAllByOrderByName()).willReturn(expected);
+  @Test
+  void getAllCategories() {
+    final List<CategoryResponseDto> expected = List.of(categoryResponseDto);
+    given(categoryRepository.findAllByOrderByName()).willReturn(expected);
 
-        final List<CategoryResponseDto> result = sut.getAllCategories();
+    final List<CategoryResponseDto> result = sut.getAllCategories();
 
-        verify(categoryRepository, times(1)).findAllByOrderByName();
-        assertEquals(expected.size(), result.size());
-        assertEquals(expected.get(0).getName(), result.get(0).getName());
-    }
+    verify(categoryRepository, times(1)).findAllByOrderByName();
+    assertEquals(expected.size(), result.size());
+    assertEquals(expected.get(0).getName(), result.get(0).getName());
+  }
 
-    @Test
-    void createCategory() {
-        final CategoryEntity expected = CategoryEntityMother.getCategoryEntity();
-        given(categoryRepository.save(any(CategoryEntity.class))).willReturn(expected);
-        given(projectionFactory.createProjection(CategoryResponseDto.class, expected)).willReturn(categoryResponseDto);
+  @Test
+  void createCategory() {
+    final CategoryEntity expected = CategoryEntityMother.getCategoryEntity();
+    given(categoryRepository.save(any(CategoryEntity.class))).willReturn(expected);
+    given(projectionFactory.createProjection(CategoryResponseDto.class, expected))
+        .willReturn(categoryResponseDto);
 
-        final CategoryResponseDto result = sut.createCategory(CategoryDtoMother.getCategoryRequestDto());
+    final CategoryResponseDto result =
+        sut.createCategory(CategoryDtoMother.getCategoryRequestDto());
 
-        assertAll(
-                () -> assertEquals(expected.getId(), result.getId()),
-                () -> assertEquals(expected.getDescription(), result.getDescription()),
-                () -> assertEquals(expected.getName(), result.getName())
-        );
-        verify(categoryRepository, times(1)).save(any(CategoryEntity.class));
-    }
+    assertAll(
+        () -> assertEquals(expected.getId(), result.getId()),
+        () -> assertEquals(expected.getDescription(), result.getDescription()),
+        () -> assertEquals(expected.getName(), result.getName()));
+    verify(categoryRepository, times(1)).save(any(CategoryEntity.class));
+  }
 
-    @Test
-    void updateCategory() {
-        final Long id = CategoryDtoMother.getCategoryRequestDto().getId();
-        final CategoryEntity expected = CategoryEntityMother.getCategoryEntity();
-        given(categoryRepository.findById(id)).willReturn(Optional.of(expected));
-        given(categoryRepository.save(any(CategoryEntity.class))).willReturn(expected);
-        given(projectionFactory.createProjection(CategoryResponseDto.class, expected)).willReturn(categoryResponseDto);
+  @Test
+  void updateCategory() {
+    final Long id = CategoryDtoMother.getCategoryRequestDto().getId();
+    final CategoryEntity expected = CategoryEntityMother.getCategoryEntity();
+    given(categoryRepository.findById(id)).willReturn(Optional.of(expected));
+    given(categoryRepository.save(any(CategoryEntity.class))).willReturn(expected);
+    given(projectionFactory.createProjection(CategoryResponseDto.class, expected))
+        .willReturn(categoryResponseDto);
 
-        final CategoryResponseDto result = sut.updateCategory(id, CategoryDtoMother.getCategoryRequestDto());
+    final CategoryResponseDto result =
+        sut.updateCategory(id, CategoryDtoMother.getCategoryRequestDto());
 
-        assertAll(
-                () -> assertEquals(expected.getId(), result.getId()),
-                () -> assertEquals(expected.getDescription(), result.getDescription()),
-                () -> assertEquals(expected.getName(), result.getName())
-        );
-        verify(categoryRepository, times(1)).save(any(CategoryEntity.class));
-        verify(categoryRepository, times(1)).findById(id);
-    }
+    assertAll(
+        () -> assertEquals(expected.getId(), result.getId()),
+        () -> assertEquals(expected.getDescription(), result.getDescription()),
+        () -> assertEquals(expected.getName(), result.getName()));
+    verify(categoryRepository, times(1)).save(any(CategoryEntity.class));
+    verify(categoryRepository, times(1)).findById(id);
+  }
 
-    @Test
-    void deleteCategory() {
-        final Long id = CategoryDtoMother.getCategoryRequestDto().getId();
-        final CategoryEntity expected = CategoryEntityMother.getCategoryEntity();
-        given(categoryRepository.findById(id)).willReturn(Optional.of(expected));
+  @Test
+  void deleteCategory() {
+    final Long id = CategoryDtoMother.getCategoryRequestDto().getId();
+    final CategoryEntity expected = CategoryEntityMother.getCategoryEntity();
+    given(categoryRepository.findById(id)).willReturn(Optional.of(expected));
 
-        sut.deleteCategory(id);
+    sut.deleteCategory(id);
 
-        verify(categoryRepository, times(1)).delete(expected);
-        verify(categoryRepository, times(1)).findById(id);
-    }
+    verify(categoryRepository, times(1)).delete(expected);
+    verify(categoryRepository, times(1)).findById(id);
+  }
 
-    @Test
-    void findCategoryById() {
-        final Long id = CategoryDtoMother.getCategoryRequestDto().getId();
-        final CategoryEntity expected = CategoryEntityMother.getCategoryEntity();
-        given(categoryRepository.findById(id)).willReturn(Optional.of(expected));
+  @Test
+  void findCategoryById() {
+    final Long id = CategoryDtoMother.getCategoryRequestDto().getId();
+    final CategoryEntity expected = CategoryEntityMother.getCategoryEntity();
+    given(categoryRepository.findById(id)).willReturn(Optional.of(expected));
 
-        final CategoryEntity result = sut.findCategoryById(id);
+    final CategoryEntity result = sut.findCategoryById(id);
 
-        assertAll(
-                () -> assertEquals(expected.getId(), result.getId()),
-                () -> assertEquals(expected.getDescription(), result.getDescription()),
-                () -> assertEquals(expected.getName(), result.getName())
-        );
-        verify(categoryRepository, times(1)).findById(id);
-    }
+    assertAll(
+        () -> assertEquals(expected.getId(), result.getId()),
+        () -> assertEquals(expected.getDescription(), result.getDescription()),
+        () -> assertEquals(expected.getName(), result.getName()));
+    verify(categoryRepository, times(1)).findById(id);
+  }
 
-    @Test
-    void findCategoryByIdNotFoundException() {
-        final Long id = 2L;
-        final NotFoundException notFoundException = assertThrows(NotFoundException.class, () -> sut.findCategoryById(id));
+  @Test
+  void findCategoryByIdNotFoundException() {
+    final Long id = 2L;
+    final NotFoundException notFoundException =
+        assertThrows(NotFoundException.class, () -> sut.findCategoryById(id));
 
-        assertAll(
-                () -> assertEquals("category.error.not.found", notFoundException.getMessage()),
-                () -> assertEquals(HttpStatus.NOT_FOUND, notFoundException.getStatus())
-        );
-        verify(categoryRepository, times(1)).findById(id);
-    }
+    assertAll(
+        () -> assertEquals("category.error.not.found", notFoundException.getMessage()),
+        () -> assertEquals(HttpStatus.NOT_FOUND, notFoundException.getStatus()));
+    verify(categoryRepository, times(1)).findById(id);
+  }
 }

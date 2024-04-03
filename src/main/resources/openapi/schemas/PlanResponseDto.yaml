@@ -1,0 +1,32 @@
+type: "object"
+properties:
+  id:
+    type: "integer"
+    format: "int64"
+    example: 1
+  name:
+    type: "string"
+    example: Plan simple
+  description:
+    type: "string"
+    example: Descripcion del Plan simple
+  imageUrl:
+    type: "string"
+    example: https://s3.amazonaws.com/bucketname/foldername/imagename.jpg
+  totalAmount:
+    type: "number"
+    format: "double"
+    example: 130680.00
+  profitPercentage:
+    type: "number"
+    format: "double"
+    example: 10.00
+  itemsPlan:
+    type: "object"
+    properties:
+      item:
+        $ref: "./ItemResponseDto.yaml"
+      quantity:
+        type: "integer"
+        format: "int32"
+        example: 1

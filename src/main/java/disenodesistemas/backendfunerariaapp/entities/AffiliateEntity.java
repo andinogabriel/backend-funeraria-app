@@ -1,14 +1,8 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.Hibernate;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
@@ -20,9 +14,14 @@ import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import java.io.Serializable;
-import java.time.LocalDate;
-import java.util.Objects;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.Hibernate;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity(name = "affiliates")
 @Table(indexes = { @Index(columnList = "dni", name = "index_dni", unique = true) })
@@ -33,7 +32,7 @@ import java.util.Objects;
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 public class AffiliateEntity implements Serializable {
-
+  
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -21,21 +21,21 @@ import javax.persistence.OneToOne;
 @Entity(name = "user_devices")
 public class UserDevice {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private UserEntity user;
 
-    private String deviceType;
+  private String deviceType;
 
-    @Column(nullable = false)
-    private String deviceId;
+  @Column(nullable = false)
+  private String deviceId;
 
-    @OneToOne(optional = false, mappedBy = "userDevice")
-    private RefreshToken refreshToken;
+  @OneToOne(optional = false, mappedBy = "userDevice")
+  private RefreshToken refreshToken;
 
-    private Boolean isRefreshActive;
+  private Boolean isRefreshActive;
 }

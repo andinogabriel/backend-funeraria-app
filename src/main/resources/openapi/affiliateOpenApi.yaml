@@ -1,0 +1,100 @@
+post:
+  summary: "POST api/v1/affiliates"
+  operationId: "createAffiliate"
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: "./schemas/AffiliateRequestDto.yaml"
+    required: true
+  responses:
+    200:
+      description: OK
+      content:
+        '*/*':
+          schema:
+            $ref: "./schemas/AffiliateResponseDto.yaml"
+    400:
+      description: a field or several required fields for an affiliate weren't sent in the request.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/ValidationErrors.yaml"
+get:
+  summary: "GET api/v1/affiliates"
+  operationId: "findAllByDeceasedFalse"
+  responses:
+    200:
+      description: OK
+      content:
+        '*/*':
+          schema:
+            type: "array"
+            items:
+              $ref: "./schemas/AffiliateResponseDto.yaml"
+    400:
+      description: a field or several required fields for an affiliate weren't sent in the request.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/ValidationErrors.yaml"
+put:
+  summary: "PUT api/v1/affiliates/{dni}"
+  operationId: "updateAffiliate"
+  parameters:
+    - name: "dni"
+      in: "path"
+      required: true
+      description: Numeric ID of the affiliate to update.
+      schema:
+        type: "integer"
+        format: "int32"
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: "./schemas/AffiliateRequestDto.yaml"
+    required: true
+  responses:
+    200:
+      description: OK
+      content:
+        '*/*':
+          schema:
+            $ref: "./schemas/AffiliateResponseDto.yaml"
+    400:
+      description: a field or several required fields for an affiliate weren't sent in the request.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/ValidationErrors.yaml"
+    404:
+      description: An affiliate with the specified dni was not found.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/NotFoundException.yaml"
+delete:
+  summary: "DELETE api/v1/affiliates/{dni}"
+  operationId: "deleteAffiliate"
+  parameters:
+    - in: "path"
+      name: "dni"
+      required: true
+      description: Numeric ID of the affiliate to delete
+      schema:
+        type: "integer"
+        format: "int32"
+  responses:
+    200:
+      description: OK
+      content:
+        '*/*':
+          schema:
+            $ref: "./schemas/OperationStatusModel.yaml"
+    404:
+      description: An affiliate with the specified dni was not found.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/NotFoundException.yaml"

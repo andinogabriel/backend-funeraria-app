@@ -26,48 +26,45 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FuneralController {
 
-    private final FuneralService funeralService;
+  private final FuneralService funeralService;
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping
-    public List<FuneralResponseDto> getAll() {
-        return funeralService.findAll();
-    }
+  @PreAuthorize("hasRole('ADMIN')")
+  @GetMapping
+  public List<FuneralResponseDto> getAll() {
+    return funeralService.findAll();
+  }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/{id}")
-    public FuneralResponseDto getFuneralById(@PathVariable final Long id) {
-        return funeralService.findById(id);
-    }
+  @PreAuthorize("hasRole('ADMIN')")
+  @GetMapping("/{id}")
+  public FuneralResponseDto getFuneralById(@PathVariable final Long id) {
+    return funeralService.findById(id);
+  }
 
-    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-    @PostMapping
-    public ResponseEntity<FuneralResponseDto> create(@RequestBody @Valid final FuneralRequestDto funeralRequestDto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(funeralService.create(funeralRequestDto));
-    }
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  @PostMapping
+  public ResponseEntity<FuneralResponseDto> create(
+      @RequestBody @Valid final FuneralRequestDto funeralRequestDto) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(funeralService.create(funeralRequestDto));
+  }
 
-    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-    @PutMapping("/{id}")
-    public ResponseEntity<FuneralResponseDto> update(@PathVariable final Long id,
-                                                     @RequestBody @Valid final FuneralRequestDto funeralRequestDto) {
-        return ResponseEntity.ok(funeralService.update(id, funeralRequestDto));
-    }
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  @PutMapping("/{id}")
+  public ResponseEntity<FuneralResponseDto> update(
+      @PathVariable final Long id, @RequestBody @Valid final FuneralRequestDto funeralRequestDto) {
+    return ResponseEntity.ok(funeralService.update(id, funeralRequestDto));
+  }
 
-    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<OperationStatusModel> delete(@PathVariable final Long id) {
-        funeralService.delete(id);
-        return ResponseEntity.ok(
-                OperationStatusModel.builder()
-                        .name("DELETE FUNERAL")
-                        .result("SUCCESS")
-                        .build()
-        );
-    }
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  @DeleteMapping("/{id}")
+  public ResponseEntity<OperationStatusModel> delete(@PathVariable final Long id) {
+    funeralService.delete(id);
+    return ResponseEntity.ok(
+        OperationStatusModel.builder().name("DELETE FUNERAL").result("SUCCESS").build());
+  }
 
-    @PreAuthorize("hasRole('USER')")
-    @GetMapping("/by-user")
-    public ResponseEntity<List<FuneralResponseDto>> findFuneralsByUser() {
-        return ResponseEntity.ok(funeralService.findFuneralsByUser());
-    }
+  @PreAuthorize("hasRole('USER')")
+  @GetMapping("/by-user")
+  public ResponseEntity<List<FuneralResponseDto>> findFuneralsByUser() {
+    return ResponseEntity.ok(funeralService.findFuneralsByUser());
+  }
 }

@@ -29,72 +29,79 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class DeceasedEntity implements Serializable {
 
-    @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+  @Id
+  @Column(name = "id")
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private Long id;
 
-    @Column(nullable = false, length = 100)
-    private String lastName;
+  @Column(nullable = false, length = 100)
+  private String lastName;
 
-    @Column(nullable = false, length = 150)
-    private String firstName;
+  @Column(nullable = false, length = 150)
+  private String firstName;
 
-    @Column(nullable = false)
-    private Integer dni;
+  @Column(nullable = false)
+  private Integer dni;
 
-    @Column(nullable = false)
-    private LocalDate birthDate;
+  @Column(nullable = false)
+  private LocalDate birthDate;
 
-    @Column(nullable = false)
-    private LocalDate deathDate;
+  @Column(nullable = false)
+  private LocalDate deathDate;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "address_id", referencedColumnName = "id")
-    private AddressEntity placeOfDeath;
+  @OneToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = "address_id", referencedColumnName = "id")
+  private AddressEntity placeOfDeath;
 
-    @CreatedDate
-    private LocalDateTime registerDate;
+  @CreatedDate private LocalDateTime registerDate;
 
-    @Column(name = "affiliated", columnDefinition = "boolean default false")
-    private boolean affiliated;
+  @Column(name = "affiliated", columnDefinition = "boolean default false")
+  private boolean affiliated;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "relationship_id")
-    private RelationshipEntity deceasedRelationship;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "relationship_id")
+  private RelationshipEntity deceasedRelationship;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private UserEntity deceasedUser;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id")
+  private UserEntity deceasedUser;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "gender_id")
-    private GenderEntity gender;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "gender_id")
+  private GenderEntity gender;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "death_cause_id")
-    private DeathCauseEntity deathCause;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "death_cause_id")
+  private DeathCauseEntity deathCause;
 
-    //@PrimaryKeyJoinColumn
-    @OneToOne(mappedBy = "deceased")
-    private Funeral funeral;
+  // @PrimaryKeyJoinColumn
+  @OneToOne(mappedBy = "deceased")
+  private Funeral funeral;
 
-    @Builder
-    public DeceasedEntity(final String lastName, final String firstName, final Integer dni, final LocalDate birthDate,
-                          final LocalDate deathDate, final AddressEntity placeOfDeath,
-                          final RelationshipEntity deceasedRelationship, final boolean affiliated,
-                          final UserEntity deceasedUser, final GenderEntity gender, final DeathCauseEntity deathCause) {
-        this.lastName = lastName;
-        this.firstName = firstName;
-        this.dni = dni;
-        this.birthDate = birthDate;
-        this.deathDate = deathDate;
-        this.placeOfDeath = placeOfDeath;
-        this.deceasedRelationship = deceasedRelationship;
-        this.affiliated = affiliated;
-        this.deceasedUser = deceasedUser;
-        this.gender = gender;
-        this.deathCause = deathCause;
-        this.registerDate = LocalDateTime.now();
-    }
+  @Builder
+  public DeceasedEntity(
+      final String lastName,
+      final String firstName,
+      final Integer dni,
+      final LocalDate birthDate,
+      final LocalDate deathDate,
+      final AddressEntity placeOfDeath,
+      final RelationshipEntity deceasedRelationship,
+      final boolean affiliated,
+      final UserEntity deceasedUser,
+      final GenderEntity gender,
+      final DeathCauseEntity deathCause) {
+    this.lastName = lastName;
+    this.firstName = firstName;
+    this.dni = dni;
+    this.birthDate = birthDate;
+    this.deathDate = deathDate;
+    this.placeOfDeath = placeOfDeath;
+    this.deceasedRelationship = deceasedRelationship;
+    this.affiliated = affiliated;
+    this.deceasedUser = deceasedUser;
+    this.gender = gender;
+    this.deathCause = deathCause;
+    this.registerDate = LocalDateTime.now();
+  }
 }

@@ -1,0 +1,18 @@
+type: "object"
+properties:
+  message:
+    type: "string"
+    example: the resource to search was not found
+  id:
+    type: "string"
+    example: 4f04334c-b32f-4eeb-ac17-ea30b0b612e7
+  timestamp:
+    type: "date-time"
+    example: "18-03-2024 11:13"
+  code:
+    type: "integer"
+    format: "int32"
+    example: 404
+  status:
+    type: "string"
+    example: NOT_FOUND

@@ -27,90 +27,83 @@ import static org.springframework.http.HttpStatus.OK;
 @ExtendWith(MockitoExtension.class)
 class DeceasedControllerTest {
 
-    @Mock
-    private DeceasedService deceasedService;
-    @InjectMocks
-    private DeceasedController deceasedController;
+  @Mock private DeceasedService deceasedService;
+  @InjectMocks private DeceasedController sut;
 
-    private DeceasedRequestDto deceasedRequestDto;
-    private DeceasedResponseDto deceasedResponseDto;
-    private static final Integer DNI = 12345678;
-    private static final Integer NOT_FOUND_DNI = 987654321;
-    private static final String LAST_NAME = "John";
-    private static final String FIRST_NAME = "Doe";
+  private DeceasedRequestDto deceasedRequestDto;
+  private DeceasedResponseDto deceasedResponseDto;
+  private static final Integer DNI = 12345678;
+  private static final Integer NOT_FOUND_DNI = 987654321;
+  private static final String LAST_NAME = "John";
+  private static final String FIRST_NAME = "Doe";
 
-    @BeforeEach
-    void setUp() {
-        deceasedRequestDto = DeceasedRequestDto.builder()
-                .dni(DNI)
-                .firstName(LAST_NAME)
-                .lastName(FIRST_NAME)
-                .build();
-        final ProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
-        final DeceasedEntity deceasedEntity = new DeceasedEntity();
-        deceasedEntity.setLastName(LAST_NAME);
-        deceasedEntity.setFirstName(FIRST_NAME);
-        deceasedEntity.setDni(DNI);
-        deceasedResponseDto = projectionFactory.createProjection(DeceasedResponseDto.class, deceasedEntity);
-    }
+  @BeforeEach
+  void setUp() {
+    deceasedRequestDto =
+        DeceasedRequestDto.builder().dni(DNI).firstName(LAST_NAME).lastName(FIRST_NAME).build();
+    final ProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
+    final DeceasedEntity deceasedEntity = new DeceasedEntity();
+    deceasedEntity.setLastName(LAST_NAME);
+    deceasedEntity.setFirstName(FIRST_NAME);
+    deceasedEntity.setDni(DNI);
+    deceasedResponseDto =
+        projectionFactory.createProjection(DeceasedResponseDto.class, deceasedEntity);
+  }
 
-    @Test
-    void testFindAll() {
-        when(deceasedService.findAll()).thenReturn(List.of(deceasedResponseDto));
+  @Test
+  void testFindAll() {
+    when(deceasedService.findAll()).thenReturn(List.of(deceasedResponseDto));
 
-        final ResponseEntity<List<DeceasedResponseDto>> responseEntity = deceasedController.findAll();
+    final ResponseEntity<List<DeceasedResponseDto>> responseEntity = sut.findAll();
 
-        assertEquals(OK, responseEntity.getStatusCode());
-        assertEquals(List.of(deceasedResponseDto), responseEntity.getBody());
-    }
+    assertEquals(OK, responseEntity.getStatusCode());
+    assertEquals(List.of(deceasedResponseDto), responseEntity.getBody());
+  }
 
-    @Test
-    void testFindByDni() {
-        when(deceasedService.findByDni(DNI)).thenReturn(deceasedResponseDto);
+  @Test
+  void testFindByDni() {
+    when(deceasedService.findByDni(DNI)).thenReturn(deceasedResponseDto);
 
-        final ResponseEntity<DeceasedResponseDto> responseEntity = deceasedController.findByDni(DNI);
+    final ResponseEntity<DeceasedResponseDto> responseEntity = sut.findByDni(DNI);
 
-        assertEquals(OK, responseEntity.getStatusCode());
-        assertEquals(deceasedResponseDto, responseEntity.getBody());
-    }
+    assertEquals(OK, responseEntity.getStatusCode());
+    assertEquals(deceasedResponseDto, responseEntity.getBody());
+  }
 
-    @Test
-    void testFindByDniNotFound() {
-        when(deceasedService.findByDni(NOT_FOUND_DNI)).thenThrow(NotFoundException.class);
-        assertThrows(NotFoundException.class, () -> deceasedController.findByDni(NOT_FOUND_DNI));
-    }
+  @Test
+  void testFindByDniNotFound() {
+    when(deceasedService.findByDni(NOT_FOUND_DNI)).thenThrow(NotFoundException.class);
+    assertThrows(NotFoundException.class, () -> sut.findByDni(NOT_FOUND_DNI));
+  }
 
-    @Test
-    void testCreate() {
-        when(deceasedService.create(deceasedRequestDto)).thenReturn(deceasedResponseDto);
+  @Test
+  void testCreate() {
+    when(deceasedService.create(deceasedRequestDto)).thenReturn(deceasedResponseDto);
 
-        final ResponseEntity<DeceasedResponseDto> responseEntity = deceasedController.create(deceasedRequestDto);
+    final ResponseEntity<DeceasedResponseDto> responseEntity = sut.create(deceasedRequestDto);
 
-        assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
-        assertEquals(deceasedResponseDto, responseEntity.getBody());
-    }
+    assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
+    assertEquals(deceasedResponseDto, responseEntity.getBody());
+  }
 
-    @Test
-    void testUpdate() {
-        when(deceasedService.update(DNI, deceasedRequestDto)).thenReturn(deceasedResponseDto);
+  @Test
+  void testUpdate() {
+    when(deceasedService.update(DNI, deceasedRequestDto)).thenReturn(deceasedResponseDto);
 
-        final ResponseEntity<DeceasedResponseDto> responseEntity = deceasedController.update(DNI, deceasedRequestDto);
+    final ResponseEntity<DeceasedResponseDto> responseEntity = sut.update(DNI, deceasedRequestDto);
 
-        assertEquals(OK, responseEntity.getStatusCode());
-        assertEquals(deceasedResponseDto, responseEntity.getBody());
-    }
+    assertEquals(OK, responseEntity.getStatusCode());
+    assertEquals(deceasedResponseDto, responseEntity.getBody());
+  }
 
-    @Test
-    void testDelete() {
-        final OperationStatusModel expectedOperationStatusModel = OperationStatusModel.builder()
-                .name("DELETE DECEASED")
-                .result("SUCCESSFUL")
-                .build();
+  @Test
+  void testDelete() {
+    final OperationStatusModel expectedOperationStatusModel =
+        OperationStatusModel.builder().name("DELETE DECEASED").result("SUCCESSFUL").build();
 
-        final ResponseEntity<OperationStatusModel> responseEntity = deceasedController.delete(DNI);
+    final ResponseEntity<OperationStatusModel> responseEntity = sut.delete(DNI);
 
-        assertEquals(OK, responseEntity.getStatusCode());
-        assertEquals(expectedOperationStatusModel, responseEntity.getBody());
-    }
-
+    assertEquals(OK, responseEntity.getStatusCode());
+    assertEquals(expectedOperationStatusModel, responseEntity.getBody());
+  }
 }

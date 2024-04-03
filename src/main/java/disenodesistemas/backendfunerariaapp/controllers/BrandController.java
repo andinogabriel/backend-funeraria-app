@@ -25,39 +25,37 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BrandController {
 
-    private final BrandService brandService;
-    private final ProjectionFactory projectionFactory;
+  private final BrandService brandService;
+  private final ProjectionFactory projectionFactory;
 
-    @GetMapping
-    public List<BrandResponseDto> getAllBrandes() {
-        return brandService.getAllBrands();
-    }
+  @GetMapping
+  public List<BrandResponseDto> getAllBrandes() {
+    return brandService.getAllBrands();
+  }
 
-    @GetMapping(path = "/{id}")
-    public ResponseEntity<BrandResponseDto> getBrandById(@PathVariable final Long id) {
-        return ResponseEntity.ok(projectionFactory.createProjection(BrandResponseDto.class, brandService.getBrandById(id)));
-    }
+  @GetMapping(path = "/{id}")
+  public ResponseEntity<BrandResponseDto> getBrandById(@PathVariable final Long id) {
+    return ResponseEntity.ok(
+        projectionFactory.createProjection(BrandResponseDto.class, brandService.getBrandById(id)));
+  }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping
-    public BrandResponseDto createBrand(@RequestBody @Valid final BrandRequestDto brandRequestDto) {
-        return brandService.createBrand(brandRequestDto);
-    }
+  @PreAuthorize("hasRole('ADMIN')")
+  @PostMapping
+  public BrandResponseDto createBrand(@RequestBody @Valid final BrandRequestDto brandRequestDto) {
+    return brandService.createBrand(brandRequestDto);
+  }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping(path = "/{id}")
-    public BrandResponseDto updateBrand(@PathVariable final Long id, @RequestBody @Valid final BrandRequestDto brandRequestDto) {
-        return brandService.updateBrand(id, brandRequestDto);
-    }
+  @PreAuthorize("hasRole('ADMIN')")
+  @PutMapping(path = "/{id}")
+  public BrandResponseDto updateBrand(
+      @PathVariable final Long id, @RequestBody @Valid final BrandRequestDto brandRequestDto) {
+    return brandService.updateBrand(id, brandRequestDto);
+  }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping(path = "/{id}")
-    public OperationStatusModel deleteBrand(@PathVariable final Long id) {
-        brandService.deleteBrand(id);
-        return OperationStatusModel.builder()
-                .name("DELETE")
-                .result("SUCCESS")
-                .build();
-    }
-
+  @PreAuthorize("hasRole('ADMIN')")
+  @DeleteMapping(path = "/{id}")
+  public OperationStatusModel deleteBrand(@PathVariable final Long id) {
+    brandService.deleteBrand(id);
+    return OperationStatusModel.builder().name("DELETE").result("SUCCESS").build();
+  }
 }

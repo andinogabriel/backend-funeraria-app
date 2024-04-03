@@ -21,20 +21,18 @@ import java.util.List;
 @NoArgsConstructor
 public class GenderEntity implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue
-    private Long id;
+  @Id @GeneratedValue private Long id;
 
-    @Column(nullable = false, length = 75)
-    private String name;
+  @Column(nullable = false, length = 75)
+  private String name;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "gender")
-    private List<AffiliateEntity> affiliates;
+  @OneToMany(cascade = CascadeType.ALL, mappedBy = "gender")
+  private List<AffiliateEntity> affiliates;
 
-    public GenderEntity(final String name) {
-        this.name = name;
-        this.affiliates = new ArrayList<>();
-    }
+  public GenderEntity(final String name) {
+    this.name = name;
+    this.affiliates = new ArrayList<>();
+  }
 }

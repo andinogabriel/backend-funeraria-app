@@ -1,0 +1,24 @@
+get:
+  summary: "GET deceased by dni"
+  operationId: "findByDni"
+  parameters:
+    - name: "dni"
+      in: "path"
+      required: true
+      description: Numeric ID of the deceased to get
+      schema:
+        type: "integer"
+        format: "int32"
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/DeceasedResponseDto.yaml"
+    404:
+      description: A deceased with the specified dni was not found.
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/NotFoundException.yaml"

@@ -1,0 +1,9 @@
+type: "object"
+properties:
+  id:
+    type: "integer"
+    format: "int64"
+    example: 1
+  number:
+    type: "string"
+    example: "3644911560"

@@ -30,51 +30,47 @@ import static org.mockito.Mockito.verify;
 @MockitoSettings(strictness = Strictness.STRICT_STUBS)
 class CityServiceImplTest {
 
-    @Mock
-    private CityRepository cityRepository;
-    @InjectMocks
-    private CityServiceImpl sut;
+  @Mock private CityRepository cityRepository;
+  @InjectMocks private CityServiceImpl sut;
 
-    private CityResponseDto cityResponseDto;
+  private CityResponseDto cityResponseDto;
 
-    @BeforeEach
-    void setUp() {
-        final ProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
-        cityResponseDto = projectionFactory.createProjection(CityResponseDto.class, CityEntityMother.getCityEntity());
-    }
+  @BeforeEach
+  void setUp() {
+    final ProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
+    cityResponseDto =
+        projectionFactory.createProjection(CityResponseDto.class, CityEntityMother.getCityEntity());
+  }
 
-    @Test
-    void getCityById() {
-        final Long id = CityEntityMother.getCityEntity().getId();
-        final CityEntity expected = CityEntityMother.getCityEntity();
-        given(cityRepository.getById(id)).willReturn(Optional.ofNullable(cityResponseDto));
+  @Test
+  void getCityById() {
+    final Long id = CityEntityMother.getCityEntity().getId();
+    final CityEntity expected = CityEntityMother.getCityEntity();
+    given(cityRepository.getById(id)).willReturn(Optional.ofNullable(cityResponseDto));
 
-        final CityResponseDto result = sut.getCityById(id);
+    final CityResponseDto result = sut.getCityById(id);
 
-        assertAll(
-                () -> assertEquals(expected.getId(), result.getId()),
-                () -> assertEquals(expected.getZipCode(), result.getZipCode()),
-                () -> assertEquals(expected.getName(), result.getName()),
-                () -> assertEquals(expected.getProvince().getName(), result.getProvince().getName())
-        );
-        verify(cityRepository, times(1)).getById(id);
-    }
+    assertAll(
+        () -> assertEquals(expected.getId(), result.getId()),
+        () -> assertEquals(expected.getZipCode(), result.getZipCode()),
+        () -> assertEquals(expected.getName(), result.getName()),
+        () -> assertEquals(expected.getProvince().getName(), result.getProvince().getName()));
+    verify(cityRepository, times(1)).getById(id);
+  }
 
+  @Test
+  void getCitiesByProvinceId() {
+    final ProvinceEntity provinceEntity = ProvinceEntityMother.getChacoProvince();
+    final List<CityResponseDto> expected = List.of(cityResponseDto);
+    given(cityRepository.findByProvinceOrderByName(provinceEntity)).willReturn(expected);
 
-    @Test
-    void getCitiesByProvinceId() {
-        final ProvinceEntity provinceEntity = ProvinceEntityMother.getChacoProvince();
-        final List<CityResponseDto> expected = List.of(cityResponseDto);
-        given(cityRepository.findByProvinceOrderByName(provinceEntity)).willReturn(expected);
+    final List<CityResponseDto> result = sut.getCitiesByProvinceId(provinceEntity.getId());
 
-        final List<CityResponseDto> result = sut.getCitiesByProvinceId(provinceEntity.getId());
-
-        assertAll(
-                () -> assertEquals(expected.size(), result.size()),
-                () -> assertEquals(expected.get(0).getId(), result.get(0).getId()),
-                () -> assertEquals(expected.get(0).getName(), result.get(0).getName()),
-                () -> assertEquals(expected.get(0).getZipCode(), result.get(0).getZipCode())
-        );
-        verify(cityRepository, times(1)).findByProvinceOrderByName(provinceEntity);
-    }
+    assertAll(
+        () -> assertEquals(expected.size(), result.size()),
+        () -> assertEquals(expected.get(0).getId(), result.get(0).getId()),
+        () -> assertEquals(expected.get(0).getName(), result.get(0).getName()),
+        () -> assertEquals(expected.get(0).getZipCode(), result.get(0).getZipCode()));
+    verify(cityRepository, times(1)).findByProvinceOrderByName(provinceEntity);
+  }
 }

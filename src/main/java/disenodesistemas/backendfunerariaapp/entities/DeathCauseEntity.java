@@ -15,23 +15,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity(name = "death_causes")
-@Getter @Setter @NoArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
 public class DeathCauseEntity implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue
-    private Long id;
+  @Id @GeneratedValue private Long id;
 
-    @Column(nullable = false, length = 150)
-    private String name;
+  @Column(nullable = false, length = 150)
+  private String name;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "deathCause")
-    private List<DeceasedEntity> deceasedList;
+  @OneToMany(cascade = CascadeType.ALL, mappedBy = "deathCause")
+  private List<DeceasedEntity> deceasedList;
 
-    public DeathCauseEntity(final String name) {
-        this.name = name;
-        this.deceasedList = new ArrayList<>();
-    }
+  public DeathCauseEntity(final String name) {
+    this.name = name;
+    this.deceasedList = new ArrayList<>();
+  }
 }

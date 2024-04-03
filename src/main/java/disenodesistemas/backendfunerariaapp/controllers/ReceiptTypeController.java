@@ -12,15 +12,14 @@ import java.util.List;
 @RequestMapping("/api/v1/receiptTypes")
 public class ReceiptTypeController {
 
-    private final ReceiptTypeServiceImpl receiptTypeServiceImpl;
+  private final ReceiptTypeServiceImpl receiptTypeServiceImpl;
 
-    public ReceiptTypeController(final ReceiptTypeServiceImpl receiptTypeServiceImpl) {
-        this.receiptTypeServiceImpl = receiptTypeServiceImpl;
-    }
+  public ReceiptTypeController(final ReceiptTypeServiceImpl receiptTypeServiceImpl) {
+    this.receiptTypeServiceImpl = receiptTypeServiceImpl;
+  }
 
-    @GetMapping
-    public List<ReceiptTypeResponseDto> getAllReceiptTypes() {
-        return receiptTypeServiceImpl.getAllReceiptTypes();
-    }
-
+  @GetMapping
+  public List<ReceiptTypeResponseDto> getAllReceiptTypes() {
+    return receiptTypeServiceImpl.getAllReceiptTypes();
+  }
 }

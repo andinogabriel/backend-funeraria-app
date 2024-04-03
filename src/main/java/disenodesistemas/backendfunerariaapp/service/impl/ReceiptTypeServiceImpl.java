@@ -15,18 +15,18 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReceiptTypeServiceImpl implements ReceiptTypeService {
 
-    private final ReceiptTypeRepository receiptTypeRepository;
+  private final ReceiptTypeRepository receiptTypeRepository;
 
-    @Override
-    public List<ReceiptTypeResponseDto> getAllReceiptTypes() {
-        return receiptTypeRepository.findAllByOrderByName();
-    }
+  @Override
+  public List<ReceiptTypeResponseDto> getAllReceiptTypes() {
+    return receiptTypeRepository.findAllByOrderByName();
+  }
 
-    @Override
-    @Transactional(readOnly = true)
-    public ReceiptTypeEntity findByNameIsContainingIgnoreCase(final String name) {
-        return receiptTypeRepository.findByNameIsContainingIgnoreCase(name)
-                .orElseThrow(() -> new NotFoundException("receiptType.error.name.not.found "));
-    }
-
+  @Override
+  @Transactional(readOnly = true)
+  public ReceiptTypeEntity findByNameIsContainingIgnoreCase(final String name) {
+    return receiptTypeRepository
+        .findByNameIsContainingIgnoreCase(name)
+        .orElseThrow(() -> new NotFoundException("receiptType.error.name.not.found "));
+  }
 }

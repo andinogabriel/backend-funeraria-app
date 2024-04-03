@@ -15,15 +15,17 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RelationshipServiceImpl implements RelationshipService {
 
-    private final RelationshipRepository relationshipRepository;
+  private final RelationshipRepository relationshipRepository;
 
-    @Override
-    public List<RelationshipResponseDto> getRelationships() {
-        return relationshipRepository.findAllByOrderByName();
-    }
+  @Override
+  public List<RelationshipResponseDto> getRelationships() {
+    return relationshipRepository.findAllByOrderByName();
+  }
 
-    @Override
-    public RelationshipEntity getRelationshipById(final Long id) {
-        return relationshipRepository.findById(id).orElseThrow(() -> new AppException("relationship.error.not.found", HttpStatus.NOT_FOUND));
-    }
+  @Override
+  public RelationshipEntity getRelationshipById(final Long id) {
+    return relationshipRepository
+        .findById(id)
+        .orElseThrow(() -> new AppException("relationship.error.not.found", HttpStatus.NOT_FOUND));
+  }
 }

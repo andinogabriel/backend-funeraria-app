@@ -33,92 +33,92 @@ import static org.mockito.Mockito.verify;
 @MockitoSettings(strictness = Strictness.STRICT_STUBS)
 class BrandServiceImplTest {
 
-    @Mock
-    private BrandRepository brandRepository;
-    @Mock
-    private ProjectionFactory projectionFactory;
-    @InjectMocks
-    private BrandServiceImpl sut;
+  @Mock private BrandRepository brandRepository;
+  @Mock private ProjectionFactory projectionFactory;
+  @InjectMocks private BrandServiceImpl sut;
 
-    private BrandResponseDto brandResponseDto;
+  private BrandResponseDto brandResponseDto;
 
-    @BeforeEach
-    void setUp() {
-        final ProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
-        brandResponseDto = projectionFactory.createProjection(BrandResponseDto.class, BrandEntityMother.getBrandEntity());
-    }
+  @BeforeEach
+  void setUp() {
+    final ProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
+    brandResponseDto =
+        projectionFactory.createProjection(
+            BrandResponseDto.class, BrandEntityMother.getBrandEntity());
+  }
 
-    @Test
-    void getAllBrands() {
-        final List<BrandResponseDto> brandResponsesDto = List.of(brandResponseDto);
-        given(brandRepository.findAllByOrderByName()).willReturn(brandResponsesDto);
+  @Test
+  void getAllBrands() {
+    final List<BrandResponseDto> brandResponsesDto = List.of(brandResponseDto);
+    given(brandRepository.findAllByOrderByName()).willReturn(brandResponsesDto);
 
-        final List<BrandResponseDto> result = sut.getAllBrands();
+    final List<BrandResponseDto> result = sut.getAllBrands();
 
-        verify(brandRepository, times(1)).findAllByOrderByName();
-        assertEquals(brandResponsesDto.size(), result.size());
-        assertEquals(brandResponsesDto.get(0).getName(), result.get(0).getName());
-    }
+    verify(brandRepository, times(1)).findAllByOrderByName();
+    assertEquals(brandResponsesDto.size(), result.size());
+    assertEquals(brandResponsesDto.get(0).getName(), result.get(0).getName());
+  }
 
-    @Test
-    void getBrandById() {
-        final Long brandId = 1L;
-        final BrandEntity expected = BrandEntityMother.getBrandEntity();
-        given(brandRepository.findById(brandId)).willReturn(Optional.of(expected));
+  @Test
+  void getBrandById() {
+    final Long brandId = 1L;
+    final BrandEntity expected = BrandEntityMother.getBrandEntity();
+    given(brandRepository.findById(brandId)).willReturn(Optional.of(expected));
 
-        final BrandEntity result = sut.getBrandById(brandId);
+    final BrandEntity result = sut.getBrandById(brandId);
 
-        assertEquals(expected.getName(), result.getName());
-        assertEquals(expected.getId(), result.getId());
-        verify(brandRepository, times(1)).findById(brandId);
-    }
+    assertEquals(expected.getName(), result.getName());
+    assertEquals(expected.getId(), result.getId());
+    verify(brandRepository, times(1)).findById(brandId);
+  }
 
-    @Test
-    void getBrandByIdThrowsError() {
-        final Long brandId = 2L;
-        assertThrows(NotFoundException.class, () -> sut.getBrandById(brandId));
-        verify(brandRepository, atMostOnce()).findById(brandId);
-    }
+  @Test
+  void getBrandByIdThrowsError() {
+    final Long brandId = 2L;
+    assertThrows(NotFoundException.class, () -> sut.getBrandById(brandId));
+    verify(brandRepository, atMostOnce()).findById(brandId);
+  }
 
-    @Test
-    void createBrand() {
-        final BrandEntity expected = BrandEntityMother.getBrandEntity();
+  @Test
+  void createBrand() {
+    final BrandEntity expected = BrandEntityMother.getBrandEntity();
 
-        given(brandRepository.save(any(BrandEntity.class))).willReturn(expected);
-        given(projectionFactory.createProjection(BrandResponseDto.class, expected)).willReturn(brandResponseDto);
+    given(brandRepository.save(any(BrandEntity.class))).willReturn(expected);
+    given(projectionFactory.createProjection(BrandResponseDto.class, expected))
+        .willReturn(brandResponseDto);
 
-        final BrandResponseDto result = sut.createBrand(BrandRequestDtoMother.getBrandRequestDto());
+    final BrandResponseDto result = sut.createBrand(BrandRequestDtoMother.getBrandRequestDto());
 
-        assertAll(
-                () -> assertEquals(expected.getId(), result.getId()),
-                () -> assertEquals(expected.getWebPage(), result.getWebPage()),
-                () -> assertEquals(expected.getName(), result.getName())
-        );
-        verify(brandRepository, times(1)).save(any(BrandEntity.class));
-    }
+    assertAll(
+        () -> assertEquals(expected.getId(), result.getId()),
+        () -> assertEquals(expected.getWebPage(), result.getWebPage()),
+        () -> assertEquals(expected.getName(), result.getName()));
+    verify(brandRepository, times(1)).save(any(BrandEntity.class));
+  }
 
-    @Test
-    void updateBrand() {
-        final BrandEntity expected = BrandEntityMother.getBrandEntity();
-        given(brandRepository.findById(expected.getId())).willReturn(Optional.of(expected));
-        given(brandRepository.save(any(BrandEntity.class))).willReturn(expected);
-        given(projectionFactory.createProjection(BrandResponseDto.class, expected)).willReturn(brandResponseDto);
+  @Test
+  void updateBrand() {
+    final BrandEntity expected = BrandEntityMother.getBrandEntity();
+    given(brandRepository.findById(expected.getId())).willReturn(Optional.of(expected));
+    given(brandRepository.save(any(BrandEntity.class))).willReturn(expected);
+    given(projectionFactory.createProjection(BrandResponseDto.class, expected))
+        .willReturn(brandResponseDto);
 
-        final BrandResponseDto result = sut.updateBrand(expected.getId(), BrandRequestDtoMother.getBrandRequestDto());
+    final BrandResponseDto result =
+        sut.updateBrand(expected.getId(), BrandRequestDtoMother.getBrandRequestDto());
 
-        assertAll(
-                () -> assertEquals(expected.getId(), result.getId()),
-                () -> assertEquals(expected.getWebPage(), result.getWebPage()),
-                () -> assertEquals(expected.getName(), result.getName())
-        );
-        verify(brandRepository, times(1)).save(any(BrandEntity.class));
-    }
+    assertAll(
+        () -> assertEquals(expected.getId(), result.getId()),
+        () -> assertEquals(expected.getWebPage(), result.getWebPage()),
+        () -> assertEquals(expected.getName(), result.getName()));
+    verify(brandRepository, times(1)).save(any(BrandEntity.class));
+  }
 
-    @Test
-    void deleteBrand() {
-        final BrandEntity expected = BrandEntityMother.getBrandEntity();
-        given(brandRepository.findById(expected.getId())).willReturn(Optional.of(expected));
-        sut.deleteBrand(expected.getId());
-        verify(brandRepository, times(1)).delete(expected);
-    }
+  @Test
+  void deleteBrand() {
+    final BrandEntity expected = BrandEntityMother.getBrandEntity();
+    given(brandRepository.findById(expected.getId())).willReturn(Optional.of(expected));
+    sut.deleteBrand(expected.getId());
+    verify(brandRepository, times(1)).delete(expected);
+  }
 }

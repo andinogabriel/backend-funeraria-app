@@ -31,74 +31,77 @@ import java.util.List;
 @RequiredArgsConstructor
 public class IncomeController {
 
-    private final IncomeService incomeService;
-    private final EntityManager entityManager;
+  private final IncomeService incomeService;
+  private final EntityManager entityManager;
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping
-    public List<IncomeResponseDto> getIncomes() {
-        return incomeService.getAllIncomes();
-    }
+  @PreAuthorize("hasRole('ADMIN')")
+  @GetMapping
+  public List<IncomeResponseDto> getIncomes() {
+    return incomeService.getAllIncomes();
+  }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping(path = "/{receiptNumber}")
-    public IncomeResponseDto getIncomeById(@PathVariable final Long receiptNumber) {
-        return incomeService.findByReceiptNumber(receiptNumber);
-    }
+  @PreAuthorize("hasRole('ADMIN')")
+  @GetMapping(path = "/{receiptNumber}")
+  public IncomeResponseDto getIncomeById(@PathVariable final Long receiptNumber) {
+    return incomeService.findByReceiptNumber(receiptNumber);
+  }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/paginated")
-    public Page<IncomeResponseDto> getIncomesPaginated(@RequestParam(value = "isDeleted", required = false, defaultValue = "false") final boolean isDeleted,
-                                                       @RequestParam(value = "page", defaultValue = "0") final int page,
-                                                       @RequestParam(value="limit", defaultValue = "5") final int limit,
-                                                       @RequestParam(value = "sortBy", defaultValue = "incomeDate") final String sortBy,
-                                                       @RequestParam(value = "sortDir", defaultValue = "desc") final String sortDir) {
-        final Session session = entityManager.unwrap(Session.class);
-        final Filter filter = session.enableFilter("deletedIncomesFilter");
-        filter.setParameter("isDeleted", isDeleted);
-        final Page<IncomeResponseDto> entries = incomeService.getIncomesPaginated(page, limit, sortBy, sortDir);
-        session.disableFilter("deletedIncomesFilter");
-        return entries;
-    }
+  @PreAuthorize("hasRole('ADMIN')")
+  @GetMapping("/paginated")
+  public Page<IncomeResponseDto> getIncomesPaginated(
+      @RequestParam(value = "isDeleted", required = false, defaultValue = "false")
+          final boolean isDeleted,
+      @RequestParam(value = "page", defaultValue = "0") final int page,
+      @RequestParam(value = "limit", defaultValue = "5") final int limit,
+      @RequestParam(value = "sortBy", defaultValue = "incomeDate") final String sortBy,
+      @RequestParam(value = "sortDir", defaultValue = "desc") final String sortDir) {
+    final Session session = entityManager.unwrap(Session.class);
+    final Filter filter = session.enableFilter("deletedIncomesFilter");
+    filter.setParameter("isDeleted", isDeleted);
+    final Page<IncomeResponseDto> entries =
+        incomeService.getIncomesPaginated(page, limit, sortBy, sortDir);
+    session.disableFilter("deletedIncomesFilter");
+    return entries;
+  }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping
-    public IncomeResponseDto createIncome(@RequestBody @Valid final IncomeRequestDto incomeRequest) {
-        val authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String email = authentication.getName();
-        val incomeRequestDto = IncomeRequestDto.builder()
-                .supplier(incomeRequest.getSupplier())
-                .incomeDetails(incomeRequest.getIncomeDetails())
-                .incomeUser(UserDto.builder().email(email).build())
-                .receiptType(incomeRequest.getReceiptType())
-                .tax(incomeRequest.getTax())
-                .build();
-        return incomeService.createIncome(incomeRequestDto);
-    }
+  @PreAuthorize("hasRole('ADMIN')")
+  @PostMapping
+  public IncomeResponseDto createIncome(@RequestBody @Valid final IncomeRequestDto incomeRequest) {
+    val authentication = SecurityContextHolder.getContext().getAuthentication();
+    final String email = authentication.getName();
+    val incomeRequestDto =
+        IncomeRequestDto.builder()
+            .supplier(incomeRequest.getSupplier())
+            .incomeDetails(incomeRequest.getIncomeDetails())
+            .incomeUser(UserDto.builder().email(email).build())
+            .receiptType(incomeRequest.getReceiptType())
+            .tax(incomeRequest.getTax())
+            .build();
+    return incomeService.createIncome(incomeRequestDto);
+  }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping(path = "/{receiptNumber}")
-    public IncomeResponseDto updateIncome(@PathVariable final Long receiptNumber, @Valid @RequestBody final IncomeRequestDto incomeRequest) {
-        val authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String email = authentication.getName();
-        final IncomeRequestDto incomeRequestDto = IncomeRequestDto.builder()
-                .supplier(incomeRequest.getSupplier())
-                .incomeDetails(incomeRequest.getIncomeDetails())
-                .incomeUser(UserDto.builder().email(email).build())
-                .receiptType(incomeRequest.getReceiptType())
-                .tax(incomeRequest.getTax())
-                .build();
-        return incomeService.updateIncome(receiptNumber, incomeRequestDto);
-    }
+  @PreAuthorize("hasRole('ADMIN')")
+  @PutMapping(path = "/{receiptNumber}")
+  public IncomeResponseDto updateIncome(
+      @PathVariable final Long receiptNumber,
+      @Valid @RequestBody final IncomeRequestDto incomeRequest) {
+    val authentication = SecurityContextHolder.getContext().getAuthentication();
+    final String email = authentication.getName();
+    final IncomeRequestDto incomeRequestDto =
+        IncomeRequestDto.builder()
+            .supplier(incomeRequest.getSupplier())
+            .incomeDetails(incomeRequest.getIncomeDetails())
+            .incomeUser(UserDto.builder().email(email).build())
+            .receiptType(incomeRequest.getReceiptType())
+            .tax(incomeRequest.getTax())
+            .build();
+    return incomeService.updateIncome(receiptNumber, incomeRequestDto);
+  }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping(path = "/{receiptNumber}")
-    public OperationStatusModel deleteIncome(@PathVariable final Long receiptNumber) {
-        incomeService.deleteIncome(receiptNumber);
-        return OperationStatusModel.builder()
-                .name("DELETE")
-                .result("SUCCESS")
-                .build();
-    }
-
+  @PreAuthorize("hasRole('ADMIN')")
+  @DeleteMapping(path = "/{receiptNumber}")
+  public OperationStatusModel deleteIncome(@PathVariable final Long receiptNumber) {
+    incomeService.deleteIncome(receiptNumber);
+    return OperationStatusModel.builder().name("DELETE").result("SUCCESS").build();
+  }
 }

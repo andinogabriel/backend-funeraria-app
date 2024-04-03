@@ -1,0 +1,38 @@
+type: "object"
+properties:
+  name:
+    type: "string"
+    example: Ataud de madera de roble
+  description:
+    type: "string"
+    example: Descripcion del ataud de madera de roble
+  code:
+    type: "string"
+    example: 672765c6-a863-4140-b0dd-b44221b89d6f
+  imageLink:
+    type: "string"
+    example: https://s3.amazonaws.com/bucketname/foldername/imagename.jpg
+  stock:
+    type: "integer"
+    format: "int32"
+    example: 17
+  price:
+    type: "number"
+    format: "double"
+    example: 13068.00
+  itemLength:
+    type: "number"
+    format: "double"
+    example: 200.00
+  itemHeight:
+    type: "number"
+    format: "double"
+    example: 80.00
+  itemWidth:
+    type: "number"
+    format: "double"
+    example: 90.00
+  category:
+    $ref: "./CategoryDto.yaml"
+  brand:
+    $ref: "./BrandDto.yaml"

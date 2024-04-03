@@ -1,0 +1,19 @@
+type: "object"
+properties:
+  firstName:
+    type: "string"
+    example: "Juan"
+  lastName:
+    type: "string"
+    example: "Perez"
+  email:
+    type: "string"
+    example: "user.affiliator@gmail.com"
+  mobileNumbers:
+    type: array
+    items:
+      $ref: './MobileNumberDto.yaml'
+  addresses:
+    type: array
+    items:
+      $ref: './AddressResponseDto.yaml'

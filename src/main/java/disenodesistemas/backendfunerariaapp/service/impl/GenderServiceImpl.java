@@ -16,17 +16,19 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GenderServiceImpl implements GenderService {
 
-    private final GenderRepository genderRepository;
+  private final GenderRepository genderRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<GenderResponseDto> getGenders() {
-        return genderRepository.findAllProjectedBy();
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public List<GenderResponseDto> getGenders() {
+    return genderRepository.findAllProjectedBy();
+  }
 
-    @Override
-    @Transactional(readOnly = true)
-    public GenderEntity getGenderById(final Long id) {
-        return genderRepository.findById(id).orElseThrow(() -> new AppException("gender.error.not.found", HttpStatus.NOT_FOUND));
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public GenderEntity getGenderById(final Long id) {
+    return genderRepository
+        .findById(id)
+        .orElseThrow(() -> new AppException("gender.error.not.found", HttpStatus.NOT_FOUND));
+  }
 }

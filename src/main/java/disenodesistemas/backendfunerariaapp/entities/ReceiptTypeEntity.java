@@ -18,39 +18,40 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity(name = "receipt_types")
-@Getter @Setter @NoArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
 public class ReceiptTypeEntity implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue
-    private Long id;
+  @Id @GeneratedValue private Long id;
 
-    @Column(nullable = false, length = 75)
-    private String name;
+  @Column(nullable = false, length = 75)
+  private String name;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "receiptType")
-    private List<IncomeEntity> incomes;
+  @OneToMany(cascade = CascadeType.ALL, mappedBy = "receiptType")
+  private List<IncomeEntity> incomes;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "receiptType")
-    private List<Funeral> services;
-    public ReceiptTypeEntity(final String name) {
-        this.name = name;
-        this.incomes = new ArrayList<>();
-        this.services = new ArrayList<>();
-    }
+  @OneToMany(cascade = CascadeType.ALL, mappedBy = "receiptType")
+  private List<Funeral> services;
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        val that = (ReceiptTypeEntity) o;
-        return id != null && Objects.equals(id, that.id);
-    }
+  public ReceiptTypeEntity(final String name) {
+    this.name = name;
+    this.incomes = new ArrayList<>();
+    this.services = new ArrayList<>();
+  }
 
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+    val that = (ReceiptTypeEntity) o;
+    return id != null && Objects.equals(id, that.id);
+  }
+
+  @Override
+  public int hashCode() {
+    return getClass().hashCode();
+  }
 }

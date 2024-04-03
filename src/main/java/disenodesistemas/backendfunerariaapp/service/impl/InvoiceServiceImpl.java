@@ -10,20 +10,20 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 public class InvoiceServiceImpl implements InvoiceService {
 
-    private final AtomicLong serialNumber;
-    private static final String PATTERN = "yyyyMMddHHmmssSSS";
+  private final AtomicLong serialNumber;
+  private static final String PATTERN = "yyyyMMddHHmmssSSS";
 
-    public InvoiceServiceImpl() {
-        this.serialNumber = new AtomicLong (0L);
-    }
+  public InvoiceServiceImpl() {
+    this.serialNumber = new AtomicLong(0L);
+  }
 
-    @Override
-    public Long createSerialNumber() {
-        return serialNumber.incrementAndGet();
-    }
+  @Override
+  public Long createSerialNumber() {
+    return serialNumber.incrementAndGet();
+  }
 
-    @Override
-    public Long createReceiptNumber() {
-        return Long.valueOf(LocalDateTime.now().format(DateTimeFormatter.ofPattern(PATTERN)));
-    }
+  @Override
+  public Long createReceiptNumber() {
+    return Long.valueOf(LocalDateTime.now().format(DateTimeFormatter.ofPattern(PATTERN)));
+  }
 }

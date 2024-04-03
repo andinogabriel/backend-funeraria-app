@@ -21,88 +21,91 @@ import static java.util.Objects.nonNull;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 
 @Entity(name = "suppliers")
-@Getter @Setter @NoArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
 public class SupplierEntity implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, length = 100)
-    private String name;
+  @Column(nullable = false, length = 100)
+  private String name;
 
-    @Column(nullable = false, length = 80, unique = true)
-    private String nif;
+  @Column(nullable = false, length = 80, unique = true)
+  private String nif;
 
-    @Column(length = 90)
-    private String webPage;
+  @Column(length = 90)
+  private String webPage;
 
-    @Column(nullable = false, length = 90)
-    private String email;
+  @Column(nullable = false, length = 90)
+  private String email;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "supplierAddress", orphanRemoval = true)
-    private List<AddressEntity> addresses;
+  @OneToMany(cascade = CascadeType.ALL, mappedBy = "supplierAddress", orphanRemoval = true)
+  private List<AddressEntity> addresses;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "supplierNumber", orphanRemoval = true)
-    private List<MobileNumberEntity> mobileNumbers;
+  @OneToMany(cascade = CascadeType.ALL, mappedBy = "supplierNumber", orphanRemoval = true)
+  private List<MobileNumberEntity> mobileNumbers;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "supplier")
-    private List<IncomeEntity> incomes;
+  @OneToMany(cascade = CascadeType.ALL, mappedBy = "supplier")
+  private List<IncomeEntity> incomes;
 
-    public SupplierEntity(final String name, final String nif, final String webPage, final String email) {
-        this.name = name;
-        this.nif = nif;
-        this.webPage = webPage;
-        this.email = email;
-        this.mobileNumbers = new ArrayList<>();
-        this.addresses = new ArrayList<>();
-        this.incomes = new ArrayList<>();
+  public SupplierEntity(
+      final String name, final String nif, final String webPage, final String email) {
+    this.name = name;
+    this.nif = nif;
+    this.webPage = webPage;
+    this.email = email;
+    this.mobileNumbers = new ArrayList<>();
+    this.addresses = new ArrayList<>();
+    this.incomes = new ArrayList<>();
+  }
+
+  public void setMobileNumbers(final List<MobileNumberEntity> mobileNumbers) {
+    mobileNumbers.forEach(this::addMobileNumber);
+  }
+
+  public void addMobileNumber(final MobileNumberEntity mobileNumber) {
+    if (!this.mobileNumbers.contains(mobileNumber)) {
+      mobileNumbers.add(mobileNumber);
+      mobileNumber.setSupplierNumber(this);
     }
+  }
 
-    public void setMobileNumbers(final List<MobileNumberEntity> mobileNumbers) {
-        mobileNumbers.forEach(this::addMobileNumber);
-    }
+  public void removeMobileNumber(final MobileNumberEntity mobileNumber) {
+    mobileNumbers.remove(mobileNumber);
+    mobileNumber.setSupplierNumber(null);
+  }
 
-    public void addMobileNumber(final MobileNumberEntity mobileNumber) {
-        if(!this.mobileNumbers.contains(mobileNumber)) {
-            mobileNumbers.add(mobileNumber);
-            mobileNumber.setSupplierNumber(this);
-        }
-    }
+  public void setAddresses(final List<AddressEntity> addresses) {
+    addresses.forEach(this::addAddress);
+  }
 
-    public void removeMobileNumber(final MobileNumberEntity mobileNumber) {
-        mobileNumbers.remove(mobileNumber);
-        mobileNumber.setSupplierNumber(null);
+  public void addAddress(final AddressEntity address) {
+    if (!this.addresses.contains(address)) {
+      this.addresses.add(address);
+      address.setSupplierAddress(this);
     }
+  }
 
-    public void setAddresses(final List<AddressEntity> addresses) {
-        addresses.forEach(this::addAddress);
-    }
+  public void removeAddress(final AddressEntity address) {
+    this.addresses.remove(address);
+    address.setSupplierAddress(null);
+  }
 
-    public void addAddress(final AddressEntity address) {
-        if(!this.addresses.contains(address)) {
-            this.addresses.add(address);
-            address.setSupplierAddress(this);
-        }
-    }
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+    final SupplierEntity that = (SupplierEntity) o;
+    return id != null && Objects.equals(nif, that.getNif());
+  }
 
-    public void removeAddress(final AddressEntity address) {
-        this.addresses.remove(address);
-        address.setSupplierAddress(null);
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        final SupplierEntity that = (SupplierEntity) o;
-        return id != null && Objects.equals(nif, that.getNif());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
+  @Override
+  public int hashCode() {
+    return getClass().hashCode();
+  }
 }

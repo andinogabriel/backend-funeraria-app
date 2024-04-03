@@ -14,20 +14,19 @@ import javax.persistence.Id;
 import java.io.Serializable;
 
 @Entity(name = "roles")
-@Getter @Setter @NoArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
 public class RoleEntity implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue
-    private Long id;
+  @Id @GeneratedValue private Long id;
 
-    @Enumerated(EnumType.STRING)
-    private Role name;
+  @Enumerated(EnumType.STRING)
+  private Role name;
 
-    public RoleEntity(final Role role) {
-        this.name = role;
-    }
-
+  public RoleEntity(final Role role) {
+    this.name = role;
+  }
 }

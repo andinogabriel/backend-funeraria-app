@@ -14,11 +14,11 @@ import java.util.List;
 @RequestMapping("/api/v1/roles")
 @RequiredArgsConstructor
 public class RoleController {
-    private final RoleService roleService;
+  private final RoleService roleService;
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping
-    public List<RolesDto> getRoles() {
-        return roleService.findAll();
-    }
+  @PreAuthorize("hasRole('ADMIN')")
+  @GetMapping
+  public List<RolesDto> getRoles() {
+    return roleService.findAll();
+  }
 }

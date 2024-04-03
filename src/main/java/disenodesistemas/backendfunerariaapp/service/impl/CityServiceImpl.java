@@ -17,19 +17,21 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CityServiceImpl implements CityService {
 
-    private final CityRepository cityRepository;
+  private final CityRepository cityRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public CityResponseDto getCityById(final Long id) {
-        return cityRepository.getById(id).orElseThrow(() -> new NotFoundException("city.error.not.found"));
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public CityResponseDto getCityById(final Long id) {
+    return cityRepository
+        .getById(id)
+        .orElseThrow(() -> new NotFoundException("city.error.not.found"));
+  }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<CityResponseDto> getCitiesByProvinceId(final Long id) {
-        val provinceEntity = new ProvinceEntity();
-        provinceEntity.setId(id);
-        return cityRepository.findByProvinceOrderByName(provinceEntity);
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public List<CityResponseDto> getCitiesByProvinceId(final Long id) {
+    val provinceEntity = new ProvinceEntity();
+    provinceEntity.setId(id);
+    return cityRepository.findByProvinceOrderByName(provinceEntity);
+  }
 }

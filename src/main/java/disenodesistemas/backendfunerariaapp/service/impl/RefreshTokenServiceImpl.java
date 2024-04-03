@@ -26,66 +26,69 @@ import static org.springframework.http.HttpStatus.EXPECTATION_FAILED;
 @RequiredArgsConstructor
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
-    private final RefreshTokenRepository refreshTokenRepository;
-    private final UserDeviceService userDeviceService;
-    private final JwtProvider jwtProvider;
+  private final RefreshTokenRepository refreshTokenRepository;
+  private final UserDeviceService userDeviceService;
+  private final JwtProvider jwtProvider;
 
-    @Override
-    public RefreshToken findByToken(final String token) {
-        return refreshTokenRepository.findByToken(token)
-                .orElseThrow(() -> new NotFoundException("refresh.token.error.not.found"));
-    }
+  @Override
+  public RefreshToken findByToken(final String token) {
+    return refreshTokenRepository
+        .findByToken(token)
+        .orElseThrow(() -> new NotFoundException("refresh.token.error.not.found"));
+  }
 
-    @Override
-    public RefreshToken save(final RefreshToken refreshToken) {
-        return refreshTokenRepository.save(refreshToken);
-    }
+  @Override
+  public RefreshToken save(final RefreshToken refreshToken) {
+    return refreshTokenRepository.save(refreshToken);
+  }
 
-    @Override
-    public RefreshToken createRefreshToken() {
-        final RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setExpiryDate(Instant.now().plusMillis(3600000));
-        refreshToken.setToken(UUID.randomUUID().toString());
-        refreshToken.setRefreshCount(0L);
-        return refreshToken;
-    }
+  @Override
+  public RefreshToken createRefreshToken() {
+    final RefreshToken refreshToken = new RefreshToken();
+    refreshToken.setExpiryDate(Instant.now().plusMillis(3600000));
+    refreshToken.setToken(UUID.randomUUID().toString());
+    refreshToken.setRefreshCount(0L);
+    return refreshToken;
+  }
 
-    @Override
-    public void verifyExpiration(final RefreshToken token) {
-        if ((token.getExpiryDate().isBefore(Instant.now())))
-            throw new AppException("refresh.token.error.expired", EXPECTATION_FAILED);
-    }
+  @Override
+  public void verifyExpiration(final RefreshToken token) {
+    if ((token.getExpiryDate().isBefore(Instant.now())))
+      throw new AppException("refresh.token.error.expired", EXPECTATION_FAILED);
+  }
 
-    @Override
-    public void deleteById(final Long id) {
-        refreshTokenRepository.deleteById(id);
-    }
+  @Override
+  public void deleteById(final Long id) {
+    refreshTokenRepository.deleteById(id);
+  }
 
-    @Override
-    public void increaseCount(final RefreshToken refreshToken) {
-        refreshToken.setRefreshCount(refreshToken.getRefreshCount() + 1);
-        save(refreshToken);
-    }
+  @Override
+  public void increaseCount(final RefreshToken refreshToken) {
+    refreshToken.setRefreshCount(refreshToken.getRefreshCount() + 1);
+    save(refreshToken);
+  }
 
-    @Override
-    public JwtDto refreshJwtToken(final TokenRefreshRequestDto tokenRefreshRequestDto) {
-        final RefreshToken refreshToken = findByToken(tokenRefreshRequestDto.getRefreshToken());
+  @Override
+  public JwtDto refreshJwtToken(final TokenRefreshRequestDto tokenRefreshRequestDto) {
+    final RefreshToken refreshToken = findByToken(tokenRefreshRequestDto.getRefreshToken());
 
-        verifyExpiration(refreshToken);
-        userDeviceService.verifyRefreshAvailability(refreshToken);
+    verifyExpiration(refreshToken);
+    userDeviceService.verifyRefreshAvailability(refreshToken);
 
-        increaseCount(refreshToken);
-        final RefreshToken refreshTokenSaved = save(refreshToken);
+    increaseCount(refreshToken);
+    final RefreshToken refreshTokenSaved = save(refreshToken);
 
-        final UserEntity userEntity = refreshTokenSaved.getUserDevice().getUser();
-        final String generatedToken = jwtProvider.generateTokenFromUser(userEntity);
+    final UserEntity userEntity = refreshTokenSaved.getUserDevice().getUser();
+    final String generatedToken = jwtProvider.generateTokenFromUser(userEntity);
 
-        return JwtDto.builder()
-                .authorization(SecurityConstants.TOKEN_PREFIX + generatedToken)
-                .refreshToken(refreshToken.getToken())
-                .authorities(SecurityContextHolder.getContext().getAuthentication().getAuthorities()
-                        .stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
-                .expiryDuration(jwtProvider.getExpiryDuration())
-                .build();
-    }
+    return JwtDto.builder()
+        .authorization(SecurityConstants.TOKEN_PREFIX + generatedToken)
+        .refreshToken(refreshToken.getToken())
+        .authorities(
+            SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList()))
+        .expiryDuration(jwtProvider.getExpiryDuration())
+        .build();
+  }
 }

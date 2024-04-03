@@ -1,0 +1,65 @@
+get:
+  summary: "GET api/v1/incomes/paginated"
+  operationId: "getIncomesPaginated"
+  x-spring-paginated: true
+  parameters:
+    - name: "isDeleted"
+      in: "query"
+      required: false
+      schema:
+        type: "boolean"
+        default: "false"
+    - name: "page"
+      in: "query"
+      required: false
+      schema:
+        type: "integer"
+        format: "int32"
+        default: "0"
+    - name: "limit"
+      in: "query"
+      required: false
+      schema:
+        type: "integer"
+        format: "int32"
+        default: "5"
+    - name: "sortBy"
+      in: "query"
+      required: false
+      schema:
+        type: "string"
+        default: "incomeDate"
+    - name: "sortDir"
+      in: "query"
+      required: false
+      schema:
+        type: "string"
+        default: "desc"
+  responses:
+    200:
+      description: "OK"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              totalItems:
+                type: "integer"
+                format: "int64"
+              totalPages:
+                type: "integer"
+                format: "int32"
+              currentPage:
+                type: "integer"
+                format: "int32"
+              limit:
+                type: "integer"
+                format: "int32"
+              sortBy:
+                type: "string"
+              sortDir:
+                type: "string"
+              data:
+                type: "array"
+                items:
+                  $ref: "../../schemas/IncomeResponseDto.yaml"

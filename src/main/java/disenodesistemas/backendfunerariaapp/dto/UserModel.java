@@ -11,7 +11,7 @@ import java.util.Set;
 
 @Getter
 @Setter
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 public class UserModel extends RepresentationModel<UserModel> {
     private String lastName;
     private String firstName;

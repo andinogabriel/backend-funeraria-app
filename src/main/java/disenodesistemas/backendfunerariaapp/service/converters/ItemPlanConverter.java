@@ -18,48 +18,52 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ItemPlanConverter implements AbstractConverter<ItemPlanEntity, ItemPlanRequestDto> {
 
-    private final ItemRepository itemRepository;
+  private final ItemRepository itemRepository;
 
-    @Override
-    public ItemPlanEntity fromDto(final ItemPlanRequestDto dto) {
-        return null;
-    }
+  @Override
+  public ItemPlanEntity fromDto(final ItemPlanRequestDto dto) {
+    return null;
+  }
 
-    @Override
-    public ItemPlanRequestDto toDTO(final ItemPlanEntity entity) {
-        return Objects.nonNull(entity) ?
-                ItemPlanRequestDto.builder()
-                        .quantity(entity.getQuantity())
-                        .item(ItemRequestPlanDto.builder()
-                                .code(entity.getItem().getCode())
-                                .id(entity.getItem().getId())
-                                .name(entity.getItem().getName())
-                                .build())
-                        .build()
-                : null;
-    }
+  @Override
+  public ItemPlanRequestDto toDTO(final ItemPlanEntity entity) {
+    return Objects.nonNull(entity)
+        ? ItemPlanRequestDto.builder()
+            .quantity(entity.getQuantity())
+            .item(
+                ItemRequestPlanDto.builder()
+                    .code(entity.getItem().getCode())
+                    .id(entity.getItem().getId())
+                    .name(entity.getItem().getName())
+                    .build())
+            .build()
+        : null;
+  }
 
+  public Set<ItemPlanEntity> fromDTOs(final Set<ItemPlanRequestDto> dtos, final Plan planEntity) {
+    final List<ItemEntity> itemEntities = findItemsByCode(dtos);
+    return dtos.stream()
+        .map(
+            itemPlan ->
+                new ItemPlanEntity(
+                    planEntity,
+                    findItemByCode(itemEntities, itemPlan.getItem().getCode()),
+                    itemPlan.getQuantity()))
+        .collect(Collectors.toUnmodifiableSet());
+  }
 
-    public Set<ItemPlanEntity> fromDTOs(final Set<ItemPlanRequestDto> dtos, final Plan planEntity) {
-        final List<ItemEntity> itemEntities = findItemsByCode(dtos);
-        return dtos.stream()
-                .map(itemPlan -> new ItemPlanEntity(
-                            planEntity,
-                            findItemByCode(itemEntities, itemPlan.getItem().getCode()),
-                            itemPlan.getQuantity())
-                ).collect(Collectors.toUnmodifiableSet());
+  private List<ItemEntity> findItemsByCode(final Set<ItemPlanRequestDto> itemsPlanRequestDto) {
+    final List<String> codes =
+        itemsPlanRequestDto.stream()
+            .map(itemRequest -> itemRequest.getItem().getCode())
+            .collect(Collectors.toUnmodifiableList());
+    return itemRepository.findAllByCodeIn(codes);
+  }
 
-    }
-
-    private List<ItemEntity> findItemsByCode(final Set<ItemPlanRequestDto> itemsPlanRequestDto) {
-        final List<String> codes = itemsPlanRequestDto.stream()
-                .map(itemRequest -> itemRequest.getItem().getCode())
-                .collect(Collectors.toUnmodifiableList());
-        return itemRepository.findAllByCodeIn(codes);
-    }
-
-    private ItemEntity findItemByCode(final List<ItemEntity> itemEntities, final String code) {
-        return itemEntities.stream().filter(item -> item.getCode().equals(code))
-                .findFirst().orElse(null);
-    }
+  private ItemEntity findItemByCode(final List<ItemEntity> itemEntities, final String code) {
+    return itemEntities.stream()
+        .filter(item -> item.getCode().equals(code))
+        .findFirst()
+        .orElse(null);
+  }
 }

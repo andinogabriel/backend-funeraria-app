@@ -1,0 +1,12 @@
+get:
+  summary: "GET affiliates of the currently logged in user"
+  operationId: "findAffiliatesByUser"
+  responses:
+    "200":
+      description: "OK"
+      content:
+        '*/*':
+          schema:
+            type: "array"
+            items:
+              $ref: "../../schemas/AffiliateResponseDto.yaml"

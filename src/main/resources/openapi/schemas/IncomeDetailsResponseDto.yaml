@@ -1,0 +1,16 @@
+type: "object"
+properties:
+  quantity:
+    type: "integer"
+    format: "int32"
+    example: 2
+  purchasePrice:
+    type: "number"
+    format: "double"
+    example: 3250.00
+  salePrice:
+    type: "number"
+    format: "double"
+    example: 5250.00
+  item:
+    $ref: "./ItemRequestDto.yaml"

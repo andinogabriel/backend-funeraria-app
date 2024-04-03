@@ -9,17 +9,16 @@ import static disenodesistemas.backendfunerariaapp.dto.request.PlanRequestDtoMot
 @UtilityClass
 public class PlanEntityMother {
 
-    private static final BigDecimal PRICE = BigDecimal.valueOf(6600);
+  private static final BigDecimal PRICE = BigDecimal.valueOf(6600);
 
-    public static Plan getPlan() {
-        final Plan planToReturn = new Plan(
-                getPlanRequest().getName(),
-                getPlanRequest().getDescription(),
-                getPlanRequest().getProfitPercentage()
-        );
-        planToReturn.setId(1L);
-        planToReturn.setPrice(PRICE);
-        return planToReturn;
-    }
-
+  public static Plan getPlan() {
+    final Plan planToReturn =
+        new Plan(
+            getPlanRequest().getName(),
+            getPlanRequest().getDescription(),
+            getPlanRequest().getProfitPercentage());
+    planToReturn.setId(1L);
+    planToReturn.setPrice(PRICE);
+    return planToReturn;
+  }
 }

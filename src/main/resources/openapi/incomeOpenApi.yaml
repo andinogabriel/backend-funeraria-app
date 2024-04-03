@@ -1,0 +1,92 @@
+get:
+  summary: "GET api/v1/incomes"
+  operationId: "getIncomes"
+  responses:
+    "200":
+      description: "OK"
+      content:
+        '*/*':
+          schema:
+            type: "array"
+            items:
+              $ref: "./schemas/IncomeResponseDto.yaml"
+post:
+  summary: "POST api/v1/incomes"
+  operationId: "createIncome"
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: "./schemas/IncomeRequestDto.yaml"
+    required: true
+  responses:
+    200:
+      description: OK
+      content:
+        '*/*':
+          schema:
+            $ref: "./schemas/IncomeResponseDto.yaml"
+    400:
+      description: a field or several required fields for income weren't sent in the request.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/ValidationErrors.yaml"
+put:
+  summary: "PUT api/v1/incomes/{receiptNumber}"
+  operationId: "updateIncome"
+  parameters:
+    - name: "receiptNumber"
+      in: "path"
+      required: true
+      schema:
+        type: "integer"
+        format: "int64"
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: "./schemas/IncomeRequestDto.yaml"
+    required: true
+  responses:
+    200:
+      description: OK
+      content:
+        '*/*':
+          schema:
+            $ref: "./schemas/IncomeResponseDto.yaml"
+    400:
+      description: a field or several required fields for income weren't sent in the request.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/ValidationErrors.yaml"
+    404:
+      description: An income with the specified receiptNumber was not found.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/NotFoundException.yaml"
+delete:
+  summary: "DELETE api/v1/incomes/{receiptNumber}"
+  operationId: "deleteIncome"
+  parameters:
+    - name: "receiptNumber"
+      in: "path"
+      required: true
+      schema:
+        type: "integer"
+        format: "int64"
+  responses:
+    200:
+      description: OK
+      content:
+        '*/*':
+          schema:
+            $ref: "./schemas/OperationStatusModel.yaml"
+    404:
+      description: An income with the specified receiptNumber was not found.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/NotFoundException.yaml"

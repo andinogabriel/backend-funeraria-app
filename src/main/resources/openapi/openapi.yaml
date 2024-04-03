@@ -1,0 +1,32 @@
+openapi: "3.0.3"
+info:
+  title: "backend_funeraria_app API"
+  description: "backend_funeraria_app API"
+  version: "1.0.0"
+servers:
+  - url: "https://backend_funeraria_app"
+paths:
+  /api/v1/affiliates:
+    $ref: ./affiliateOpenApi.yaml
+  /api/v1/affiliates/search:
+    $ref: ./paths/affiliate/getAffiliatesSearchPath.yaml
+  /api/v1/affiliates/deceased:
+    $ref: ./paths/affiliate/getAffiliatesDeceasedPath.yaml
+  /api/v1/affiliates/by-user:
+    $ref: ./paths/affiliate/getAffiliatesByUserPath.yaml
+  /api/v1/deceased:
+    $ref: ./deceasedOpenApi.yaml
+  /api/v1/deceased/{dni}:
+    $ref: ./paths/deceased/getDeceasedByDniPath.yaml
+  /api/v1/funerals:
+    $ref: ./funeralOpenApi.yaml
+  /api/v1/funerals/{id}:
+    $ref: ./paths/funeral/getFuneralById.yaml
+  /api/v1/funerals/by-user:
+    $ref: ./paths/funeral/getFuneralByLoggedUser.yaml
+  /api/v1/incomes:
+    $ref: ./incomeOpenApi.yaml
+  /api/v1/incomes/{receiptNumber}:
+    $ref: ./paths/income/getIncomeByReceiptNumber.yaml
+  /api/v1/incomes/paginated:
+    $ref: ./paths/income/getIncomesPaginated.yaml

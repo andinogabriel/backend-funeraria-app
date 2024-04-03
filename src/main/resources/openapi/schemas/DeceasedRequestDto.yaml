@@ -1,0 +1,41 @@
+type: "object"
+properties:
+  firstName:
+    type: "string"
+    example: "Pedro"
+  lastName:
+    type: "string"
+    example: "Gomez"
+  dni:
+    type: "integer"
+    format: "int32"
+    example: 18560276
+  birthDate:
+    type: "string"
+    format: "date"
+    example: "12-12-1969"
+  deathDate:
+    type: "string"
+    format: "date"
+    example: "17-03-2024"
+  placeOfDeath:
+    $ref: "./AddressResponseDto.yaml"
+  gender:
+    $ref: "./GenderDto.yaml"
+  deceasedRelationship:
+    $ref: "./RelationshipDto.yaml"
+  deathCause:
+    $ref: "./DeathCauseDto.yaml"
+  user:
+    type: "object"
+    properties:
+      firstName:
+        type: "string"
+        example: "Jose"
+      lastNae:
+        type: "string"
+        example: "Perez"
+      dni:
+        type: "integer"
+        format: "int32"
+        example: 32564851

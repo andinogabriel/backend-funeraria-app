@@ -26,49 +26,48 @@ import java.util.Objects;
 @Builder
 public class AddressEntity implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue
-    private Long id;
+  @Id @GeneratedValue private Long id;
 
-    @Column(nullable = false, length = 90)
-    private String streetName;
+  @Column(nullable = false, length = 90)
+  private String streetName;
 
-    private Integer blockStreet;
+  private Integer blockStreet;
 
-    @Column(length = 90)
-    private String apartment;
+  @Column(length = 90)
+  private String apartment;
 
-    @Column(length = 90)
-    private String flat; //Piso del departamento
+  @Column(length = 90)
+  private String flat; // Piso del departamento
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "city_id")
-    private CityEntity city;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "city_id")
+  private CityEntity city;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private UserEntity userAddress;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id")
+  private UserEntity userAddress;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "supplier_id")
-    private SupplierEntity supplierAddress;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "supplier_id")
+  private SupplierEntity supplierAddress;
 
-    @OneToOne(mappedBy = "placeOfDeath")
-    private DeceasedEntity deceased;
+  @OneToOne(mappedBy = "placeOfDeath")
+  private DeceasedEntity deceased;
 
-    @Override
-    public boolean equals(final Object o) {
-        //if (this == o) return true;
-        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        final AddressEntity that = (AddressEntity) o;
-        return Objects.equals(city.getId(), that.getCity().getId()) && Objects.equals(streetName, that.getStreetName())
-                && Objects.equals(blockStreet, that.getBlockStreet());
-    }
+  @Override
+  public boolean equals(final Object o) {
+    // if (this == o) return true;
+    if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+    final AddressEntity that = (AddressEntity) o;
+    return Objects.equals(city.getId(), that.getCity().getId())
+        && Objects.equals(streetName, that.getStreetName())
+        && Objects.equals(blockStreet, that.getBlockStreet());
+  }
 
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
+  @Override
+  public int hashCode() {
+    return getClass().hashCode();
+  }
 }

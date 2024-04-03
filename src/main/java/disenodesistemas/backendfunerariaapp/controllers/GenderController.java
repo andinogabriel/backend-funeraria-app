@@ -13,16 +13,15 @@ import java.util.List;
 @RequestMapping("api/v1/genders")
 public class GenderController {
 
-    private final GenderService genderService;
+  private final GenderService genderService;
 
-    public GenderController(final GenderService genderService) {
-        this.genderService = genderService;
-    }
+  public GenderController(final GenderService genderService) {
+    this.genderService = genderService;
+  }
 
-    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-    @GetMapping
-    public List<GenderResponseDto> getGenders() {
-        return genderService.getGenders();
-    }
-
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  @GetMapping
+  public List<GenderResponseDto> getGenders() {
+    return genderService.getGenders();
+  }
 }

@@ -11,10 +11,14 @@ import javax.validation.constraints.NotNull;
 @Builder(toBuilder = true)
 @Jacksonized
 public class AddressRequestDto {
-    Long id;
-    String apartment;
-    Integer blockStreet;
-    String flat;
-    @NotBlank(message = "{address.error.streetName.blank}") String streetName;
-    @NotNull(message = "{address.error.city.blank}") CityDto city;
+  Long id;
+  String apartment;
+  Integer blockStreet;
+  String flat;
+
+  @NotBlank(message = "{address.error.streetName.blank}")
+  String streetName;
+
+  @NotNull(message = "{address.error.city.blank}")
+  CityDto city;
 }

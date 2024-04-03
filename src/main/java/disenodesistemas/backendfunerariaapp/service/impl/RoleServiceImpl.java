@@ -14,15 +14,20 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RoleServiceImpl implements RoleService {
 
-    private final RoleRepository repository;
-    private static final String ROLE_PREFIX = "ROLE_";
+  private final RoleRepository repository;
+  private static final String ROLE_PREFIX = "ROLE_";
 
-    @Override
-    public List<RolesDto> findAll() {
-        return repository.findAll().stream().map(role -> RolesDto.builder()
-                .id(role.getId())
-                .name(StringUtils.capitalize(role.getName().name().replace(ROLE_PREFIX, "").toLowerCase()))
-                .build()
-        ).collect(Collectors.toUnmodifiableList());
-    }
+  @Override
+  public List<RolesDto> findAll() {
+    return repository.findAll().stream()
+        .map(
+            role ->
+                RolesDto.builder()
+                    .id(role.getId())
+                    .name(
+                        StringUtils.capitalize(
+                            role.getName().name().replace(ROLE_PREFIX, "").toLowerCase()))
+                    .build())
+        .collect(Collectors.toUnmodifiableList());
+  }
 }

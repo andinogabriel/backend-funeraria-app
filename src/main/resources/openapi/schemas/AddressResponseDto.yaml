@@ -1,0 +1,19 @@
+type: "object"
+properties:
+  id:
+    type: "integer"
+    format: "int64"
+    example: 1
+  streetName:
+    type: "string"
+    example: "San Martin"
+  blockStreet:
+    type: "integer"
+    format: "int32"
+    example: 560
+  apartment:
+    type: "string"
+  flat:
+    type: "string"
+  city:
+    $ref: "./CityDto.yaml"

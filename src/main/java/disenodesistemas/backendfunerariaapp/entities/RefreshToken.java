@@ -22,20 +22,20 @@ import java.time.Instant;
 @Setter
 public class RefreshToken {
 
-    @Id
-    @Column(nullable = false)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @Column(nullable = false)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String token;
+  @Column(nullable = false, unique = true)
+  private String token;
 
-    @OneToOne(optional = false, cascade = CascadeType.ALL)
-    @JoinColumn(name = "user_device_id", unique = true)
-    private UserDevice userDevice;
+  @OneToOne(optional = false, cascade = CascadeType.ALL)
+  @JoinColumn(name = "user_device_id", unique = true)
+  private UserDevice userDevice;
 
-    private Long refreshCount;
+  private Long refreshCount;
 
-    @Column(nullable = false)
-    private Instant expiryDate;
+  @Column(nullable = false)
+  private Instant expiryDate;
 }

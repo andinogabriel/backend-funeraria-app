@@ -15,26 +15,29 @@ import javax.persistence.EntityNotFoundException;
 @RequiredArgsConstructor
 public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
 
-    private final ConfirmationTokenRepository confirmationTokenRepository;
+  private final ConfirmationTokenRepository confirmationTokenRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public ConfirmationTokenEntity findByToken(final String token) {
-        return confirmationTokenRepository.findByToken(token).orElseThrow(() -> new EntityNotFoundException("confirmationToken.error.invalid"));
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public ConfirmationTokenEntity findByToken(final String token) {
+    return confirmationTokenRepository
+        .findByToken(token)
+        .orElseThrow(() -> new EntityNotFoundException("confirmationToken.error.invalid"));
+  }
 
-    @Override
-    @Transactional(readOnly = true)
-    public ConfirmationTokenEntity findByUser(final UserEntity user) {
-        return confirmationTokenRepository.findByUser(user).orElseThrow(() -> new EntityNotFoundException("user.error.id.not.found"));
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public ConfirmationTokenEntity findByUser(final UserEntity user) {
+    return confirmationTokenRepository
+        .findByUser(user)
+        .orElseThrow(() -> new EntityNotFoundException("user.error.id.not.found"));
+  }
 
-    @Override
-    @Transactional
-    public void save(final UserEntity user, final String token) {
-        val confirmationTokenEntity = new ConfirmationTokenEntity(user, token);
-        confirmationTokenEntity.setExpiryDate(calculateExpiryDate(24L*60L)); //24hs
-        confirmationTokenRepository.save(confirmationTokenEntity);
-    }
-
+  @Override
+  @Transactional
+  public void save(final UserEntity user, final String token) {
+    val confirmationTokenEntity = new ConfirmationTokenEntity(user, token);
+    confirmationTokenEntity.setExpiryDate(calculateExpiryDate(24L * 60L)); // 24hs
+    confirmationTokenRepository.save(confirmationTokenEntity);
+  }
 }

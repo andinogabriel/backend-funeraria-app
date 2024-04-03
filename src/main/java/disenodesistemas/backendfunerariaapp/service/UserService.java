@@ -27,21 +27,38 @@ import java.util.Map;
 import java.util.Set;
 
 public interface UserService extends UserDetailsService {
-    UserEntity save(UserEntity user);
-    UserResponseDto createUser(UserRegisterDto user);
-    JwtDto login(UserLoginDto loginUser);
-    UserEntity getUserById(Long id);
-    UserEntity getUserByEmail(String email);
-    String confirmationUser(String token);
-    String resetUserPasswordByEmail(PasswordResetByEmailDto passwordResetDto, String token);
-    Map<String, String> changeOldPassword(PasswordResetDto passwordResetDto);
-    UserDetails loadUserByUsername(String email) throws UsernameNotFoundException;
-    Page<UserEntity> getAllUsers(int page, int limit, String sortBy, String sortDir);
-    List<UserResponseDto> findAll();
-    Set<RolRequestDto> updateUserRol(String email, RolRequestDto rolRequestDto);
-    UserAddressAndPhoneDto getUserAddressesAndMobileNumbers();
-    List<AddressResponseDto> addAddressesUser(List<AddressRequestDto> addressRequestDto);
-    List<MobileNumberResponseDto> addMobileNumbersUser(List<MobileNumberRequestDto> addressRequestDto);
-    OperationStatusModel logoutUser(LogOutRequestDto logOutRequest);
-    JwtDto refreshJwtToken(TokenRefreshRequestDto tokenRefreshRequestDto);
+  UserEntity save(UserEntity user);
+
+  UserResponseDto createUser(UserRegisterDto user);
+
+  JwtDto login(UserLoginDto loginUser);
+
+  UserEntity getUserById(Long id);
+
+  UserEntity getUserByEmail(String email);
+
+  String confirmationUser(String token);
+
+  String resetUserPasswordByEmail(PasswordResetByEmailDto passwordResetDto, String token);
+
+  Map<String, String> changeOldPassword(PasswordResetDto passwordResetDto);
+
+  UserDetails loadUserByUsername(String email) throws UsernameNotFoundException;
+
+  Page<UserEntity> getAllUsers(int page, int limit, String sortBy, String sortDir);
+
+  List<UserResponseDto> findAll();
+
+  Set<RolRequestDto> updateUserRol(String email, RolRequestDto rolRequestDto);
+
+  UserAddressAndPhoneDto getUserAddressesAndMobileNumbers();
+
+  List<AddressResponseDto> addAddressesUser(List<AddressRequestDto> addressRequestDto);
+
+  List<MobileNumberResponseDto> addMobileNumbersUser(
+      List<MobileNumberRequestDto> addressRequestDto);
+
+  OperationStatusModel logoutUser(LogOutRequestDto logOutRequest);
+
+  JwtDto refreshJwtToken(TokenRefreshRequestDto tokenRefreshRequestDto);
 }

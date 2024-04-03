@@ -28,43 +28,42 @@ import java.util.Objects;
 @Builder
 public class IncomeDetailEntity implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue
-    private Long id;
+  @Id @GeneratedValue private Long id;
 
-    @Column(nullable = false)
-    private Integer quantity;
+  @Column(nullable = false)
+  private Integer quantity;
 
-    @Column(nullable = false)
-    @Digits(integer = 6, fraction = 2)
-    private BigDecimal purchasePrice;
+  @Column(nullable = false)
+  @Digits(integer = 6, fraction = 2)
+  private BigDecimal purchasePrice;
 
-    @Column(nullable = false)
-    @Digits(integer = 6, fraction = 2)
-    private BigDecimal salePrice;
+  @Column(nullable = false)
+  @Digits(integer = 6, fraction = 2)
+  private BigDecimal salePrice;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "income_id")
-    private IncomeEntity income;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "income_id")
+  private IncomeEntity income;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "item_id")
-    private ItemEntity item;
+  @ManyToOne(cascade = CascadeType.PERSIST)
+  @JoinColumn(name = "item_id")
+  private ItemEntity item;
 
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+    final IncomeDetailEntity that = (IncomeDetailEntity) o;
+    return id != null
+        && Objects.equals(income.getId(), that.getIncome().getId())
+        && Objects.equals(item.getId(), that.getItem().getId())
+        && Objects.equals(quantity, that.getQuantity());
+  }
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        final IncomeDetailEntity that = (IncomeDetailEntity) o;
-        return id != null && Objects.equals(income.getId(), that.getIncome().getId()) &&
-                Objects.equals(item.getId(), that.getItem().getId()) && Objects.equals(quantity, that.getQuantity());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
+  @Override
+  public int hashCode() {
+    return getClass().hashCode();
+  }
 }

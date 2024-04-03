@@ -1,0 +1,43 @@
+type: "object"
+properties:
+  id:
+    type: "integer"
+    format: "int64"
+    example: 1
+  funeralDate:
+    type: "string"
+    format: "date"
+    example: 12-07-2024
+  registerDateDate:
+    type: "string"
+    format: "date"
+    example: 11-07-2024 17:23
+  receiptNumber:
+    type: "string"
+    example: 20240711172326858499
+  receiptSeries:
+    type: "string"
+    example: 1
+  tax:
+    type: "number"
+    format: "double"
+    example: 21
+  totalAmount:
+    type: "number"
+    format: "double"
+    example: 130680.00
+  receiptType:
+    $ref: "./ReceiptTypeDto.yaml"
+  deceased:
+    $ref: "./DeceasedResponseDto.yaml"
+  itemsPlan:
+    type: array
+    items:
+      type: object
+      properties:
+        item:
+          $ref: "./ItemResponseDto.yaml"
+        quantity:
+          type: "integer"
+          format: "int32"
+          example: 1

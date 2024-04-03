@@ -1,0 +1,12 @@
+get:
+  summary: "GET funerals by logged user"
+  operationId: "findFuneralsByUser"
+  responses:
+    200:
+      description: "OK"
+      content:
+        '*/*':
+          schema:
+            type: "array"
+            items:
+              $ref: "../../schemas/FuneralResponseDto.yaml"

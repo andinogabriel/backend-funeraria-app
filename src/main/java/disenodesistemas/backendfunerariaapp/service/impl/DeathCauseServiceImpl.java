@@ -17,45 +17,47 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DeathCauseServiceImpl implements DeathCauseService {
 
-    private final DeathCauseRepository deathCauseRepository;
-    private final ProjectionFactory projectionFactory;
+  private final DeathCauseRepository deathCauseRepository;
+  private final ProjectionFactory projectionFactory;
 
-    @Override
-    @Transactional
-    public DeathCauseResponseDto create(final DeathCauseDto deathCauseDto) {
-        final DeathCauseEntity deathCauseEntity = new DeathCauseEntity(deathCauseDto.getName());
-        return projectionFactory.createProjection(DeathCauseResponseDto.class,
-                deathCauseRepository.save(deathCauseEntity));
-    }
+  @Override
+  @Transactional
+  public DeathCauseResponseDto create(final DeathCauseDto deathCauseDto) {
+    final DeathCauseEntity deathCauseEntity = new DeathCauseEntity(deathCauseDto.getName());
+    return projectionFactory.createProjection(
+        DeathCauseResponseDto.class, deathCauseRepository.save(deathCauseEntity));
+  }
 
-    @Override
-    @Transactional
-    public DeathCauseResponseDto update(final Long id, final DeathCauseDto deathCauseDto) {
-        final DeathCauseEntity deathCauseToUpdate = findEntityById(id);
-        deathCauseToUpdate.setName(deathCauseDto.getName());
-        return projectionFactory.createProjection(DeathCauseResponseDto.class, deathCauseRepository.save(deathCauseToUpdate));
-    }
+  @Override
+  @Transactional
+  public DeathCauseResponseDto update(final Long id, final DeathCauseDto deathCauseDto) {
+    final DeathCauseEntity deathCauseToUpdate = findEntityById(id);
+    deathCauseToUpdate.setName(deathCauseDto.getName());
+    return projectionFactory.createProjection(
+        DeathCauseResponseDto.class, deathCauseRepository.save(deathCauseToUpdate));
+  }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<DeathCauseResponseDto> findAll() {
-        return deathCauseRepository.findAllByOrderByNameAsc();
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public List<DeathCauseResponseDto> findAll() {
+    return deathCauseRepository.findAllByOrderByNameAsc();
+  }
 
-    @Override
-    @Transactional
-    public void delete(final Long id) {
-        deathCauseRepository.delete(findEntityById(id));
-    }
+  @Override
+  @Transactional
+  public void delete(final Long id) {
+    deathCauseRepository.delete(findEntityById(id));
+  }
 
-    @Override
-    @Transactional(readOnly = true)
-    public DeathCauseResponseDto findById(final Long id) {
-        return projectionFactory.createProjection(DeathCauseResponseDto.class, findEntityById(id));
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public DeathCauseResponseDto findById(final Long id) {
+    return projectionFactory.createProjection(DeathCauseResponseDto.class, findEntityById(id));
+  }
 
-    private DeathCauseEntity findEntityById(final Long id) {
-        return deathCauseRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("death.cause.not.found"));
-    }
+  private DeathCauseEntity findEntityById(final Long id) {
+    return deathCauseRepository
+        .findById(id)
+        .orElseThrow(() -> new NotFoundException("death.cause.not.found"));
+  }
 }

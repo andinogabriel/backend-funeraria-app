@@ -7,8 +7,7 @@ import java.util.List;
 
 public interface ProvinceService {
 
-    List<ProvinceResponseDto> getAllProvinces();
+  List<ProvinceResponseDto> getAllProvinces();
 
-    ProvinceEntity getProvinceById(Long id);
-
+  ProvinceEntity getProvinceById(Long id);
 }

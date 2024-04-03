@@ -1,0 +1,12 @@
+type: "object"
+properties:
+  id:
+    type: "integer"
+    format: "int64"
+    example: 1
+  name:
+    type: "string"
+    example: Ataudes
+  description:
+    type: "string"
+    example: Distintos tipos de ataudes

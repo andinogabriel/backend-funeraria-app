@@ -20,47 +20,48 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
-    private final CategoryRepository categoryRepository;
-    private final ProjectionFactory projectionFactory;
+  private final CategoryRepository categoryRepository;
+  private final ProjectionFactory projectionFactory;
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<CategoryResponseDto> getAllCategories() {
-        return categoryRepository.findAllByOrderByName();
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public List<CategoryResponseDto> getAllCategories() {
+    return categoryRepository.findAllByOrderByName();
+  }
 
-    @Override
-    @Transactional
-    public CategoryResponseDto createCategory(final CategoryRequestDto category) {
-        val categoryEntity = new CategoryEntity(
-                StringUtils.capitalize(category.getName()),
-                category.getDescription()
-        );
-        return projectionFactory.createProjection(CategoryResponseDto.class, categoryRepository.save(categoryEntity));
-    }
+  @Override
+  @Transactional
+  public CategoryResponseDto createCategory(final CategoryRequestDto category) {
+    val categoryEntity =
+        new CategoryEntity(StringUtils.capitalize(category.getName()), category.getDescription());
+    return projectionFactory.createProjection(
+        CategoryResponseDto.class, categoryRepository.save(categoryEntity));
+  }
 
-    @Override
-    @Transactional
-    public CategoryResponseDto updateCategory(final Long id, final CategoryRequestDto categoryDto) {
-        val categoryEntity = findCategoryById(id);
-        categoryEntity.setName(categoryDto.getName());
-        categoryEntity.setDescription(categoryDto.getDescription());
-        return projectionFactory.createProjection(CategoryResponseDto.class, categoryRepository.save(categoryEntity));
-    }
+  @Override
+  @Transactional
+  public CategoryResponseDto updateCategory(final Long id, final CategoryRequestDto categoryDto) {
+    val categoryEntity = findCategoryById(id);
+    categoryEntity.setName(categoryDto.getName());
+    categoryEntity.setDescription(categoryDto.getDescription());
+    return projectionFactory.createProjection(
+        CategoryResponseDto.class, categoryRepository.save(categoryEntity));
+  }
 
-    @Override
-    @Transactional
-    public void deleteCategory(final Long id) {
-        final CategoryEntity categoryEntity = findCategoryById(id);
-        if (!categoryEntity.getItems().isEmpty())
-            throw new ConflictException("category.error.invalid.delete");
-        categoryRepository.delete(categoryEntity);
-    }
+  @Override
+  @Transactional
+  public void deleteCategory(final Long id) {
+    final CategoryEntity categoryEntity = findCategoryById(id);
+    if (!categoryEntity.getItems().isEmpty())
+      throw new ConflictException("category.error.invalid.delete");
+    categoryRepository.delete(categoryEntity);
+  }
 
-    @Override
-    @Transactional(readOnly = true)
-    public CategoryEntity findCategoryById(final Long id) {
-        return categoryRepository.findById(id).orElseThrow(() -> new NotFoundException("category.error.not.found"));
-    }
-
+  @Override
+  @Transactional(readOnly = true)
+  public CategoryEntity findCategoryById(final Long id) {
+    return categoryRepository
+        .findById(id)
+        .orElseThrow(() -> new NotFoundException("category.error.not.found"));
+  }
 }
