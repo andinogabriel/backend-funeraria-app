@@ -1,11 +1,23 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.only;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import disenodesistemas.backendfunerariaapp.dto.BrandRequestDtoMother;
 import disenodesistemas.backendfunerariaapp.dto.response.BrandResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.BrandEntity;
 import disenodesistemas.backendfunerariaapp.entities.BrandEntityMother;
 import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
 import disenodesistemas.backendfunerariaapp.repository.BrandRepository;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,18 +28,6 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
-
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.atMostOnce;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.STRICT_STUBS)
@@ -54,9 +54,10 @@ class BrandServiceImplTest {
 
     final List<BrandResponseDto> result = sut.getAllBrands();
 
-    verify(brandRepository, times(1)).findAllByOrderByName();
-    assertEquals(brandResponsesDto.size(), result.size());
-    assertEquals(brandResponsesDto.get(0).getName(), result.get(0).getName());
+    assertAll(
+        () -> assertEquals(brandResponsesDto.size(), result.size()),
+        () -> assertEquals(brandResponsesDto.get(0).getName(), result.get(0).getName()));
+    verify(brandRepository, only()).findAllByOrderByName();
   }
 
   @Test
@@ -67,8 +68,9 @@ class BrandServiceImplTest {
 
     final BrandEntity result = sut.getBrandById(brandId);
 
-    assertEquals(expected.getName(), result.getName());
-    assertEquals(expected.getId(), result.getId());
+    assertAll(
+        () -> assertEquals(expected.getName(), result.getName()),
+        () -> assertEquals(expected.getId(), result.getId()));
     verify(brandRepository, times(1)).findById(brandId);
   }
 
@@ -119,6 +121,6 @@ class BrandServiceImplTest {
     final BrandEntity expected = BrandEntityMother.getBrandEntity();
     given(brandRepository.findById(expected.getId())).willReturn(Optional.of(expected));
     sut.deleteBrand(expected.getId());
-    verify(brandRepository, times(1)).delete(expected);
+    verify(brandRepository, only()).delete(expected);
   }
 }

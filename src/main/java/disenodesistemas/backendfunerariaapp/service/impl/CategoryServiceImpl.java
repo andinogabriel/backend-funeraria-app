@@ -7,14 +7,13 @@ import disenodesistemas.backendfunerariaapp.exceptions.ConflictException;
 import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
 import disenodesistemas.backendfunerariaapp.repository.CategoryRepository;
 import disenodesistemas.backendfunerariaapp.service.CategoryService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -25,13 +24,13 @@ public class CategoryServiceImpl implements CategoryService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<CategoryResponseDto> getAllCategories() {
+  public List<CategoryResponseDto> findAll() {
     return categoryRepository.findAllByOrderByName();
   }
 
   @Override
   @Transactional
-  public CategoryResponseDto createCategory(final CategoryRequestDto category) {
+  public CategoryResponseDto create(final CategoryRequestDto category) {
     val categoryEntity =
         new CategoryEntity(StringUtils.capitalize(category.getName()), category.getDescription());
     return projectionFactory.createProjection(
@@ -40,7 +39,7 @@ public class CategoryServiceImpl implements CategoryService {
 
   @Override
   @Transactional
-  public CategoryResponseDto updateCategory(final Long id, final CategoryRequestDto categoryDto) {
+  public CategoryResponseDto update(final Long id, final CategoryRequestDto categoryDto) {
     val categoryEntity = findCategoryById(id);
     categoryEntity.setName(categoryDto.getName());
     categoryEntity.setDescription(categoryDto.getDescription());
@@ -50,7 +49,7 @@ public class CategoryServiceImpl implements CategoryService {
 
   @Override
   @Transactional
-  public void deleteCategory(final Long id) {
+  public void delete(final Long id) {
     final CategoryEntity categoryEntity = findCategoryById(id);
     if (!categoryEntity.getItems().isEmpty())
       throw new ConflictException("category.error.invalid.delete");

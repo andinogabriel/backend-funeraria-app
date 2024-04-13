@@ -4,6 +4,8 @@ import disenodesistemas.backendfunerariaapp.dto.request.AffiliateRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.AffiliateResponseDto;
 import disenodesistemas.backendfunerariaapp.service.AffiliateService;
 import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
+import java.util.List;
+import javax.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,9 +18,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.validation.Valid;
-import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/affiliates")
@@ -35,7 +34,7 @@ public class AffiliateController {
   public ResponseEntity<AffiliateResponseDto> createAffiliate(
       @RequestBody @Valid final AffiliateRequestDto affiliateRequestDto) {
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(affiliateService.createAffiliate(affiliateRequestDto));
+        .body(affiliateService.create(affiliateRequestDto));
   }
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")

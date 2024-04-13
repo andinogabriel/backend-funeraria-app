@@ -1,6 +1,5 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
-import static java.util.Objects.nonNull;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 
 import disenodesistemas.backendfunerariaapp.dto.request.IncomeDetailRequestDto;
@@ -23,6 +22,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,7 +55,7 @@ public class IncomeServiceImpl implements IncomeService {
 
   @Override
   @Transactional(propagation = Propagation.SUPPORTS)
-  public IncomeResponseDto createIncome(final IncomeRequestDto incomeRequestDto) {
+  public IncomeResponseDto create(final IncomeRequestDto incomeRequestDto) {
     val incomeEntity =
         IncomeEntity.builder()
             .receiptSeries(invoiceService.createSerialNumber())
@@ -74,13 +74,13 @@ public class IncomeServiceImpl implements IncomeService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<IncomeResponseDto> getAllIncomes() {
+  public List<IncomeResponseDto> findAll() {
     return incomeRepository.findAllByOrderByIdDesc();
   }
 
   @Override
   @Transactional
-  public IncomeResponseDto updateIncome(
+  public IncomeResponseDto update(
       final Long receiptNumber, final IncomeRequestDto incomeRequestDto) {
     val incomeEntity = findEntityByReceiptNumber(receiptNumber);
 
@@ -100,7 +100,7 @@ public class IncomeServiceImpl implements IncomeService {
 
   @Override
   @Transactional
-  public void deleteIncome(final Long receiptNumber) {
+  public void delete(final Long receiptNumber) {
     val incomeEntity = findEntityByReceiptNumber(receiptNumber);
     incomeRepository.delete(incomeEntity);
   }
@@ -168,15 +168,16 @@ public class IncomeServiceImpl implements IncomeService {
   private BigDecimal totalAmountCalculator(
       final List<IncomeDetailEntity> incomeDetailEntities,
       final IncomeRequestDto incomeRequestDto) {
-    // Cantidad × precio de compra de todos los detalles de ingreso y luego le sumamos el impuesto
-    // para obtener el monto total
     final BigDecimal subTotal =
         incomeDetailEntities.stream()
-            .map(e -> e.getPurchasePrice().multiply(BigDecimal.valueOf(e.getQuantity())))
+            .map(
+                detail ->
+                    detail.getPurchasePrice().multiply(BigDecimal.valueOf(detail.getQuantity())))
             .reduce(BigDecimal.ZERO, BigDecimal::add);
-    return subTotal.add(
+    final BigDecimal taxAmount =
         subTotal.multiply(
-            incomeRequestDto.getTax().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)));
+            incomeRequestDto.getTax().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP));
+    return subTotal.add(taxAmount);
   }
 
   private IncomeEntity findEntityByReceiptNumber(final Long receiptNumber) {
@@ -186,6 +187,8 @@ public class IncomeServiceImpl implements IncomeService {
   }
 
   private void setItemsPriceAndStock(final List<IncomeDetailEntity> incomeDetails) {
+    if (incomeDetails.isEmpty()) return;
+
     final List<ItemEntity> itemsToUpdate =
         incomeDetails.stream()
             .filter(Objects::nonNull)
@@ -194,9 +197,9 @@ public class IncomeServiceImpl implements IncomeService {
                   final ItemEntity item = incomeDetail.getItem();
                   item.setPrice(incomeDetail.getSalePrice());
                   item.setStock(
-                      nonNull(item.getStock())
-                          ? item.getStock() + incomeDetail.getQuantity()
-                          : incomeDetail.getQuantity());
+                      Optional.ofNullable(item.getStock())
+                          .map(stock -> stock + incomeDetail.getQuantity())
+                          .orElse(incomeDetail.getQuantity()));
                   return item;
                 })
             .collect(Collectors.toUnmodifiableList());

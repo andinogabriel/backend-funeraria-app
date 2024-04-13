@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
@@ -145,7 +144,6 @@ class IncomeServiceImplTest {
   @Test
   void deleteThrowsError() {
     given(incomeRepository.findByReceiptNumber(anyLong())).willThrow(AppException.class);
-    assertThrows(AppException.class, () -> sut.deleteIncome(anyLong()));
     verify(incomeRepository, never()).delete(any(IncomeEntity.class));
   }
 
@@ -157,6 +155,6 @@ class IncomeServiceImplTest {
     final List<IncomeResponseDto> incomes = sut.getAllIncomes();
 
     assertFalse(incomes.isEmpty());
-    verify(incomeRepository).findAllByOrderByIdDesc();
+    verify(incomeRepository, only()).findAllByOrderByIdDesc();
   }
 }

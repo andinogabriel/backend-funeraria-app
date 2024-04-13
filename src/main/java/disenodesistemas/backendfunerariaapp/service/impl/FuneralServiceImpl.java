@@ -1,5 +1,7 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
+
 import disenodesistemas.backendfunerariaapp.dto.request.DeceasedRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.FuneralRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.FuneralResponseDto;
@@ -24,7 +26,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.ObjectUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.security.core.Authentication;
@@ -63,7 +64,7 @@ public class FuneralServiceImpl implements FuneralService {
         });
     final DeceasedEntity deceased =
         saveDeceased(funeralRequest.getDeceased(), affiliateEntityOptional.isPresent());
-    final BigDecimal tax = ObjectUtils.defaultIfNull(funeralRequest.getTax(), DEFAULT_TAX);
+    final BigDecimal tax = defaultIfNull(funeralRequest.getTax(), DEFAULT_TAX);
     final Funeral funeral = buildFuneral(funeralRequest, funeralPlan, deceased, tax);
     funeral.setDeceased(deceased);
     final Funeral savedFuneral = funeralRepository.save(funeral);
@@ -79,7 +80,7 @@ public class FuneralServiceImpl implements FuneralService {
     validateDeceasedDniRequest(funeralRequest.getDeceased().getDni());
     funeralToUpdate.setFuneralDate(funeralToUpdate.getFuneralDate());
     funeralToUpdate.setReceiptSeries(funeralRequest.getReceiptSeries());
-    final BigDecimal tax = ObjectUtils.defaultIfNull(funeralRequest.getTax(), DEFAULT_TAX);
+    final BigDecimal tax = defaultIfNull(funeralRequest.getTax(), DEFAULT_TAX);
     funeralToUpdate.setTax(tax);
     funeralToUpdate.setTotalAmount(getTotalAmount(funeralToUpdate.getPlan(), tax));
     return projectionFactory.createProjection(
@@ -160,15 +161,15 @@ public class FuneralServiceImpl implements FuneralService {
     return Funeral.builder()
         .funeralDate(funeralRequest.getFuneralDate())
         .receiptSeries(
-            ObjectUtils.defaultIfNull(
+            defaultIfNull(
                 invoiceService.createSerialNumber().toString(), funeralRequest.getReceiptSeries()))
         .tax(tax)
         .receiptType(
-            ObjectUtils.defaultIfNull(
+            defaultIfNull(
                 receiptTypeService.findByNameIsContainingIgnoreCase(DEFAULT_RECEIPT_TYPE),
                 modelMapper.map(funeralRequest.getReceiptType(), ReceiptTypeEntity.class)))
         .receiptNumber(
-            ObjectUtils.defaultIfNull(
+            defaultIfNull(
                 invoiceService.createReceiptNumber().toString(), funeralRequest.getReceiptNumber()))
         .plan(funeralPlan)
         .deceased(deceased)

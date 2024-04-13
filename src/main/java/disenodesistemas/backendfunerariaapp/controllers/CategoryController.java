@@ -28,7 +28,7 @@ public class CategoryController {
 
   @GetMapping
   public List<CategoryResponseDto> getAllCategories() {
-    return categoryService.getAllCategories();
+    return categoryService.findAll();
   }
 
   @GetMapping(path = "/{id}")
@@ -41,7 +41,7 @@ public class CategoryController {
   @PostMapping
   public CategoryResponseDto createCategory(
       @RequestBody @Valid final CategoryRequestDto categoryRequestDto) {
-    return categoryService.createCategory(categoryRequestDto);
+    return categoryService.create(categoryRequestDto);
   }
 
   @PreAuthorize("hasRole('ADMIN')")
@@ -49,13 +49,13 @@ public class CategoryController {
   public CategoryResponseDto updateCategory(
       @PathVariable final Long id,
       @RequestBody @Valid final CategoryRequestDto categoryRequestDto) {
-    return categoryService.updateCategory(id, categoryRequestDto);
+    return categoryService.update(id, categoryRequestDto);
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping("/{id}")
   public OperationStatusModel deleteCategory(@PathVariable final Long id) {
-    categoryService.deleteCategory(id);
+    categoryService.delete(id);
     return OperationStatusModel.builder().name("DELETE").result("SUCCESS").build();
   }
 }

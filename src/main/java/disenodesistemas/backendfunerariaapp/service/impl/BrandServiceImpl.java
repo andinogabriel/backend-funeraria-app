@@ -23,7 +23,7 @@ public class BrandServiceImpl implements BrandService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<BrandResponseDto> getAllBrands() {
+  public List<BrandResponseDto> findAll() {
     return brandRepository.findAllByOrderByName();
   }
 
@@ -37,7 +37,7 @@ public class BrandServiceImpl implements BrandService {
 
   @Override
   @Transactional
-  public BrandResponseDto createBrand(final BrandRequestDto brandDto) {
+  public BrandResponseDto create(final BrandRequestDto brandDto) {
     val brandEntity = new BrandEntity(brandDto.getName(), brandDto.getWebPage());
     return projectionFactory.createProjection(
         BrandResponseDto.class, brandRepository.save(brandEntity));
@@ -45,7 +45,7 @@ public class BrandServiceImpl implements BrandService {
 
   @Override
   @Transactional
-  public BrandResponseDto updateBrand(final Long id, final BrandRequestDto brandDto) {
+  public BrandResponseDto update(final Long id, final BrandRequestDto brandDto) {
     val brandEntity = getBrandById(id);
     brandEntity.setName(brandDto.getName());
     brandEntity.setWebPage(brandDto.getWebPage());
@@ -55,7 +55,7 @@ public class BrandServiceImpl implements BrandService {
 
   @Override
   @Transactional
-  public void deleteBrand(final Long id) {
+  public void delete(final Long id) {
     final BrandEntity brand = getBrandById(id);
     if (!brand.getBrandItems().isEmpty()) throw new ConflictException("brand.error.invalid.delete");
     brandRepository.delete(brand);

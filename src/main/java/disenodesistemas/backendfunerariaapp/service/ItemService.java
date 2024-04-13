@@ -2,23 +2,14 @@ package disenodesistemas.backendfunerariaapp.service;
 
 import disenodesistemas.backendfunerariaapp.dto.request.ItemRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.ItemResponseDto;
+import java.util.List;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
+public interface ItemService extends CommonService<ItemResponseDto, ItemRequestDto, String> {
 
-public interface ItemService {
+  List<ItemResponseDto> getItemsByCategoryId(Long id);
 
-    List<ItemResponseDto> getAllItems();
+  void uploadItemImage(String code, MultipartFile image);
 
-    List<ItemResponseDto> getItemsByCategoryId(Long id);
-
-    ItemResponseDto createItem(ItemRequestDto itemRequestDto);
-
-    ItemResponseDto updateItem(String code, ItemRequestDto itemRequestDto);
-
-    void deleteItem(String code);
-
-    void uploadItemImage(String code, MultipartFile image);
-    ItemResponseDto findItemByCode(String code);
-
+  ItemResponseDto findItemByCode(String code);
 }

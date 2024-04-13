@@ -1,9 +1,8 @@
 package disenodesistemas.backendfunerariaapp.utils;
 
-import org.springframework.beans.BeanWrapperImpl;
-
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
+import org.springframework.beans.BeanWrapperImpl;
 
 public class ConfirmedFieldValidator implements ConstraintValidator<ConfirmedField, Object> {
 
@@ -11,6 +10,7 @@ public class ConfirmedFieldValidator implements ConstraintValidator<ConfirmedFie
   private String confirmationField;
   private String message;
 
+  @Override
   public void initialize(final ConfirmedField constraintAnnotation) {
     this.originalField = constraintAnnotation.originalField();
     this.confirmationField = constraintAnnotation.confirmationField();

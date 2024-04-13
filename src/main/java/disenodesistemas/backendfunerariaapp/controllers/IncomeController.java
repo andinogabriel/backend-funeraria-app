@@ -1,10 +1,13 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
-import disenodesistemas.backendfunerariaapp.dto.request.IncomeRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.UserDto;
+import disenodesistemas.backendfunerariaapp.dto.request.IncomeRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.IncomeResponseDto;
-import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.service.IncomeService;
+import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
+import java.util.List;
+import javax.persistence.EntityManager;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.hibernate.Filter;
@@ -22,10 +25,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.persistence.EntityManager;
-import javax.validation.Valid;
-import java.util.List;
-
 @RestController
 @RequestMapping("api/v1/incomes")
 @RequiredArgsConstructor
@@ -37,7 +36,7 @@ public class IncomeController {
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping
   public List<IncomeResponseDto> getIncomes() {
-    return incomeService.getAllIncomes();
+    return incomeService.findAll();
   }
 
   @PreAuthorize("hasRole('ADMIN')")
@@ -77,7 +76,7 @@ public class IncomeController {
             .receiptType(incomeRequest.getReceiptType())
             .tax(incomeRequest.getTax())
             .build();
-    return incomeService.createIncome(incomeRequestDto);
+    return incomeService.create(incomeRequestDto);
   }
 
   @PreAuthorize("hasRole('ADMIN')")
@@ -95,13 +94,13 @@ public class IncomeController {
             .receiptType(incomeRequest.getReceiptType())
             .tax(incomeRequest.getTax())
             .build();
-    return incomeService.updateIncome(receiptNumber, incomeRequestDto);
+    return incomeService.update(receiptNumber, incomeRequestDto);
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping(path = "/{receiptNumber}")
   public OperationStatusModel deleteIncome(@PathVariable final Long receiptNumber) {
-    incomeService.deleteIncome(receiptNumber);
+    incomeService.delete(receiptNumber);
     return OperationStatusModel.builder().name("DELETE").result("SUCCESS").build();
   }
 }

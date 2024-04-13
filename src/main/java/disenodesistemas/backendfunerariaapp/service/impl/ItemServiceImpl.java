@@ -1,5 +1,7 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
+import static java.util.Objects.nonNull;
+
 import disenodesistemas.backendfunerariaapp.dto.request.ItemRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.ItemResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.BrandEntity;
@@ -10,6 +12,8 @@ import disenodesistemas.backendfunerariaapp.repository.ItemRepository;
 import disenodesistemas.backendfunerariaapp.service.CategoryService;
 import disenodesistemas.backendfunerariaapp.service.FileStoreService;
 import disenodesistemas.backendfunerariaapp.service.ItemService;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -19,11 +23,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
-import java.util.UUID;
-
-import static java.util.Objects.nonNull;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +36,7 @@ public class ItemServiceImpl implements ItemService {
   private final ModelMapper mapper;
 
   @Override
-  public List<ItemResponseDto> getAllItems() {
+  public List<ItemResponseDto> findAll() {
     return itemRepository.findAllProjectedBy();
   }
 
@@ -49,7 +48,7 @@ public class ItemServiceImpl implements ItemService {
 
   @Override
   @Transactional
-  public ItemResponseDto createItem(final ItemRequestDto itemRequestDto) {
+  public ItemResponseDto create(final ItemRequestDto itemRequestDto) {
     val itemEntity =
         ItemEntity.builder()
             .brand(mapper.map(itemRequestDto.getBrand(), BrandEntity.class))
@@ -68,7 +67,7 @@ public class ItemServiceImpl implements ItemService {
 
   @Override
   @Transactional
-  public ItemResponseDto updateItem(final String code, final ItemRequestDto itemRequestDto) {
+  public ItemResponseDto update(final String code, final ItemRequestDto itemRequestDto) {
     val itemEntity = getItemByCode(code);
     itemEntity.setCategory(mapper.map(itemRequestDto.getCategory(), CategoryEntity.class));
     itemEntity.setBrand(mapper.map(itemRequestDto.getBrand(), BrandEntity.class));
@@ -84,7 +83,7 @@ public class ItemServiceImpl implements ItemService {
   }
 
   @Transactional
-  public void deleteItem(final String code) {
+  public void delete(final String code) {
     val itemEntity = getItemByCode(code);
     if (nonNull(itemEntity.getItemImageLink()))
       fileStoreService.deleteFilesFromS3Bucket(itemEntity);

@@ -1,5 +1,18 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import disenodesistemas.backendfunerariaapp.dto.request.AffiliateRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.AffiliateRequestDtoMother;
 import disenodesistemas.backendfunerariaapp.dto.response.AffiliateResponseDto;
@@ -15,6 +28,10 @@ import disenodesistemas.backendfunerariaapp.exceptions.ConflictException;
 import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
 import disenodesistemas.backendfunerariaapp.repository.AffiliateRepository;
 import disenodesistemas.backendfunerariaapp.service.UserService;
+import java.util.List;
+import java.util.Optional;
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,25 +47,6 @@ import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
-
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.atMostOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.STRICT_STUBS)
@@ -196,8 +194,9 @@ class AffiliateServiceImplTest {
     final List<AffiliateResponseDto> result = sut.findAllByDeceasedFalse();
 
     verify(affiliateRepository).findAllByDeceasedFalseOrderByStartDateDesc();
-    assertEquals(affiliatesDeceasedFalse.size(), result.size());
-    assertEquals(affiliatesDeceasedFalse.get(0).getDni(), result.get(0).getDni());
+    assertAll(
+        () -> assertEquals(affiliatesDeceasedFalse.size(), result.size()),
+        () -> assertEquals(affiliatesDeceasedFalse.get(0).getDni(), result.get(0).getDni()));
   }
 
   @Test
@@ -208,8 +207,9 @@ class AffiliateServiceImplTest {
     final List<AffiliateResponseDto> result = sut.findAll();
 
     verify(affiliateRepository).findAllByOrderByStartDateDesc();
-    assertEquals(affiliatesDeceasedFalse.size(), result.size());
-    assertEquals(affiliatesDeceasedFalse.get(0).getDni(), result.get(0).getDni());
+    assertAll(
+        () -> assertEquals(affiliatesDeceasedFalse.size(), result.size()),
+        () -> assertEquals(affiliatesDeceasedFalse.get(0).getDni(), result.get(0).getDni()));
   }
 
   @Test
@@ -225,10 +225,13 @@ class AffiliateServiceImplTest {
 
     final List<AffiliateResponseDto> result = sut.findAffiliatesByUser();
 
+    assertAll(
+        () -> assertEquals(userLoggedAffiliates.size(), result.size()),
+        () ->
+            assertEquals(
+                userLoggedAffiliates.get(0).getUser().getEmail(),
+                result.get(0).getUser().getEmail()));
     verify(affiliateRepository).findByUserOrderByStartDateDesc(userEntity);
-    assertEquals(userLoggedAffiliates.size(), result.size());
-    assertEquals(
-        userLoggedAffiliates.get(0).getUser().getEmail(), result.get(0).getUser().getEmail());
   }
 
   @Test
@@ -254,8 +257,8 @@ class AffiliateServiceImplTest {
     final List<AffiliateResponseDto> result =
         sut.findAffiliatesByFirstNameOrLastNameOrDniContaining(valueToSearch);
 
+    assertEquals(affiliateEntities.size(), result.size());
     verify(entityManager).createQuery(query, AffiliateEntity.class);
     verify(typedQuery).setParameter("valueToSearch", "%" + valueToSearch + "%");
-    assertEquals(affiliateEntities.size(), result.size());
   }
 }

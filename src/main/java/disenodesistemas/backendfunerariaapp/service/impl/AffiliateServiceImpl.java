@@ -36,7 +36,7 @@ public class AffiliateServiceImpl implements AffiliateService {
 
   @Override
   @Transactional
-  public AffiliateResponseDto createAffiliate(final AffiliateRequestDto affiliate) {
+  public AffiliateResponseDto create(final AffiliateRequestDto affiliate) {
 
     final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     final UserEntity userEntity = userService.getUserByEmail(authentication.getName());

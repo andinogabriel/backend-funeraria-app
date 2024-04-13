@@ -9,35 +9,47 @@ import disenodesistemas.backendfunerariaapp.entities.MobileNumberEntity;
 import disenodesistemas.backendfunerariaapp.entities.SupplierEntity;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.repository.SupplierRepository;
+import disenodesistemas.backendfunerariaapp.service.EntityProcessor;
 import disenodesistemas.backendfunerariaapp.service.SupplierService;
 import disenodesistemas.backendfunerariaapp.service.converters.AbstractConverter;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.function.Function;
 import lombok.val;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.springframework.util.CollectionUtils.isEmpty;
-
 @Service
-@RequiredArgsConstructor
 public class SupplierServiceImpl implements SupplierService {
 
   private final SupplierRepository supplierRepository;
   private final ProjectionFactory projectionFactory;
   private final AbstractConverter<MobileNumberEntity, MobileNumberRequestDto> mobileNumberConverter;
   private final AbstractConverter<AddressEntity, AddressRequestDto> addressConverter;
+  private final EntityProcessor<MobileNumberEntity, MobileNumberRequestDto>
+      mobileNumberEntityProcessor;
+  private final EntityProcessor<AddressEntity, AddressRequestDto> addressEntityProcessor;
+
+  public SupplierServiceImpl(
+      final SupplierRepository supplierRepository,
+      final ProjectionFactory projectionFactory,
+      final AbstractConverter<MobileNumberEntity, MobileNumberRequestDto> mobileNumberConverter,
+      final AbstractConverter<AddressEntity, AddressRequestDto> addressConverter) {
+    this.supplierRepository = supplierRepository;
+    this.projectionFactory = projectionFactory;
+    this.mobileNumberConverter = mobileNumberConverter;
+    this.addressConverter = addressConverter;
+    this.mobileNumberEntityProcessor = new DefaultEntityProcessor<>();
+    this.addressEntityProcessor = new DefaultEntityProcessor<>();
+  }
 
   @Override
-  public List<SupplierResponseDto> getSuppliers() {
+  public List<SupplierResponseDto> findAll() {
     return supplierRepository.findAllProjectedByOrderByIdDesc();
   }
 
   @Override
-  public SupplierResponseDto createSupplier(final SupplierRequestDto supplier) {
+  public SupplierResponseDto create(final SupplierRequestDto supplier) {
     val supplierEntity =
         new SupplierEntity(
             supplier.getName(), supplier.getNif(), supplier.getWebPage(), supplier.getEmail());
@@ -54,12 +66,12 @@ public class SupplierServiceImpl implements SupplierService {
   }
 
   @Override
-  public void deleteSupplier(final String nif) {
+  public void delete(final String nif) {
     supplierRepository.delete(findSupplierEntityByNif(nif));
   }
 
   @Override
-  public SupplierResponseDto updateSupplier(final String nif, final SupplierRequestDto supplier) {
+  public SupplierResponseDto update(final String nif, final SupplierRequestDto supplier) {
     val supplierEntity = findSupplierEntityByNif(nif);
 
     supplierEntity.setName(supplier.getName());
@@ -88,19 +100,16 @@ public class SupplierServiceImpl implements SupplierService {
 
   private List<MobileNumberEntity> getDeletedMobileNumbers(
       final SupplierEntity supplierEntity, final SupplierRequestDto supplier) {
-    return !isEmpty(supplierEntity.getMobileNumbers())
-        ? supplierEntity.getMobileNumbers().stream()
-            .filter(mDb -> !supplier.getMobileNumbers().contains(mobileNumberConverter.toDTO(mDb)))
-            .collect(Collectors.toUnmodifiableList())
-        : List.of();
+    final Function<MobileNumberEntity, MobileNumberRequestDto> entityToDtoConverter =
+        mobileNumberConverter::toDTO;
+    return mobileNumberEntityProcessor.getDeletedEntities(
+        supplierEntity.getMobileNumbers(), supplier.getMobileNumbers(), entityToDtoConverter);
   }
 
   private List<AddressEntity> getDeletedAddresses(
       final SupplierEntity supplierEntity, final SupplierRequestDto supplier) {
-    return !isEmpty(supplierEntity.getAddresses())
-        ? supplierEntity.getAddresses().stream()
-            .filter(aDb -> !supplier.getAddresses().contains(addressConverter.toDTO(aDb)))
-            .collect(Collectors.toUnmodifiableList())
-        : List.of();
+    final Function<AddressEntity, AddressRequestDto> entityToDtoConverter = addressConverter::toDTO;
+    return addressEntityProcessor.getDeletedEntities(
+        supplierEntity.getAddresses(), supplier.getAddresses(), entityToDtoConverter);
   }
 }

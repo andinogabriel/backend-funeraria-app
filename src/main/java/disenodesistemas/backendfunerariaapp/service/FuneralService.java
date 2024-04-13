@@ -5,11 +5,8 @@ import disenodesistemas.backendfunerariaapp.dto.response.FuneralResponseDto;
 
 import java.util.List;
 
-public interface FuneralService {
-    FuneralResponseDto create(FuneralRequestDto funeralRequest);
-    FuneralResponseDto update(Long id, FuneralRequestDto funeralRequest);
-    void delete(Long id);
-    List<FuneralResponseDto> findAll();
-    FuneralResponseDto findById(Long id);
-    List<FuneralResponseDto> findFuneralsByUser();
+public interface FuneralService extends CommonService<FuneralResponseDto, FuneralRequestDto, Long> {
+  FuneralResponseDto findById(Long id);
+
+  List<FuneralResponseDto> findFuneralsByUser();
 }

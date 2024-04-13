@@ -1,9 +1,15 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
+import static disenodesistemas.backendfunerariaapp.utils.ApiConstants.*;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
+
 import disenodesistemas.backendfunerariaapp.dto.request.ItemRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.ItemResponseDto;
-import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.service.ItemService;
+import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
+import java.util.List;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,13 +24,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.Valid;
-import java.util.List;
-
-import static disenodesistemas.backendfunerariaapp.utils.ApiConstants.*;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
-
 @RestController
 @RequestMapping(VERSION + ITEMS)
 @RequiredArgsConstructor
@@ -36,7 +35,7 @@ public class ItemController {
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   @GetMapping
   public List<ItemResponseDto> getAllItems() {
-    return itemService.getAllItems();
+    return itemService.findAll();
   }
 
   @PreAuthorize("hasRole('ADMIN')")
@@ -54,7 +53,7 @@ public class ItemController {
   @PreAuthorize("hasRole('ADMIN')")
   @PostMapping
   public ItemResponseDto createItem(@RequestBody @Valid final ItemRequestDto itemRequestModel) {
-    return itemService.createItem(itemRequestModel);
+    return itemService.create(itemRequestModel);
   }
 
   @PreAuthorize("hasRole('ADMIN')")
@@ -62,14 +61,13 @@ public class ItemController {
   public ItemResponseDto updateItem(
       @PathVariable(name = "code") final String code,
       @RequestBody @Valid final ItemRequestDto itemRequestModel) {
-    log.debug("Item to update: " + itemRequestModel);
-    return itemService.updateItem(code, itemRequestModel);
+    return itemService.update(code, itemRequestModel);
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping(path = "/{code}")
   public OperationStatusModel deleteItem(@PathVariable final String code) {
-    itemService.deleteItem(code);
+    itemService.delete(code);
     return OperationStatusModel.builder().name("DELETE").result("SUCCESS").build();
   }
 

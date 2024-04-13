@@ -2,8 +2,10 @@ package disenodesistemas.backendfunerariaapp.controllers;
 
 import disenodesistemas.backendfunerariaapp.dto.request.SupplierRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.SupplierResponseDto;
-import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.service.SupplierService;
+import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
+import java.util.List;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,9 +18,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.Valid;
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/v1/suppliers")
 @RequiredArgsConstructor
@@ -30,13 +29,13 @@ public class SupplierController {
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping
   public List<SupplierResponseDto> getSuppliers() {
-    return supplierService.getSuppliers();
+    return supplierService.findAll();
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @PostMapping
   public SupplierResponseDto createSupplier(@RequestBody @Valid final SupplierRequestDto supplier) {
-    return supplierService.createSupplier(supplier);
+    return supplierService.create(supplier);
   }
 
   @PreAuthorize("hasRole('ADMIN')")
@@ -49,7 +48,7 @@ public class SupplierController {
   @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping(path = "/{nif}")
   public OperationStatusModel deleteSupplier(@PathVariable final String nif) {
-    supplierService.deleteSupplier(nif);
+    supplierService.delete(nif);
     return OperationStatusModel.builder().name("DELETE").result("SUCCESSFUL").build();
   }
 
@@ -58,6 +57,6 @@ public class SupplierController {
   public SupplierResponseDto updateSupplier(
       @PathVariable final String nif,
       @RequestBody @Valid final SupplierRequestDto supplierRequestDto) {
-    return supplierService.updateSupplier(nif, supplierRequestDto);
+    return supplierService.update(nif, supplierRequestDto);
   }
 }

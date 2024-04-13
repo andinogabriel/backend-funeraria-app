@@ -15,8 +15,11 @@ import disenodesistemas.backendfunerariaapp.service.PlanService;
 import disenodesistemas.backendfunerariaapp.service.converters.AbstractConverter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -108,31 +111,39 @@ public class PlanServiceImpl implements PlanService {
 
   private Set<ItemPlanEntity> getItemsPlanEntities(
       final Set<ItemPlanRequestDto> itemsPlanRequestDto, final Plan planEntity) {
-    final List<ItemEntity> itemEntities = findItemsByCode(itemsPlanRequestDto);
-    return itemsPlanRequestDto.stream()
-        .map(
-            itemPlan ->
-                itemsPlanRepository.save(
-                    new ItemPlanEntity(
-                        planEntity,
-                        findItemByCode(itemEntities, itemPlan.getItem().getCode()),
-                        itemPlan.getQuantity())))
-        .collect(Collectors.toUnmodifiableSet());
-  }
 
-  private List<ItemEntity> findItemsByCode(final Set<ItemPlanRequestDto> itemsPlanRequestDto) {
-    final List<String> codes =
+    final Map<String, ItemEntity> itemEntitiesMap = fetchItemEntitiesMap(itemsPlanRequestDto);
+
+    final List<ItemPlanEntity> itemPlanEntities =
         itemsPlanRequestDto.stream()
-            .map(itemRequest -> itemRequest.getItem().getCode())
+            .map(
+                itemPlanRequestDto -> {
+                  final ItemEntity itemEntity =
+                      itemEntitiesMap.get(itemPlanRequestDto.getItem().getCode());
+                  if (itemEntity == null) {
+                    log.error(
+                        "Item with code {} not found", itemPlanRequestDto.getItem().getCode());
+                    throw new IllegalArgumentException(
+                        "Item with code " + itemPlanRequestDto.getItem().getCode() + " not found");
+                  }
+                  return new ItemPlanEntity(
+                      planEntity, itemEntity, itemPlanRequestDto.getQuantity());
+                })
             .collect(Collectors.toUnmodifiableList());
-    return itemRepository.findAllByCodeIn(codes);
+    return new HashSet<>(itemsPlanRepository.saveAll(itemPlanEntities));
   }
 
-  private ItemEntity findItemByCode(final List<ItemEntity> itemEntities, final String code) {
+  private Map<String, ItemEntity> fetchItemEntitiesMap(
+      final Set<ItemPlanRequestDto> itemsPlanRequestDto) {
+    final List<String> itemCodes =
+        itemsPlanRequestDto.stream()
+            .map(itemPlanRequestDto -> itemPlanRequestDto.getItem().getCode())
+            .collect(Collectors.toUnmodifiableList());
+
+    final List<ItemEntity> itemEntities = itemRepository.findAllByCodeIn(itemCodes);
+
     return itemEntities.stream()
-        .filter(item -> item.getCode().equals(code))
-        .findFirst()
-        .orElse(null);
+        .collect(Collectors.toMap(ItemEntity::getCode, Function.identity()));
   }
 
   private List<ItemPlanEntity> getDeletedItemsPlanEntities(

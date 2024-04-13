@@ -1,11 +1,19 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import disenodesistemas.backendfunerariaapp.dto.response.CityResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.CityEntity;
 import disenodesistemas.backendfunerariaapp.entities.CityEntityMother;
 import disenodesistemas.backendfunerariaapp.entities.ProvinceEntity;
 import disenodesistemas.backendfunerariaapp.entities.ProvinceEntityMother;
 import disenodesistemas.backendfunerariaapp.repository.CityRepository;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,15 +25,6 @@ import org.mockito.quality.Strictness;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.STRICT_STUBS)
 class CityServiceImplTest {
@@ -34,7 +33,7 @@ class CityServiceImplTest {
   @InjectMocks private CityServiceImpl sut;
 
   private CityResponseDto cityResponseDto;
-
+ 
   @BeforeEach
   void setUp() {
     final ProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
