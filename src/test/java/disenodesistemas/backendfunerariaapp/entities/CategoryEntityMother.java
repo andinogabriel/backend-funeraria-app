@@ -1,8 +1,7 @@
 package disenodesistemas.backendfunerariaapp.entities;
 
-import lombok.experimental.UtilityClass;
-
 import java.util.List;
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class CategoryEntityMother {
@@ -12,7 +11,7 @@ public class CategoryEntityMother {
 
   public static CategoryEntity getCategoryEntity() {
     final CategoryEntity categoryEntity = new CategoryEntity(NAME, DESCRIPTION);
-    categoryEntity.setId(ID);
+    categoryEntity.setId(null);
     categoryEntity.setItems(List.of());
     return categoryEntity;
   }

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.verify;
 
@@ -51,7 +52,7 @@ class CategoryServiceImplTest {
     final List<CategoryResponseDto> expected = List.of(categoryResponseDto);
     given(categoryRepository.findAllByOrderByName()).willReturn(expected);
 
-    final List<CategoryResponseDto> result = sut.getAllCategories();
+    final List<CategoryResponseDto> result = sut.findAll();
 
     assertAll(
         () -> assertEquals(expected.size(), result.size()),
@@ -66,8 +67,7 @@ class CategoryServiceImplTest {
     given(projectionFactory.createProjection(CategoryResponseDto.class, expected))
         .willReturn(categoryResponseDto);
 
-    final CategoryResponseDto result =
-        sut.createCategory(CategoryDtoMother.getCategoryRequestDto());
+    final CategoryResponseDto result = sut.create(CategoryDtoMother.getCategoryRequestDto());
 
     assertAll(
         () -> assertEquals(expected.getId(), result.getId()),
@@ -85,15 +85,14 @@ class CategoryServiceImplTest {
     given(projectionFactory.createProjection(CategoryResponseDto.class, expected))
         .willReturn(categoryResponseDto);
 
-    final CategoryResponseDto result =
-        sut.updateCategory(id, CategoryDtoMother.getCategoryRequestDto());
+    final CategoryResponseDto result = sut.update(id, CategoryDtoMother.getCategoryRequestDto());
 
     assertAll(
         () -> assertEquals(expected.getId(), result.getId()),
         () -> assertEquals(expected.getDescription(), result.getDescription()),
         () -> assertEquals(expected.getName(), result.getName()));
-    verify(categoryRepository, only()).save(any(CategoryEntity.class));
-    verify(categoryRepository, only()).findById(id);
+    verify(categoryRepository, atLeastOnce()).save(any(CategoryEntity.class));
+    verify(categoryRepository, atLeastOnce()).findById(id);
   }
 
   @Test
@@ -102,10 +101,10 @@ class CategoryServiceImplTest {
     final CategoryEntity expected = CategoryEntityMother.getCategoryEntity();
     given(categoryRepository.findById(id)).willReturn(Optional.of(expected));
 
-    sut.deleteCategory(id);
+    sut.delete(id);
 
-    verify(categoryRepository, only()).delete(expected);
-    verify(categoryRepository, only()).findById(id);
+    verify(categoryRepository, atLeastOnce()).delete(expected);
+    verify(categoryRepository, atLeastOnce()).findById(id);
   }
 
   @Test

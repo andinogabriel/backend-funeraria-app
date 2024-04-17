@@ -91,7 +91,7 @@ class AffiliateServiceImplTest {
     given(projectionFactory.createProjection(AffiliateResponseDto.class, expectedEntity))
         .willReturn(affiliateResponseDto);
 
-    final AffiliateResponseDto response = sut.createAffiliate(requestDto);
+    final AffiliateResponseDto response = sut.create(requestDto);
 
     assertAll(
         () -> assertEquals(expectedEntity.getDni(), response.getDni()),

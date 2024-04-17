@@ -16,7 +16,10 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.security.core.Authentication;
@@ -26,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AffiliateServiceImpl implements AffiliateService {
 
   private final AffiliateRepository affiliateRepository;
@@ -107,23 +111,29 @@ public class AffiliateServiceImpl implements AffiliateService {
   @Transactional(readOnly = true)
   public List<AffiliateResponseDto> findAffiliatesByFirstNameOrLastNameOrDniContaining(
       final String valueToSearch) {
+    if (StringUtils.isBlank(valueToSearch.trim())) {
+      return List.of();
+    }
     final String query =
         "SELECT a FROM affiliates a "
             + "WHERE lower(a.firstName) LIKE lower(:valueToSearch) "
             + "OR lower(a.lastName) LIKE lower(:valueToSearch) "
             + "OR CAST(a.dni AS string) LIKE :valueToSearch";
 
-    final List<AffiliateEntity> affiliateEntities =
-        entityManager
-            .createQuery(query, AffiliateEntity.class)
-            .setParameter("valueToSearch", "%" + valueToSearch + "%")
-            .getResultList();
-
-    return affiliateEntities.stream()
-        .map(
-            affiliateEntity ->
-                projectionFactory.createProjection(AffiliateResponseDto.class, affiliateEntity))
-        .collect(Collectors.toUnmodifiableList());
+    try {
+      return entityManager
+          .createQuery(query, AffiliateEntity.class)
+          .setParameter("valueToSearch", "%" + valueToSearch + "%")
+          .getResultList()
+          .stream()
+          .map(
+              affiliateEntity ->
+                  projectionFactory.createProjection(AffiliateResponseDto.class, affiliateEntity))
+          .collect(Collectors.toUnmodifiableList());
+    } catch (IllegalArgumentException | PersistenceException e) {
+      log.error("Unable to find affiliates by first name, last name or dni: {}", e.getMessage(), e);
+      return List.of();
+    }
   }
 
   private AffiliateEntity findByDni(final Integer dni) {

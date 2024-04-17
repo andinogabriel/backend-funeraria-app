@@ -79,13 +79,8 @@ public class SupplierServiceImpl implements SupplierService {
     supplierEntity.setEmail(supplier.getEmail());
     supplierEntity.setWebPage(supplier.getWebPage());
 
-    val deletedMobileNumbers = getDeletedMobileNumbers(supplierEntity, supplier);
-    deletedMobileNumbers.forEach(supplierEntity::removeMobileNumber);
-    supplierEntity.setMobileNumbers(mobileNumberConverter.fromDTOs(supplier.getMobileNumbers()));
-
-    val deletedAddresses = getDeletedAddresses(supplierEntity, supplier);
-    deletedAddresses.forEach(supplierEntity::removeAddress);
-    supplierEntity.setAddresses(addressConverter.fromDTOs(supplier.getAddresses()));
+    updateMobileNumbers(supplierEntity, supplier);
+    updateAddresses(supplierEntity, supplier);
 
     return projectionFactory.createProjection(
         SupplierResponseDto.class, supplierRepository.save(supplierEntity));
@@ -98,18 +93,22 @@ public class SupplierServiceImpl implements SupplierService {
         .orElseThrow(() -> new AppException("supplier.error.not.found", HttpStatus.NOT_FOUND));
   }
 
-  private List<MobileNumberEntity> getDeletedMobileNumbers(
-      final SupplierEntity supplierEntity, final SupplierRequestDto supplier) {
+  private void updateMobileNumbers(SupplierEntity supplierEntity, SupplierRequestDto supplier) {
     final Function<MobileNumberEntity, MobileNumberRequestDto> entityToDtoConverter =
         mobileNumberConverter::toDTO;
-    return mobileNumberEntityProcessor.getDeletedEntities(
-        supplierEntity.getMobileNumbers(), supplier.getMobileNumbers(), entityToDtoConverter);
+    final List<MobileNumberEntity> deletedMobileNumbers =
+        mobileNumberEntityProcessor.getDeletedEntities(
+            supplierEntity.getMobileNumbers(), supplier.getMobileNumbers(), entityToDtoConverter);
+    deletedMobileNumbers.forEach(supplierEntity::removeMobileNumber);
+    supplierEntity.setMobileNumbers(mobileNumberConverter.fromDTOs(supplier.getMobileNumbers()));
   }
 
-  private List<AddressEntity> getDeletedAddresses(
-      final SupplierEntity supplierEntity, final SupplierRequestDto supplier) {
+  private void updateAddresses(SupplierEntity supplierEntity, SupplierRequestDto supplier) {
     final Function<AddressEntity, AddressRequestDto> entityToDtoConverter = addressConverter::toDTO;
-    return addressEntityProcessor.getDeletedEntities(
-        supplierEntity.getAddresses(), supplier.getAddresses(), entityToDtoConverter);
+    final List<AddressEntity> deletedAddresses =
+        addressEntityProcessor.getDeletedEntities(
+            supplierEntity.getAddresses(), supplier.getAddresses(), entityToDtoConverter);
+    deletedAddresses.forEach(supplierEntity::removeAddress);
+    supplierEntity.setAddresses(addressConverter.fromDTOs(supplier.getAddresses()));
   }
 }

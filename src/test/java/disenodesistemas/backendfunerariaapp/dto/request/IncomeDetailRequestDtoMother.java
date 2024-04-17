@@ -13,7 +13,7 @@ public class IncomeDetailRequestDtoMother {
 
   public static IncomeDetailRequestDto getIncomeDetail() {
     return IncomeDetailRequestDto.builder()
-        .item(ItemRequestDtoMother.getItem())
+        .item(ItemMother.getItemRequest())
         .purchasePrice(PURCHASE_PRICE)
         .quantity(QUANTITY)
         .salePrice(SALE_PRICE)
@@ -23,7 +23,7 @@ public class IncomeDetailRequestDtoMother {
   public static List<IncomeDetailRequestDto> getIncomeDetails() {
     return List.of(
         IncomeDetailRequestDto.builder()
-            .item(ItemRequestDtoMother.getItem())
+            .item(ItemMother.getItemRequest())
             .purchasePrice(PURCHASE_PRICE)
             .quantity(QUANTITY)
             .salePrice(SALE_PRICE)

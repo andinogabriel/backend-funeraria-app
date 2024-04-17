@@ -23,6 +23,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -120,7 +121,7 @@ public class PlanServiceImpl implements PlanService {
                 itemPlanRequestDto -> {
                   final ItemEntity itemEntity =
                       itemEntitiesMap.get(itemPlanRequestDto.getItem().getCode());
-                  if (itemEntity == null) {
+                  if (ObjectUtils.isEmpty(itemEntity)) {
                     log.error(
                         "Item with code {} not found", itemPlanRequestDto.getItem().getCode());
                     throw new IllegalArgumentException(
@@ -143,7 +144,7 @@ public class PlanServiceImpl implements PlanService {
     final List<ItemEntity> itemEntities = itemRepository.findAllByCodeIn(itemCodes);
 
     return itemEntities.stream()
-        .collect(Collectors.toMap(ItemEntity::getCode, Function.identity()));
+        .collect(Collectors.toUnmodifiableMap(ItemEntity::getCode, Function.identity()));
   }
 
   private List<ItemPlanEntity> getDeletedItemsPlanEntities(
@@ -158,7 +159,7 @@ public class PlanServiceImpl implements PlanService {
   private BigDecimal priceCalculator(
       final BigDecimal profitPercentage, final Set<ItemPlanEntity> itemPlanEntities) {
     if (itemPlanEntities.stream()
-        .anyMatch(itemPlanEntity -> itemPlanEntity.getItem().getPrice() == null))
+        .anyMatch(itemPlanEntity -> ObjectUtils.isEmpty(itemPlanEntity.getItem().getPrice())))
       throw new ConflictException("plan.error.price.calculator");
 
     final BigDecimal subTotal =

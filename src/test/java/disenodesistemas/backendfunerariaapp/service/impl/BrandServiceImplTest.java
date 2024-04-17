@@ -5,20 +5,24 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import disenodesistemas.backendfunerariaapp.dto.BrandRequestDtoMother;
+import disenodesistemas.backendfunerariaapp.dto.BrandDtoMother;
 import disenodesistemas.backendfunerariaapp.dto.response.BrandResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.BrandEntity;
 import disenodesistemas.backendfunerariaapp.entities.BrandEntityMother;
+import disenodesistemas.backendfunerariaapp.exceptions.ConflictException;
 import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
 import disenodesistemas.backendfunerariaapp.repository.BrandRepository;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -52,7 +56,7 @@ class BrandServiceImplTest {
     final List<BrandResponseDto> brandResponsesDto = List.of(brandResponseDto);
     given(brandRepository.findAllByOrderByName()).willReturn(brandResponsesDto);
 
-    final List<BrandResponseDto> result = sut.getAllBrands();
+    final List<BrandResponseDto> result = sut.findAll();
 
     assertAll(
         () -> assertEquals(brandResponsesDto.size(), result.size()),
@@ -89,7 +93,7 @@ class BrandServiceImplTest {
     given(projectionFactory.createProjection(BrandResponseDto.class, expected))
         .willReturn(brandResponseDto);
 
-    final BrandResponseDto result = sut.createBrand(BrandRequestDtoMother.getBrandRequestDto());
+    final BrandResponseDto result = sut.create(BrandDtoMother.getBrandRequestDto());
 
     assertAll(
         () -> assertEquals(expected.getId(), result.getId()),
@@ -107,7 +111,7 @@ class BrandServiceImplTest {
         .willReturn(brandResponseDto);
 
     final BrandResponseDto result =
-        sut.updateBrand(expected.getId(), BrandRequestDtoMother.getBrandRequestDto());
+        sut.update(expected.getId(), BrandDtoMother.getBrandRequestDto());
 
     assertAll(
         () -> assertEquals(expected.getId(), result.getId()),
@@ -120,7 +124,19 @@ class BrandServiceImplTest {
   void deleteBrand() {
     final BrandEntity expected = BrandEntityMother.getBrandEntity();
     given(brandRepository.findById(expected.getId())).willReturn(Optional.of(expected));
-    sut.deleteBrand(expected.getId());
-    verify(brandRepository, only()).delete(expected);
+    sut.delete(expected.getId());
+    verify(brandRepository, atLeastOnce()).delete(expected);
+  }
+
+  @Test
+  @DisplayName(
+      "Given a valid brand id with related items when delete method is called then it throws a ConflictException")
+  void deleteBrandThrowsError() {
+    final BrandEntity brandEntity = BrandEntityMother.getBrandEntityWithItems();
+    given(brandRepository.findById(brandEntity.getId())).willReturn(Optional.of(brandEntity));
+    final ConflictException conflictException =
+        assertThrows(ConflictException.class, () -> sut.delete(brandEntity.getId()));
+    assertEquals("brand.error.invalid.delete", conflictException.getMessage());
+    verify(brandRepository, never()).delete(brandEntity);
   }
 }

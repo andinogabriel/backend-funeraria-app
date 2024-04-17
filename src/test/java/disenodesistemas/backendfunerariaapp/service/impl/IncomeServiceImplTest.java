@@ -115,7 +115,7 @@ class IncomeServiceImplTest {
                 IncomeResponseDto.class, IncomeEntityMother.getIncome()))
         .willReturn(incomeResponseDto);
 
-    final IncomeResponseDto response = sut.createIncome(incomeRequestDto);
+    final IncomeResponseDto response = sut.create(incomeRequestDto);
 
     assertAll(
         () ->
@@ -136,7 +136,7 @@ class IncomeServiceImplTest {
   void delete() {
     Optional<IncomeEntity> incomeEntityOptional = Optional.of(new IncomeEntity());
     given(incomeRepository.findByReceiptNumber(anyLong())).willReturn(incomeEntityOptional);
-    sut.deleteIncome(anyLong());
+    sut.delete(anyLong());
     verify(incomeRepository).findByReceiptNumber(anyLong());
     verify(incomeRepository).delete(any(IncomeEntity.class));
   }
@@ -150,9 +150,9 @@ class IncomeServiceImplTest {
   @Test
   void getAllIncomes() {
     given(incomeRepository.findAllByOrderByIdDesc()).willReturn(List.of(incomeResponseDto));
-    given(sut.getAllIncomes()).willReturn(List.of(incomeResponseDto));
+    given(sut.findAll()).willReturn(List.of(incomeResponseDto));
 
-    final List<IncomeResponseDto> incomes = sut.getAllIncomes();
+    final List<IncomeResponseDto> incomes = sut.findAll();
 
     assertFalse(incomes.isEmpty());
     verify(incomeRepository, only()).findAllByOrderByIdDesc();
