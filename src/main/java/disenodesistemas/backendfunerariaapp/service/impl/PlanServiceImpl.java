@@ -159,7 +159,7 @@ public class PlanServiceImpl implements PlanService {
   private BigDecimal priceCalculator(
       final BigDecimal profitPercentage, final Set<ItemPlanEntity> itemPlanEntities) {
     if (itemPlanEntities.stream()
-        .anyMatch(itemPlanEntity -> ObjectUtils.isEmpty(itemPlanEntity.getItem().getPrice())))
+        .anyMatch(itemPlanEntity -> itemPlanEntity.getItem().getPrice() == null))
       throw new ConflictException("plan.error.price.calculator");
 
     final BigDecimal subTotal =
@@ -171,10 +171,10 @@ public class PlanServiceImpl implements PlanService {
                         .getPrice()
                         .multiply(BigDecimal.valueOf(itemPlan.getQuantity())))
             .reduce(BigDecimal.ZERO, BigDecimal::add);
-    return subTotal
-        .add(
-            subTotal.multiply(
-                profitPercentage.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)))
-        .setScale(2, RoundingMode.HALF_EVEN);
+    final BigDecimal profitAmount =
+        subTotal.multiply(
+            profitPercentage.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP));
+    final BigDecimal totalPrice = subTotal.add(profitAmount);
+    return totalPrice.setScale(2, RoundingMode.HALF_EVEN);
   }
 }

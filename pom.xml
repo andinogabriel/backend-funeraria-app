@@ -16,7 +16,7 @@
     <properties>
         <java.version>11</java.version>
         <cucumber.version>7.15.0</cucumber.version>
-        <junit.platform.version>1.9.0</junit.platform.version>
+        <junit.platform.version>1.10.2</junit.platform.version>
     </properties>
     <dependencies>
         <dependency>

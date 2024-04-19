@@ -32,4 +32,16 @@ public class ItemPlanEntityMother {
         .quantity(2)
         .build();
   }
+
+  public static ItemPlanRequestDto getItemPlanRequestItemWithoutPrice() {
+    return ItemPlanRequestDto.builder()
+        .item(
+            ItemRequestPlanDto.builder()
+                .id(3L)
+                .name(NAME)
+                .code("01c5fc8a-9ab2-4c85-ac15-6b66b92b266c")
+                .build())
+        .quantity(2)
+        .build();
+  }
 }
