@@ -16,12 +16,10 @@ import disenodesistemas.backendfunerariaapp.entities.ItemEntity;
 import disenodesistemas.backendfunerariaapp.entities.Plan;
 import disenodesistemas.backendfunerariaapp.exceptions.ConflictException;
 import disenodesistemas.backendfunerariaapp.repository.ItemRepository;
-import disenodesistemas.backendfunerariaapp.repository.ItemsPlanRepository;
 import disenodesistemas.backendfunerariaapp.repository.PlanRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,21 +39,12 @@ import org.springframework.transaction.annotation.Transactional;
 class PlanServiceIntegrationTest {
 
   @Autowired private PlanRepository planRepository;
-  @Autowired private ItemsPlanRepository itemsPlanRepository;
   @Autowired private PlanServiceImpl sut;
   @Autowired private ItemRepository itemRepository;
 
   private static final Long EXISTING_PLAN_ID = 1L;
   private static final String EXISTING_PLAN_NAME_1 = "Plan Simple";
   private static final String EXISTING_PLAN_NAME_2 = "Plan nivel medio";
-
-  @AfterEach
-  void tearDown() {
-    planRepository.deleteAll();
-    itemsPlanRepository.deleteAll();
-    planRepository.flush();
-    itemsPlanRepository.flush();
-  }
 
   @DisplayName(
       "Given a valid plan request when create method is called then it returns a created plan response dto")
@@ -77,8 +66,9 @@ class PlanServiceIntegrationTest {
         assertThrows(
             ConflictException.class, () -> sut.create(getInvalidPlanRequestItemWithoutPrice()));
 
-    assertNotNull(exception.getMessage());
-    assertEquals("plan.error.price.calculator", exception.getMessage());
+    assertAll(
+        () -> assertNotNull(exception.getMessage()),
+        () -> assertEquals("plan.error.price.calculator", exception.getMessage()));
   }
 
   @DisplayName(
@@ -87,7 +77,10 @@ class PlanServiceIntegrationTest {
   void delete() {
     sut.delete(EXISTING_PLAN_ID);
 
-    assertFalse(planRepository.existsById(EXISTING_PLAN_ID), "Plan should be deleted");
+    assertAll(
+        () ->
+            assertFalse(planRepository.existsById(EXISTING_PLAN_ID), "this Plan should be deleted"),
+        () -> assertEquals(1, planRepository.count()));
   }
 
   @Test
@@ -96,8 +89,10 @@ class PlanServiceIntegrationTest {
   void createThrowsAnError() {
     final IllegalArgumentException exception =
         assertThrows(IllegalArgumentException.class, () -> sut.create(getInvalidPlanRequest()));
-    assertNotNull(exception.getMessage());
-    assertTrue(exception.getMessage().contains("not found"));
+
+    assertAll(
+        () -> assertNotNull(exception.getMessage()),
+        () -> assertTrue(exception.getMessage().contains("not found")));
   }
 
   @DisplayName(
@@ -138,8 +133,9 @@ class PlanServiceIntegrationTest {
     final BigDecimal expectedPricePlan2 =
         BigDecimal.valueOf(14950.00).setScale(2, RoundingMode.HALF_EVEN);
 
-    assertEquals(expectedPricePlan1, updatedPlans.get(0).getPrice());
-    assertEquals(expectedPricePlan2, updatedPlans.get(1).getPrice());
+    assertAll(
+        () -> assertEquals(expectedPricePlan1, updatedPlans.get(0).getPrice()),
+        () -> assertEquals(expectedPricePlan2, updatedPlans.get(1).getPrice()));
   }
 
   @DisplayName(
@@ -147,17 +143,20 @@ class PlanServiceIntegrationTest {
   @Test
   void getById() {
     PlanResponseDto actualResponse = sut.getById(EXISTING_PLAN_ID);
-    assertNotNull(actualResponse);
-    assertEquals(EXISTING_PLAN_ID, actualResponse.getId());
-    assertEquals(EXISTING_PLAN_NAME_1, actualResponse.getName());
+
+    assertAll(
+        () -> assertNotNull(actualResponse),
+        () -> assertEquals(EXISTING_PLAN_ID, actualResponse.getId()),
+        () -> assertEquals(EXISTING_PLAN_NAME_1, actualResponse.getName()));
   }
 
   private void assertPlanResponseDto(final PlanResponseDto actual, final PlanRequestDto expected) {
-    assertNotNull(actual.getId());
-    assertEquals(expected.getDescription(), actual.getDescription());
-    assertEquals(expected.getProfitPercentage(), actual.getProfitPercentage());
-    assertEquals(new BigDecimal("6600.00"), actual.getPrice());
-    assertEquals(expected.getName(), actual.getName());
-    assertFalse(actual.getItemsPlan().isEmpty(), "Items Plan Set should not be empty");
+    assertAll(
+        () -> assertNotNull(actual.getId()),
+        () -> assertEquals(expected.getDescription(), actual.getDescription()),
+        () -> assertEquals(expected.getProfitPercentage(), actual.getProfitPercentage()),
+        () -> assertEquals(new BigDecimal("6600.00"), actual.getPrice()),
+        () -> assertEquals(expected.getName(), actual.getName()),
+        () -> assertFalse(actual.getItemsPlan().isEmpty(), "Items Plan Set should not be empty"));
   }
 }

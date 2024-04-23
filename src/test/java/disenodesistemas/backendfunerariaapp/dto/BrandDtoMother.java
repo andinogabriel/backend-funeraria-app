@@ -8,7 +8,7 @@ import lombok.experimental.UtilityClass;
 public class BrandDtoMother {
 
   private static final String NAME = "Marca primer nivel";
-  private static final String WEB_PAGE = "www.brandpage.com";
+  private static final String WEB_PAGE = "www.marcaprimernivel.com";
 
   public static BrandRequestDto getBrandRequestDto() {
     return BrandRequestDto.builder().id(1L).name(NAME).webPage(WEB_PAGE).build();

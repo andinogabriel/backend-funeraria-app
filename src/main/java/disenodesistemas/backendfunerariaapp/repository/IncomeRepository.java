@@ -12,10 +12,9 @@ import java.util.Optional;
 
 @Repository
 public interface IncomeRepository extends PagingAndSortingRepository<IncomeEntity, Long> {
+  Optional<IncomeEntity> findByReceiptNumber(Long receiptNumber);
 
-    Optional<IncomeEntity> findByReceiptNumber(Long receiptNumber);
-    boolean existsByReceiptNumber(Long receiptNumber);
-    List<IncomeResponseDto> findAllByOrderByIdDesc();
-    Page<IncomeResponseDto> findAllProjectedBy(Pageable pageable);
+  List<IncomeResponseDto> findAllByOrderByIdDesc();
 
+  Page<IncomeResponseDto> findAllProjectedBy(Pageable pageable);
 }

@@ -1,5 +1,7 @@
 package disenodesistemas.backendfunerariaapp.dto.request;
 
+import static disenodesistemas.backendfunerariaapp.dto.BrandDtoMother.getBrandRequestDto;
+import static disenodesistemas.backendfunerariaapp.dto.CategoryDtoMother.getCategoryRequestDto;
 import static disenodesistemas.backendfunerariaapp.entities.BrandEntityMother.getBrandEntity;
 import static disenodesistemas.backendfunerariaapp.entities.CategoryEntityMother.getCategoryEntity;
 
@@ -11,14 +13,14 @@ import lombok.experimental.UtilityClass;
 public class ItemMother {
 
   private static final String NAME = "Corona simple";
-  private static final String CODE = "itemCode";
+  private static final String CODE = "67ad6c26-f586-4cb2-9d5e-3fbcc3e2e8eb";
   private static final BigDecimal PRICE = BigDecimal.valueOf(3000);
 
   public static ItemRequestDto getItemRequest() {
     return ItemRequestDto.builder()
         .id(1L)
-        .brand(BrandRequestDto.builder().id(1L).name("Marcaza").build())
-        .category(CategoryRequestDto.builder().id(1L).name("Coronas").build())
+        .brand(getBrandRequestDto())
+        .category(getCategoryRequestDto())
         .code(CODE)
         .price(PRICE)
         .name(NAME)
