@@ -2,7 +2,6 @@ package disenodesistemas.backendfunerariaapp.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -16,6 +15,8 @@ public interface DeceasedResponseDto {
   String getLastName();
 
   Integer getDni();
+
+  boolean getAffiliated();
 
   @JsonFormat(pattern = "dd-MM-yyyy")
   LocalDate getBirthDate();

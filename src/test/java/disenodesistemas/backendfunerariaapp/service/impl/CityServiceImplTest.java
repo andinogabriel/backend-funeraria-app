@@ -8,9 +8,9 @@ import static org.mockito.Mockito.verify;
 
 import disenodesistemas.backendfunerariaapp.dto.response.CityResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.CityEntity;
-import disenodesistemas.backendfunerariaapp.entities.CityEntityMother;
+import disenodesistemas.backendfunerariaapp.utils.CityTestDataFactory;
 import disenodesistemas.backendfunerariaapp.entities.ProvinceEntity;
-import disenodesistemas.backendfunerariaapp.entities.ProvinceEntityMother;
+import disenodesistemas.backendfunerariaapp.utils.ProvinceTestDataFactory;
 import disenodesistemas.backendfunerariaapp.repository.CityRepository;
 import java.util.List;
 import java.util.Optional;
@@ -33,18 +33,19 @@ class CityServiceImplTest {
   @InjectMocks private CityServiceImpl sut;
 
   private CityResponseDto cityResponseDto;
- 
+
   @BeforeEach
   void setUp() {
     final ProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
     cityResponseDto =
-        projectionFactory.createProjection(CityResponseDto.class, CityEntityMother.getCityEntity());
+        projectionFactory.createProjection(
+            CityResponseDto.class, CityTestDataFactory.getCityEntity());
   }
 
   @Test
   void getCityById() {
-    final Long id = CityEntityMother.getCityEntity().getId();
-    final CityEntity expected = CityEntityMother.getCityEntity();
+    final Long id = CityTestDataFactory.getCityEntity().getId();
+    final CityEntity expected = CityTestDataFactory.getCityEntity();
     given(cityRepository.getById(id)).willReturn(Optional.ofNullable(cityResponseDto));
 
     final CityResponseDto result = sut.getCityById(id);
@@ -59,7 +60,7 @@ class CityServiceImplTest {
 
   @Test
   void getCitiesByProvinceId() {
-    final ProvinceEntity provinceEntity = ProvinceEntityMother.getChacoProvince();
+    final ProvinceEntity provinceEntity = ProvinceTestDataFactory.getChacoProvince();
     final List<CityResponseDto> expected = List.of(cityResponseDto);
     given(cityRepository.findByProvinceOrderByName(provinceEntity)).willReturn(expected);
 

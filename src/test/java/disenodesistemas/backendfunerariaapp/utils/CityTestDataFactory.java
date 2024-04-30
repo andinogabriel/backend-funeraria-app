@@ -1,9 +1,10 @@
-package disenodesistemas.backendfunerariaapp.entities;
+package disenodesistemas.backendfunerariaapp.utils;
 
+import disenodesistemas.backendfunerariaapp.entities.CityEntity;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
-public class CityEntityMother {
+public class CityTestDataFactory {
 
   private static final String NAME = "PRESIDENCIA ROQUE SAENZ PEÑA";
   private static final String ZIP_CODE = "3700";
@@ -14,7 +15,7 @@ public class CityEntityMother {
         .id(ID)
         .name(NAME)
         .zipCode(ZIP_CODE)
-        .province(ProvinceEntityMother.getChacoProvince())
+        .province(ProvinceTestDataFactory.getChacoProvince())
         .build();
   }
 }

@@ -138,6 +138,10 @@ VALUES (7871, 16, 'PRESIDENCIA ROQUE SAENZ PEÑA', '3700'),
        (12486, 2, 'MORON', '1708'),
        (12480, 2, 'HURLINGHAM', '1686');
 
+INSERT INTO affiliates (id, birth_date, deceased, dni, first_name, last_name, start_date, gender_id, relationship_id,
+                        user_id)
+VALUES (98, '1950-10-31', null, 11236549, 'Juan', 'Acosta', '2024-09-10', 2, 9, 1);
+
 INSERT INTO incomes (id, deleted, receipt_number, receipt_series, tax, total_amount,
                      user_id, user_modified_id, receipt_type_id, supplier_id)
 VALUES (555555, false, 20231108223102347, 1, 21.00, 12100.00, 1,
@@ -145,3 +149,23 @@ VALUES (555555, false, 20231108223102347, 1, 21.00, 12100.00, 1,
 
 INSERT INTO income_details (id, purchase_price, quantity, sale_price, income_id, item_id)
 VALUES (1, 1500.00, 2, 3000.00, 555555, 1);
+
+INSERT INTO addresses (id, apartment, block_street, flat, street_name, city_id, supplier_id, user_id)
+VALUES (45, null, 500, null, 'Belgrano', 7871, null, null),
+       (59, null, 500, null, 'Belgrano', 7871, null, null);
+
+INSERT INTO deceased (id, affiliated, birth_date, death_date, dni, first_name, last_name, register_date, death_cause_id,
+                      relationship_id, user_id, gender_id, address_id)
+VALUES (38, true, '1965-07-15', '2024-11-10', 22156961, 'Marta', 'Perez', '2023-11-13 16:26:26.818638', 2, 10, 1, 1,
+        45),
+       (72, false, '1960-03-28', '2024-12-10', 17621970, 'Maria', 'Perez', '2023-08-25 16:26:26.818638', 2, 10, 1, 1,
+        59);
+
+INSERT INTO funeral (id, funeral_date, receipt_number, receipt_series, register_date, tax, total_amount, deceased_id,
+                     plan_id, receipt_type_id)
+VALUES (120, '2024-11-12 03:00:00', '2024290420241A', '1', '2023-05-12 18:59:36.345607', 21.00, 130680.00, 72, 2,
+        2),
+       (45, '2024-11-11 03:00:00', '123465sad465', '465asd4as', '2023-11-12 18:59:36.345607', 21.00, 130680.00, 38, 2,
+        2);
+
+

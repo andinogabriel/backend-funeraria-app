@@ -1,5 +1,10 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
+import static disenodesistemas.backendfunerariaapp.utils.IncomeDetailTestDataFactory.getIncomeDetailDto;
+import static disenodesistemas.backendfunerariaapp.utils.IncomeDetailTestDataFactory.getIncomeDetails;
+import static disenodesistemas.backendfunerariaapp.utils.ReceiptTypeTestDataFactory.getIncomeCashReceipt;
+import static disenodesistemas.backendfunerariaapp.utils.SupplierTestDataFactory.getSupplierRequestDto;
+import static disenodesistemas.backendfunerariaapp.utils.UserTestDataFactory.getUserDto;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -13,12 +18,8 @@ import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import disenodesistemas.backendfunerariaapp.dto.ReceiptTypeDtoMother;
-import disenodesistemas.backendfunerariaapp.dto.UserDtoMother;
 import disenodesistemas.backendfunerariaapp.dto.request.IncomeDetailRequestDto;
-import disenodesistemas.backendfunerariaapp.dto.request.IncomeDetailRequestDtoMother;
 import disenodesistemas.backendfunerariaapp.dto.request.IncomeRequestDto;
-import disenodesistemas.backendfunerariaapp.dto.request.SupplierRequestDtoMother;
 import disenodesistemas.backendfunerariaapp.dto.response.IncomeResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.*;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
@@ -30,6 +31,13 @@ import disenodesistemas.backendfunerariaapp.service.PlanService;
 import disenodesistemas.backendfunerariaapp.service.SupplierService;
 import disenodesistemas.backendfunerariaapp.service.UserService;
 import disenodesistemas.backendfunerariaapp.service.converters.AbstractConverter;
+import disenodesistemas.backendfunerariaapp.utils.IncomeDetailTestDataFactory;
+import disenodesistemas.backendfunerariaapp.utils.IncomeTestDataFactory;
+import disenodesistemas.backendfunerariaapp.utils.ItemTestDataFactory;
+import disenodesistemas.backendfunerariaapp.utils.PlanTestDataFactory;
+import disenodesistemas.backendfunerariaapp.utils.ReceiptTypeTestDataFactory;
+import disenodesistemas.backendfunerariaapp.utils.SupplierTestDataFactory;
+import disenodesistemas.backendfunerariaapp.utils.UserTestDataFactory;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -73,46 +81,46 @@ class IncomeServiceImplTest {
             // .receiptNumber(123456789L)
             .tax(BigDecimal.TEN)
             // .receiptSeries(321L)
-            .receiptType(ReceiptTypeDtoMother.getReciboDeCaja())
-            .incomeUser(UserDtoMother.getUserDto())
-            .supplier(SupplierRequestDtoMother.getSupplier())
-            .incomeDetails(IncomeDetailRequestDtoMother.getIncomeDetails())
+            .receiptType(getIncomeCashReceipt())
+            .incomeUser(getUserDto())
+            .supplier(getSupplierRequestDto())
+            .incomeDetails(getIncomeDetails())
             .build();
 
-    given(userService.getUserByEmail(UserDtoMother.getUserDto().getEmail()))
-        .willReturn(UserEntityMother.getUser());
-    given(modelMapper.map(ReceiptTypeDtoMother.getReciboDeCaja(), ReceiptTypeEntity.class))
-        .willReturn(ReceiptTypeEntityMother.getReceipt());
-    given(supplierService.findSupplierEntityByNif(SupplierRequestDtoMother.getSupplier().getNif()))
-        .willReturn(SupplierEntityMother.getSupplier());
+    given(userService.getUserByEmail(getUserDto().getEmail()))
+        .willReturn(UserTestDataFactory.getUserEntity());
+    given(modelMapper.map(getIncomeCashReceipt(), ReceiptTypeEntity.class))
+        .willReturn(ReceiptTypeTestDataFactory.getCashReceipt());
+    given(supplierService.findSupplierEntityByNif(getSupplierRequestDto().getNif()))
+        .willReturn(SupplierTestDataFactory.getSupplierEntity());
     final ProjectionFactory factory = new SpelAwareProxyProjectionFactory();
     incomeResponseDto =
-        factory.createProjection(IncomeResponseDto.class, IncomeEntityMother.getIncome());
+        factory.createProjection(IncomeResponseDto.class, IncomeTestDataFactory.getIncome());
   }
 
   @Test
   void create() {
-    final List<ItemEntity> itemsEntity = List.of(ItemEntityMother.getItem());
+    final List<ItemEntity> itemsEntity = List.of(ItemTestDataFactory.getItem());
     given(invoiceService.createSerialNumber()).willReturn(321L);
     given(invoiceService.createReceiptNumber()).willReturn(123456789L);
-    given(itemRepository.findAll()).willReturn(List.of(ItemEntityMother.getItem()));
-    given(modelMapper.map(IncomeDetailRequestDtoMother.getIncomeDetail(), IncomeDetailEntity.class))
-        .willReturn(IncomeDetailEntityMother.getIncomeDetail());
-    given(incomeRepository.save(IncomeEntityMother.getIncome()))
-        .willReturn(IncomeEntityMother.getIncome());
+    given(itemRepository.findAll()).willReturn(List.of(ItemTestDataFactory.getItem()));
+    given(modelMapper.map(getIncomeDetailDto(), IncomeDetailEntity.class))
+        .willReturn(IncomeDetailTestDataFactory.getIncomeDetail());
+    given(incomeRepository.save(IncomeTestDataFactory.getIncome()))
+        .willReturn(IncomeTestDataFactory.getIncome());
     given(incomeDetailConverter.fromDTOs(incomeRequestDto.getIncomeDetails()))
-        .willReturn(List.of(IncomeDetailEntityMother.getIncomeDetail()));
+        .willReturn(List.of(IncomeDetailTestDataFactory.getIncomeDetail()));
     given(itemRepository.saveAll(itemsEntity)).willReturn(itemsEntity);
     doNothing().when(planService).updatePlansPrice(itemsEntity);
     given(planRepository.findPlansContainingAnyOfThisItems(itemsEntity))
-        .willReturn(List.of(PlanEntityMother.getPlan()));
-    given(planRepository.saveAll(List.of(PlanEntityMother.getPlan())))
-        .willReturn(List.of(PlanEntityMother.getPlan()));
+        .willReturn(List.of(PlanTestDataFactory.getPlan()));
+    given(planRepository.saveAll(List.of(PlanTestDataFactory.getPlan())))
+        .willReturn(List.of(PlanTestDataFactory.getPlan()));
     given(incomeRepository.save(any(IncomeEntity.class)))
-        .willReturn(IncomeEntityMother.getIncome());
+        .willReturn(IncomeTestDataFactory.getIncome());
     given(
             projectionFactory.createProjection(
-                IncomeResponseDto.class, IncomeEntityMother.getIncome()))
+                IncomeResponseDto.class, IncomeTestDataFactory.getIncome()))
         .willReturn(incomeResponseDto);
 
     final IncomeResponseDto response = sut.create(incomeRequestDto);

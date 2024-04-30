@@ -1,6 +1,7 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
-import static disenodesistemas.backendfunerariaapp.dto.request.AffiliateRequestDtoMother.getAffiliateRequestDto;
+import static disenodesistemas.backendfunerariaapp.utils.AffiliateTestDataFactory.getAffiliateEntity;
+import static disenodesistemas.backendfunerariaapp.utils.AffiliateTestDataFactory.getAffiliateRequestDto;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -10,7 +11,6 @@ import static org.mockito.Mockito.verify;
 
 import disenodesistemas.backendfunerariaapp.dto.request.AffiliateRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.AffiliateResponseDto;
-import disenodesistemas.backendfunerariaapp.entities.AffiliateEntityMother;
 import disenodesistemas.backendfunerariaapp.service.AffiliateService;
 import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import java.util.List;
@@ -42,8 +42,7 @@ class AffiliateControllerTest {
     final ProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
     this.affiliateRequest = getAffiliateRequestDto();
     this.affiliateResponseDto =
-        projectionFactory.createProjection(
-            AffiliateResponseDto.class, AffiliateEntityMother.getAffiliateEntity());
+        projectionFactory.createProjection(AffiliateResponseDto.class, getAffiliateEntity());
   }
 
   @Test

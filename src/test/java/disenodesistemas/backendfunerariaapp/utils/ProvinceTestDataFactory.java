@@ -1,11 +1,11 @@
-package disenodesistemas.backendfunerariaapp.entities;
+package disenodesistemas.backendfunerariaapp.utils;
 
+import disenodesistemas.backendfunerariaapp.entities.ProvinceEntity;
+import java.util.List;
 import lombok.experimental.UtilityClass;
 
-import java.util.List;
-
 @UtilityClass
-public class ProvinceEntityMother {
+public class ProvinceTestDataFactory {
   private static final String NAME = "Chaco";
   private static final String CODE_31662 = "AR-H";
   private static final Long ID = 16L;

@@ -1,8 +1,8 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
-import static disenodesistemas.backendfunerariaapp.dto.request.PlanRequestDtoMother.getInvalidPlanRequest;
-import static disenodesistemas.backendfunerariaapp.dto.request.PlanRequestDtoMother.getInvalidPlanRequestItemWithoutPrice;
-import static disenodesistemas.backendfunerariaapp.dto.request.PlanRequestDtoMother.getPlanRequest;
+import static disenodesistemas.backendfunerariaapp.utils.PlanTestDataFactory.getInvalidPlanRequest;
+import static disenodesistemas.backendfunerariaapp.utils.PlanTestDataFactory.getInvalidPlanRequestItemWithoutPrice;
+import static disenodesistemas.backendfunerariaapp.utils.PlanTestDataFactory.getPlanRequest;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

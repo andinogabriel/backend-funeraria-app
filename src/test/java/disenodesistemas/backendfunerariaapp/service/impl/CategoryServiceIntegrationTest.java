@@ -1,6 +1,6 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
-import static disenodesistemas.backendfunerariaapp.dto.CategoryDtoMother.getCategoryRequestDto;
+import static disenodesistemas.backendfunerariaapp.utils.CategoryTestDataFactory.getCategoryRequestDto;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -1,5 +1,7 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
+import static disenodesistemas.backendfunerariaapp.utils.AffiliateTestDataFactory.getAffiliateEntity;
+import static disenodesistemas.backendfunerariaapp.utils.GenderTestDataFactory.getEntityMaleGender;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -14,20 +16,18 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import disenodesistemas.backendfunerariaapp.dto.request.AffiliateRequestDto;
-import disenodesistemas.backendfunerariaapp.dto.request.AffiliateRequestDtoMother;
 import disenodesistemas.backendfunerariaapp.dto.response.AffiliateResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.AffiliateEntity;
-import disenodesistemas.backendfunerariaapp.entities.AffiliateEntityMother;
 import disenodesistemas.backendfunerariaapp.entities.GenderEntity;
-import disenodesistemas.backendfunerariaapp.entities.GenderEntityMother;
 import disenodesistemas.backendfunerariaapp.entities.RelationshipEntity;
-import disenodesistemas.backendfunerariaapp.entities.RelationshipEntityMother;
 import disenodesistemas.backendfunerariaapp.entities.UserEntity;
-import disenodesistemas.backendfunerariaapp.entities.UserEntityMother;
 import disenodesistemas.backendfunerariaapp.exceptions.ConflictException;
 import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
 import disenodesistemas.backendfunerariaapp.repository.AffiliateRepository;
 import disenodesistemas.backendfunerariaapp.service.UserService;
+import disenodesistemas.backendfunerariaapp.utils.AffiliateTestDataFactory;
+import disenodesistemas.backendfunerariaapp.utils.RelationshipTestDataFactory;
+import disenodesistemas.backendfunerariaapp.utils.UserTestDataFactory;
 import java.util.List;
 import java.util.Optional;
 import javax.persistence.EntityManager;
@@ -68,24 +68,24 @@ class AffiliateServiceImplTest {
     final ProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
     affiliateResponseDto =
         projectionFactory.createProjection(
-            AffiliateResponseDto.class, AffiliateEntityMother.getAffiliateEntity());
+            AffiliateResponseDto.class, getAffiliateEntity());
     SecurityContextHolder.setContext(securityContext);
   }
 
   @Test
   void createAffiliate() {
-    final AffiliateRequestDto requestDto = AffiliateRequestDtoMother.getAffiliateRequestDto();
-    final String userMail = UserEntityMother.getUser().getEmail();
-    final UserEntity userEntity = UserEntityMother.getUser();
-    final AffiliateEntity expectedEntity = AffiliateEntityMother.getAffiliateEntity();
+    final AffiliateRequestDto requestDto = AffiliateTestDataFactory.getAffiliateRequestDto();
+    final String userMail = UserTestDataFactory.getUserEntity().getEmail();
+    final UserEntity userEntity = UserTestDataFactory.getUserEntity();
+    final AffiliateEntity expectedEntity = getAffiliateEntity();
 
     given(securityContext.getAuthentication()).willReturn(authentication);
     given(authentication.getName()).willReturn(userMail);
     given(userService.getUserByEmail(userMail)).willReturn(userEntity);
     given(mapper.map(requestDto.getGender(), GenderEntity.class))
-        .willReturn(GenderEntityMother.getMaleGender());
+        .willReturn(getEntityMaleGender());
     given(mapper.map(requestDto.getRelationship(), RelationshipEntity.class))
-        .willReturn(RelationshipEntityMother.getParentRelationship());
+        .willReturn(RelationshipTestDataFactory.getParentRelationship());
 
     given(affiliateRepository.save(expectedEntity)).willReturn(expectedEntity);
     given(projectionFactory.createProjection(AffiliateResponseDto.class, expectedEntity))
@@ -111,16 +111,16 @@ class AffiliateServiceImplTest {
 
   @Test
   void testUpdateSuccessful() {
-    final Integer dni = AffiliateEntityMother.getAffiliateEntity().getDni();
-    final AffiliateRequestDto requestDto = AffiliateRequestDtoMother.getAffiliateRequestDto();
-    final AffiliateEntity affiliateEntity = AffiliateEntityMother.getAffiliateEntity();
+    final Integer dni = getAffiliateEntity().getDni();
+    final AffiliateRequestDto requestDto = AffiliateTestDataFactory.getAffiliateRequestDto();
+    final AffiliateEntity affiliateEntity = getAffiliateEntity();
 
     given(affiliateRepository.findByDni(dni)).willReturn(Optional.of(affiliateEntity));
     given(affiliateRepository.existsAffiliateEntitiesByDni(dni)).willReturn(false);
     given(mapper.map(requestDto.getGender(), GenderEntity.class))
-        .willReturn(GenderEntityMother.getMaleGender());
+        .willReturn(getEntityMaleGender());
     given(mapper.map(requestDto.getRelationship(), RelationshipEntity.class))
-        .willReturn(RelationshipEntityMother.getParentRelationship());
+        .willReturn(RelationshipTestDataFactory.getParentRelationship());
     given(affiliateRepository.save(affiliateEntity)).willReturn(affiliateEntity);
     given(projectionFactory.createProjection(AffiliateResponseDto.class, affiliateEntity))
         .willReturn(affiliateResponseDto);
@@ -136,7 +136,7 @@ class AffiliateServiceImplTest {
       "given an non-existent dni when update affiliate method is call then throw a NotFoundException")
   void updateAffiliateDoesntExist() {
     final Integer dni = 123456789;
-    final AffiliateRequestDto requestDto = AffiliateRequestDtoMother.getAffiliateRequestDto();
+    final AffiliateRequestDto requestDto = AffiliateTestDataFactory.getAffiliateRequestDto();
 
     assertThrows(NotFoundException.class, () -> sut.update(dni, requestDto));
 
@@ -151,8 +151,8 @@ class AffiliateServiceImplTest {
   void testUpdateAffiliateConflict() {
     final Integer dniToUpdate = 32156454;
     final AffiliateRequestDto requestDto =
-        AffiliateRequestDtoMother.getAffiliateRequestDtoDifferentDni();
-    final AffiliateEntity affiliateEntity = AffiliateEntityMother.getAffiliateEntity();
+        AffiliateTestDataFactory.getAffiliateRequestDtoDifferentDni();
+    final AffiliateEntity affiliateEntity = getAffiliateEntity();
 
     given(affiliateRepository.findByDni(dniToUpdate)).willReturn(Optional.of(affiliateEntity));
     given(affiliateRepository.existsAffiliateEntitiesByDni(any())).willReturn(true);
@@ -175,8 +175,8 @@ class AffiliateServiceImplTest {
 
   @Test
   void delete() {
-    final Integer dni = AffiliateEntityMother.getAffiliateEntity().getDni();
-    final AffiliateEntity affiliateEntity = AffiliateEntityMother.getAffiliateEntity();
+    final Integer dni = getAffiliateEntity().getDni();
+    final AffiliateEntity affiliateEntity = getAffiliateEntity();
     given(affiliateRepository.findByDni(dni)).willReturn(Optional.of(affiliateEntity));
 
     sut.delete(dni);
@@ -215,8 +215,8 @@ class AffiliateServiceImplTest {
   @Test
   void findAffiliatesByLoggedUser() {
     final List<AffiliateResponseDto> userLoggedAffiliates = List.of(affiliateResponseDto);
-    final String userMail = UserEntityMother.getUser().getEmail();
-    final UserEntity userEntity = UserEntityMother.getUser();
+    final String userMail = UserTestDataFactory.getUserEntity().getEmail();
+    final UserEntity userEntity = UserTestDataFactory.getUserEntity();
     given(securityContext.getAuthentication()).willReturn(authentication);
     given(authentication.getName()).willReturn(userMail);
     given(userService.getUserByEmail(userMail)).willReturn(userEntity);
@@ -237,9 +237,9 @@ class AffiliateServiceImplTest {
   @Test
   void findAffiliatesByFirstNameOrLastNameOrDniContaining() {
     final List<AffiliateEntity> affiliateEntities =
-        List.of(AffiliateEntityMother.getAffiliateEntity());
+        List.of(getAffiliateEntity());
     final List<AffiliateResponseDto> affiliatesResponseDto = List.of(affiliateResponseDto);
-    final String valueToSearch = AffiliateEntityMother.getAffiliateEntity().getLastName();
+    final String valueToSearch = getAffiliateEntity().getLastName();
     final String query =
         "SELECT a FROM affiliates a "
             + "WHERE lower(a.firstName) LIKE lower(:valueToSearch) "

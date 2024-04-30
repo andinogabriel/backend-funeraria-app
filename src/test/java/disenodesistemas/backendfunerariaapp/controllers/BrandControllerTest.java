@@ -1,7 +1,7 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
-import static disenodesistemas.backendfunerariaapp.dto.BrandDtoMother.getBrandEntity;
-import static disenodesistemas.backendfunerariaapp.dto.BrandDtoMother.getBrandRequestDto;
+import static disenodesistemas.backendfunerariaapp.utils.BrandTestDataFactory.getBrandEntity;
+import static disenodesistemas.backendfunerariaapp.utils.BrandTestDataFactory.getBrandRequestDto;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

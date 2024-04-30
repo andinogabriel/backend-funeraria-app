@@ -1,6 +1,6 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
-import static disenodesistemas.backendfunerariaapp.dto.request.IncomeRequestDtoMother.getIncomeRequest;
+import static disenodesistemas.backendfunerariaapp.utils.IncomeTestDataFactory.getIncomeRequest;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
+import static disenodesistemas.backendfunerariaapp.utils.CategoryTestDataFactory.getCategoryEntity;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -9,12 +10,11 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.verify;
 
-import disenodesistemas.backendfunerariaapp.dto.CategoryDtoMother;
 import disenodesistemas.backendfunerariaapp.dto.response.CategoryResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.CategoryEntity;
-import disenodesistemas.backendfunerariaapp.entities.CategoryEntityMother;
 import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
 import disenodesistemas.backendfunerariaapp.repository.CategoryRepository;
+import disenodesistemas.backendfunerariaapp.utils.CategoryTestDataFactory;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,8 +43,7 @@ class CategoryServiceImplTest {
   void setUp() {
     final ProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
     categoryResponseDto =
-        projectionFactory.createProjection(
-            CategoryResponseDto.class, CategoryEntityMother.getCategoryEntity());
+        projectionFactory.createProjection(CategoryResponseDto.class, getCategoryEntity());
   }
 
   @Test
@@ -62,12 +61,12 @@ class CategoryServiceImplTest {
 
   @Test
   void createCategory() {
-    final CategoryEntity expected = CategoryEntityMother.getCategoryEntity();
+    final CategoryEntity expected = getCategoryEntity();
     given(categoryRepository.save(any(CategoryEntity.class))).willReturn(expected);
     given(projectionFactory.createProjection(CategoryResponseDto.class, expected))
         .willReturn(categoryResponseDto);
 
-    final CategoryResponseDto result = sut.create(CategoryDtoMother.getCategoryRequestDto());
+    final CategoryResponseDto result = sut.create(CategoryTestDataFactory.getCategoryRequestDto());
 
     assertAll(
         () -> assertEquals(expected.getId(), result.getId()),
@@ -78,14 +77,15 @@ class CategoryServiceImplTest {
 
   @Test
   void updateCategory() {
-    final Long id = CategoryDtoMother.getCategoryRequestDto().getId();
-    final CategoryEntity expected = CategoryEntityMother.getCategoryEntity();
+    final Long id = CategoryTestDataFactory.getCategoryRequestDto().getId();
+    final CategoryEntity expected = getCategoryEntity();
     given(categoryRepository.findById(id)).willReturn(Optional.of(expected));
     given(categoryRepository.save(any(CategoryEntity.class))).willReturn(expected);
     given(projectionFactory.createProjection(CategoryResponseDto.class, expected))
         .willReturn(categoryResponseDto);
 
-    final CategoryResponseDto result = sut.update(id, CategoryDtoMother.getCategoryRequestDto());
+    final CategoryResponseDto result =
+        sut.update(id, CategoryTestDataFactory.getCategoryRequestDto());
 
     assertAll(
         () -> assertEquals(expected.getId(), result.getId()),
@@ -97,8 +97,8 @@ class CategoryServiceImplTest {
 
   @Test
   void deleteCategory() {
-    final Long id = CategoryDtoMother.getCategoryRequestDto().getId();
-    final CategoryEntity expected = CategoryEntityMother.getCategoryEntity();
+    final Long id = CategoryTestDataFactory.getCategoryRequestDto().getId();
+    final CategoryEntity expected = getCategoryEntity();
     given(categoryRepository.findById(id)).willReturn(Optional.of(expected));
 
     sut.delete(id);
@@ -109,8 +109,8 @@ class CategoryServiceImplTest {
 
   @Test
   void findCategoryById() {
-    final Long id = CategoryDtoMother.getCategoryRequestDto().getId();
-    final CategoryEntity expected = CategoryEntityMother.getCategoryEntity();
+    final Long id = CategoryTestDataFactory.getCategoryRequestDto().getId();
+    final CategoryEntity expected = getCategoryEntity();
     given(categoryRepository.findById(id)).willReturn(Optional.of(expected));
 
     final CategoryEntity result = sut.findCategoryById(id);

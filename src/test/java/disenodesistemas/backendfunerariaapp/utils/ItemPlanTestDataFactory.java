@@ -1,11 +1,13 @@
-package disenodesistemas.backendfunerariaapp.entities;
+package disenodesistemas.backendfunerariaapp.utils;
 
 import disenodesistemas.backendfunerariaapp.dto.request.ItemPlanRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.ItemRequestPlanDto;
+import disenodesistemas.backendfunerariaapp.entities.ItemPlanEntity;
+import disenodesistemas.backendfunerariaapp.entities.ItemPlanId;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
-public class ItemPlanEntityMother {
+public class ItemPlanTestDataFactory {
 
   private static final String NAME = "Corona simple";
   private static final String CODE = "67ad6c26-f586-4cb2-9d5e-3fbcc3e2e8eb";
@@ -13,8 +15,8 @@ public class ItemPlanEntityMother {
   public static ItemPlanEntity getItemPlanEntity() {
     return ItemPlanEntity.builder()
         .id(new ItemPlanId(1L, 1L))
-        .item(ItemEntityMother.getItem())
-        .plan(PlanEntityMother.getPlan())
+        .item(ItemTestDataFactory.getItem())
+        .plan(PlanTestDataFactory.getPlan())
         .quantity(2)
         .build();
   }
