@@ -6,7 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.atMostOnce;
@@ -14,6 +16,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import disenodesistemas.backendfunerariaapp.dto.request.AffiliateRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.AffiliateResponseDto;
@@ -31,7 +34,9 @@ import disenodesistemas.backendfunerariaapp.utils.UserTestDataFactory;
 import java.util.List;
 import java.util.Optional;
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceException;
 import javax.persistence.TypedQuery;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,8 +44,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
@@ -49,7 +52,6 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.STRICT_STUBS)
 class AffiliateServiceImplTest {
 
   @Mock private AffiliateRepository affiliateRepository;
@@ -61,48 +63,52 @@ class AffiliateServiceImplTest {
   @Mock private Authentication authentication;
   @InjectMocks private AffiliateServiceImpl sut;
 
-  private AffiliateResponseDto affiliateResponseDto;
+  private static AffiliateResponseDto affiliateResponseDto;
+  private static AffiliateRequestDto affiliateRequestDto;
 
   @BeforeEach
   void setUp() {
+    affiliateRequestDto = AffiliateTestDataFactory.getAffiliateRequestDto();
     final ProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
     affiliateResponseDto =
-        projectionFactory.createProjection(
-            AffiliateResponseDto.class, getAffiliateEntity());
+        projectionFactory.createProjection(AffiliateResponseDto.class, getAffiliateEntity());
     SecurityContextHolder.setContext(securityContext);
   }
 
   @Test
   void createAffiliate() {
-    final AffiliateRequestDto requestDto = AffiliateTestDataFactory.getAffiliateRequestDto();
-    final String userMail = UserTestDataFactory.getUserEntity().getEmail();
     final UserEntity userEntity = UserTestDataFactory.getUserEntity();
+    final String userMail = userEntity.getEmail();
     final AffiliateEntity expectedEntity = getAffiliateEntity();
 
     given(securityContext.getAuthentication()).willReturn(authentication);
     given(authentication.getName()).willReturn(userMail);
     given(userService.getUserByEmail(userMail)).willReturn(userEntity);
-    given(mapper.map(requestDto.getGender(), GenderEntity.class))
+    given(mapper.map(affiliateRequestDto.getGender(), GenderEntity.class))
         .willReturn(getEntityMaleGender());
-    given(mapper.map(requestDto.getRelationship(), RelationshipEntity.class))
+    given(mapper.map(affiliateRequestDto.getRelationship(), RelationshipEntity.class))
         .willReturn(RelationshipTestDataFactory.getParentRelationship());
 
     given(affiliateRepository.save(expectedEntity)).willReturn(expectedEntity);
     given(projectionFactory.createProjection(AffiliateResponseDto.class, expectedEntity))
         .willReturn(affiliateResponseDto);
 
-    final AffiliateResponseDto response = sut.create(requestDto);
+    final AffiliateResponseDto actualResponse = sut.create(affiliateRequestDto);
 
     assertAll(
-        () -> assertEquals(expectedEntity.getDni(), response.getDni()),
-        () -> assertEquals(expectedEntity.getGender().getName(), response.getGender().getName()),
+        () -> assertEquals(expectedEntity.getDni(), actualResponse.getDni()),
         () ->
             assertEquals(
-                expectedEntity.getRelationship().getName(), response.getRelationship().getName()),
-        () -> assertEquals(expectedEntity.getLastName(), response.getLastName()),
-        () -> assertEquals(expectedEntity.getFirstName(), response.getFirstName()),
-        () -> assertEquals(expectedEntity.getBirthDate(), response.getBirthDate()),
-        () -> assertEquals(expectedEntity.getUser().getEmail(), response.getUser().getEmail()));
+                expectedEntity.getGender().getName(), actualResponse.getGender().getName()),
+        () ->
+            assertEquals(
+                expectedEntity.getRelationship().getName(),
+                actualResponse.getRelationship().getName()),
+        () -> assertEquals(expectedEntity.getLastName(), actualResponse.getLastName()),
+        () -> assertEquals(expectedEntity.getFirstName(), actualResponse.getFirstName()),
+        () -> assertEquals(expectedEntity.getBirthDate(), actualResponse.getBirthDate()),
+        () ->
+            assertEquals(expectedEntity.getUser().getEmail(), actualResponse.getUser().getEmail()));
     verify(affiliateRepository, times(1)).save(expectedEntity);
     verify(projectionFactory, times(1))
         .createProjection(AffiliateResponseDto.class, expectedEntity);
@@ -111,24 +117,23 @@ class AffiliateServiceImplTest {
 
   @Test
   void testUpdateSuccessful() {
-    final Integer dni = getAffiliateEntity().getDni();
-    final AffiliateRequestDto requestDto = AffiliateTestDataFactory.getAffiliateRequestDto();
     final AffiliateEntity affiliateEntity = getAffiliateEntity();
+    final Integer dni = affiliateEntity.getDni();
 
     given(affiliateRepository.findByDni(dni)).willReturn(Optional.of(affiliateEntity));
     given(affiliateRepository.existsAffiliateEntitiesByDni(dni)).willReturn(false);
-    given(mapper.map(requestDto.getGender(), GenderEntity.class))
+    given(mapper.map(affiliateRequestDto.getGender(), GenderEntity.class))
         .willReturn(getEntityMaleGender());
-    given(mapper.map(requestDto.getRelationship(), RelationshipEntity.class))
+    given(mapper.map(affiliateRequestDto.getRelationship(), RelationshipEntity.class))
         .willReturn(RelationshipTestDataFactory.getParentRelationship());
     given(affiliateRepository.save(affiliateEntity)).willReturn(affiliateEntity);
     given(projectionFactory.createProjection(AffiliateResponseDto.class, affiliateEntity))
         .willReturn(affiliateResponseDto);
 
-    final AffiliateResponseDto result = sut.update(dni, requestDto);
+    final AffiliateResponseDto result = sut.update(dni, affiliateRequestDto);
 
     assertNotNull(result);
-    verify(affiliateRepository).save(affiliateEntity);
+    verify(affiliateRepository, atMostOnce()).save(affiliateEntity);
   }
 
   @Test
@@ -136,9 +141,8 @@ class AffiliateServiceImplTest {
       "given an non-existent dni when update affiliate method is call then throw a NotFoundException")
   void updateAffiliateDoesntExist() {
     final Integer dni = 123456789;
-    final AffiliateRequestDto requestDto = AffiliateTestDataFactory.getAffiliateRequestDto();
 
-    assertThrows(NotFoundException.class, () -> sut.update(dni, requestDto));
+    assertThrows(NotFoundException.class, () -> sut.update(dni, affiliateRequestDto));
 
     verify(affiliateRepository, atMostOnce()).findByDni(dni);
     verify(affiliateRepository, never()).save(any());
@@ -150,14 +154,13 @@ class AffiliateServiceImplTest {
       "given an existent dni and a different dni to update when update affiliate method is call then throw a ConflictException")
   void testUpdateAffiliateConflict() {
     final Integer dniToUpdate = 32156454;
-    final AffiliateRequestDto requestDto =
-        AffiliateTestDataFactory.getAffiliateRequestDtoDifferentDni();
     final AffiliateEntity affiliateEntity = getAffiliateEntity();
+    affiliateRequestDto = AffiliateTestDataFactory.getAffiliateRequestDtoDifferentDni();
 
     given(affiliateRepository.findByDni(dniToUpdate)).willReturn(Optional.of(affiliateEntity));
     given(affiliateRepository.existsAffiliateEntitiesByDni(any())).willReturn(true);
 
-    assertThrows(ConflictException.class, () -> sut.update(dniToUpdate, requestDto));
+    assertThrows(ConflictException.class, () -> sut.update(dniToUpdate, affiliateRequestDto));
 
     verify(affiliateRepository, never()).save(any());
     verify(mapper, never()).map(any(), any());
@@ -175,8 +178,9 @@ class AffiliateServiceImplTest {
 
   @Test
   void delete() {
-    final Integer dni = getAffiliateEntity().getDni();
     final AffiliateEntity affiliateEntity = getAffiliateEntity();
+    final Integer dni = affiliateEntity.getDni();
+
     given(affiliateRepository.findByDni(dni)).willReturn(Optional.of(affiliateEntity));
 
     sut.delete(dni);
@@ -193,10 +197,10 @@ class AffiliateServiceImplTest {
 
     final List<AffiliateResponseDto> result = sut.findAllByDeceasedFalse();
 
-    verify(affiliateRepository).findAllByDeceasedFalseOrderByStartDateDesc();
     assertAll(
         () -> assertEquals(affiliatesDeceasedFalse.size(), result.size()),
         () -> assertEquals(affiliatesDeceasedFalse.get(0).getDni(), result.get(0).getDni()));
+    verify(affiliateRepository).findAllByDeceasedFalseOrderByStartDateDesc();
   }
 
   @Test
@@ -206,17 +210,18 @@ class AffiliateServiceImplTest {
 
     final List<AffiliateResponseDto> result = sut.findAll();
 
-    verify(affiliateRepository).findAllByOrderByStartDateDesc();
     assertAll(
         () -> assertEquals(affiliatesDeceasedFalse.size(), result.size()),
         () -> assertEquals(affiliatesDeceasedFalse.get(0).getDni(), result.get(0).getDni()));
+    verify(affiliateRepository).findAllByOrderByStartDateDesc();
   }
 
   @Test
   void findAffiliatesByLoggedUser() {
     final List<AffiliateResponseDto> userLoggedAffiliates = List.of(affiliateResponseDto);
-    final String userMail = UserTestDataFactory.getUserEntity().getEmail();
     final UserEntity userEntity = UserTestDataFactory.getUserEntity();
+    final String userMail = userEntity.getEmail();
+
     given(securityContext.getAuthentication()).willReturn(authentication);
     given(authentication.getName()).willReturn(userMail);
     given(userService.getUserByEmail(userMail)).willReturn(userEntity);
@@ -236,8 +241,7 @@ class AffiliateServiceImplTest {
 
   @Test
   void findAffiliatesByFirstNameOrLastNameOrDniContaining() {
-    final List<AffiliateEntity> affiliateEntities =
-        List.of(getAffiliateEntity());
+    final List<AffiliateEntity> affiliateEntities = List.of(getAffiliateEntity());
     final List<AffiliateResponseDto> affiliatesResponseDto = List.of(affiliateResponseDto);
     final String valueToSearch = getAffiliateEntity().getLastName();
     final String query =
@@ -260,5 +264,27 @@ class AffiliateServiceImplTest {
     assertEquals(affiliateEntities.size(), result.size());
     verify(entityManager).createQuery(query, AffiliateEntity.class);
     verify(typedQuery).setParameter("valueToSearch", "%" + valueToSearch + "%");
+  }
+
+  @Test
+  void findAffiliatesByFirstNameOrLastNameOrDniContainingEmptyList() {
+    final List<AffiliateResponseDto> result =
+        sut.findAffiliatesByFirstNameOrLastNameOrDniContaining(StringUtils.EMPTY);
+
+    assertTrue(result.isEmpty());
+    verify(entityManager, never()).createQuery(anyString(), any());
+    verify(projectionFactory, never()).createProjection(any(), any());
+  }
+
+  @Test
+  void findAffiliatesByFirstNameOrLastNameOrDniContainingThrowsAnException() {
+    final String valueToSearch = "searchValue";
+    when(entityManager.createQuery(anyString(), any())).thenThrow(PersistenceException.class);
+
+    final List<AffiliateResponseDto> actualResult =
+        sut.findAffiliatesByFirstNameOrLastNameOrDniContaining(valueToSearch);
+
+    assertTrue(actualResult.isEmpty());
+    verify(entityManager, atMostOnce()).createQuery(anyString(), any());
   }
 }

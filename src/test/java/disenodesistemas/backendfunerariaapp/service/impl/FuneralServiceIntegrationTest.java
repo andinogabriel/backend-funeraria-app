@@ -43,14 +43,14 @@ class FuneralServiceIntegrationTest {
 
   @Autowired private FuneralServiceImpl sut;
   @Autowired private FuneralRepository funeralRepository;
-  private FuneralRequestDto funeralRequestDto;
+  private static FuneralRequestDto funeralRequestDto;
   private static final Long EXISTING_FUNERAL_ID = 45L;
   private static final String EXISTING_RECEIPT_NUMBER = "123465sad465";
   private static final String EXISTING_RECEIPT_SERIES = "465asd4as";
 
   @BeforeEach
   void setUp() {
-    this.funeralRequestDto = getFuneralRequestDto();
+    funeralRequestDto = getFuneralRequestDto();
     final Authentication authentication =
         new UsernamePasswordAuthenticationToken("email_test@gmail.com", "asdPassword123");
     SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -75,7 +75,7 @@ class FuneralServiceIntegrationTest {
 
   @Test
   void createThrowsExceptionReceiptNumberAlreadyExists() {
-    this.funeralRequestDto = getFuneralExistingReceiptNumberRequestDto();
+    funeralRequestDto = getFuneralExistingReceiptNumberRequestDto();
     final ConflictException exception =
         assertThrows(ConflictException.class, () -> sut.create(funeralRequestDto));
 
@@ -86,7 +86,7 @@ class FuneralServiceIntegrationTest {
 
   @Test
   void createThrowsExceptionDeceasedDniAlreadyExists() {
-    this.funeralRequestDto = getFuneralExistingDeceasedDniRequestDto();
+    funeralRequestDto = getFuneralExistingDeceasedDniRequestDto();
     final ConflictException exception =
         assertThrows(ConflictException.class, () -> sut.create(funeralRequestDto));
 
@@ -97,7 +97,7 @@ class FuneralServiceIntegrationTest {
 
   @Test
   void update() {
-    this.funeralRequestDto = getSavedInDBFuneralRequestDto();
+    funeralRequestDto = getSavedInDBFuneralRequestDto();
     final FuneralResponseDto actualResponse = sut.update(EXISTING_FUNERAL_ID, funeralRequestDto);
     funeralAsserts(actualResponse);
     assertAll(
@@ -107,7 +107,7 @@ class FuneralServiceIntegrationTest {
 
   @Test
   void updateThrowsConflictException() {
-    this.funeralRequestDto = getSavedInDBFuneralRequestDtoThrowsException();
+    funeralRequestDto = getSavedInDBFuneralRequestDtoThrowsException();
 
     final ConflictException exception =
         assertThrows(

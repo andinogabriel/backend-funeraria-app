@@ -1,17 +1,21 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
 import static disenodesistemas.backendfunerariaapp.utils.CategoryTestDataFactory.getCategoryEntity;
+import static disenodesistemas.backendfunerariaapp.utils.CategoryTestDataFactory.getCategoryEntityWithItems;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.verify;
 
+import disenodesistemas.backendfunerariaapp.dto.request.CategoryRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.CategoryResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.CategoryEntity;
+import disenodesistemas.backendfunerariaapp.exceptions.ConflictException;
 import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
 import disenodesistemas.backendfunerariaapp.repository.CategoryRepository;
 import disenodesistemas.backendfunerariaapp.utils.CategoryTestDataFactory;
@@ -23,24 +27,23 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.STRICT_STUBS)
 class CategoryServiceImplTest {
 
   @Mock private CategoryRepository categoryRepository;
   @Mock private ProjectionFactory projectionFactory;
   @InjectMocks private CategoryServiceImpl sut;
 
-  private CategoryResponseDto categoryResponseDto;
+  private static CategoryResponseDto categoryResponseDto;
+  private static CategoryRequestDto categoryRequestDto;
 
   @BeforeEach
   void setUp() {
+    categoryRequestDto = CategoryTestDataFactory.getCategoryRequestDto();
     final ProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
     categoryResponseDto =
         projectionFactory.createProjection(CategoryResponseDto.class, getCategoryEntity());
@@ -66,7 +69,7 @@ class CategoryServiceImplTest {
     given(projectionFactory.createProjection(CategoryResponseDto.class, expected))
         .willReturn(categoryResponseDto);
 
-    final CategoryResponseDto result = sut.create(CategoryTestDataFactory.getCategoryRequestDto());
+    final CategoryResponseDto result = sut.create(categoryRequestDto);
 
     assertAll(
         () -> assertEquals(expected.getId(), result.getId()),
@@ -77,15 +80,14 @@ class CategoryServiceImplTest {
 
   @Test
   void updateCategory() {
-    final Long id = CategoryTestDataFactory.getCategoryRequestDto().getId();
+    final Long id = categoryRequestDto.getId();
     final CategoryEntity expected = getCategoryEntity();
     given(categoryRepository.findById(id)).willReturn(Optional.of(expected));
     given(categoryRepository.save(any(CategoryEntity.class))).willReturn(expected);
     given(projectionFactory.createProjection(CategoryResponseDto.class, expected))
         .willReturn(categoryResponseDto);
 
-    final CategoryResponseDto result =
-        sut.update(id, CategoryTestDataFactory.getCategoryRequestDto());
+    final CategoryResponseDto result = sut.update(id, categoryRequestDto);
 
     assertAll(
         () -> assertEquals(expected.getId(), result.getId()),
@@ -97,7 +99,7 @@ class CategoryServiceImplTest {
 
   @Test
   void deleteCategory() {
-    final Long id = CategoryTestDataFactory.getCategoryRequestDto().getId();
+    final Long id = categoryRequestDto.getId();
     final CategoryEntity expected = getCategoryEntity();
     given(categoryRepository.findById(id)).willReturn(Optional.of(expected));
 
@@ -108,8 +110,23 @@ class CategoryServiceImplTest {
   }
 
   @Test
+  void deleteCategoryThrowsException() {
+    final Long id = categoryRequestDto.getId();
+    final CategoryEntity expected = getCategoryEntityWithItems();
+    given(categoryRepository.findById(id)).willReturn(Optional.of(expected));
+
+    final ConflictException result = assertThrows(ConflictException.class, () -> sut.delete(id));
+
+    assertAll(
+        () -> assertEquals(HttpStatus.CONFLICT, result.getStatus()),
+        () -> assertEquals("category.error.invalid.delete", result.getMessage()));
+    verify(categoryRepository, never()).delete(expected);
+    verify(categoryRepository, atLeastOnce()).findById(id);
+  }
+
+  @Test
   void findCategoryById() {
-    final Long id = CategoryTestDataFactory.getCategoryRequestDto().getId();
+    final Long id = categoryRequestDto.getId();
     final CategoryEntity expected = getCategoryEntity();
     given(categoryRepository.findById(id)).willReturn(Optional.of(expected));
 

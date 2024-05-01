@@ -12,6 +12,7 @@ import disenodesistemas.backendfunerariaapp.dto.response.IncomeResponseDto;
 import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
 import disenodesistemas.backendfunerariaapp.repository.IncomeRepository;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -34,15 +35,20 @@ class IncomeServiceIntegrationTest {
 
   @Autowired private IncomeServiceImpl sut;
   @Autowired private IncomeRepository incomeRepository;
+  private static IncomeRequestDto incomeRequestDto;
   private static final Long EXISTING_INCOME_RECEIPT_NUMBER = 20231108223102347L;
   private static final Long NON_EXISTING_INCOME_RECEIPT_NUM = 20241103223122343L;
 
+  @BeforeEach
+  void setUp() {
+    incomeRequestDto = getIncomeRequest();
+  }
+
   @Test
   void create() {
-    final IncomeRequestDto incomeRequest = getIncomeRequest();
-    final IncomeResponseDto actualResponse = sut.create(incomeRequest);
+    final IncomeResponseDto actualResponse = sut.create(incomeRequestDto);
     assertEquals(2, incomeRepository.count());
-    assertsIncome(incomeRequest, actualResponse);
+    assertsIncome(incomeRequestDto, actualResponse);
   }
 
   @Test
@@ -73,10 +79,9 @@ class IncomeServiceIntegrationTest {
 
   @Test
   void update() {
-    final IncomeRequestDto incomeRequest = getIncomeRequest();
     final IncomeResponseDto actualResponse =
-        sut.update(EXISTING_INCOME_RECEIPT_NUMBER, incomeRequest);
-    assertsIncome(incomeRequest, actualResponse);
+        sut.update(EXISTING_INCOME_RECEIPT_NUMBER, incomeRequestDto);
+    assertsIncome(incomeRequestDto, actualResponse);
     assertAll(
         () -> assertNotNull(actualResponse.getLastModifiedDate()),
         () -> assertNotNull(actualResponse.getLastModifiedBy()));
@@ -87,7 +92,7 @@ class IncomeServiceIntegrationTest {
     final NotFoundException exception =
         assertThrows(
             NotFoundException.class,
-            () -> sut.update(NON_EXISTING_INCOME_RECEIPT_NUM, getIncomeRequest()));
+            () -> sut.update(NON_EXISTING_INCOME_RECEIPT_NUM, incomeRequestDto));
 
     assertAll(
         () -> assertEquals("income.error.not.found", exception.getMessage()),

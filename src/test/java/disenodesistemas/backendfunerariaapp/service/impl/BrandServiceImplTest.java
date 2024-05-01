@@ -14,6 +14,7 @@ import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import disenodesistemas.backendfunerariaapp.dto.request.BrandRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.BrandResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.BrandEntity;
 import disenodesistemas.backendfunerariaapp.exceptions.ConflictException;
@@ -29,23 +30,22 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.STRICT_STUBS)
 class BrandServiceImplTest {
 
   @Mock private BrandRepository brandRepository;
   @Mock private ProjectionFactory projectionFactory;
   @InjectMocks private BrandServiceImpl sut;
 
-  private BrandResponseDto brandResponseDto;
+  private static BrandResponseDto brandResponseDto;
+  private static BrandRequestDto brandRequestDto;
 
   @BeforeEach
   void setUp() {
+    brandRequestDto = BrandTestDataFactory.getBrandRequestDto();
     final ProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
     brandResponseDto =
         projectionFactory.createProjection(BrandResponseDto.class, getBrandEntityIdNull());
@@ -93,7 +93,7 @@ class BrandServiceImplTest {
     given(projectionFactory.createProjection(BrandResponseDto.class, expected))
         .willReturn(brandResponseDto);
 
-    final BrandResponseDto result = sut.create(BrandTestDataFactory.getBrandRequestDto());
+    final BrandResponseDto result = sut.create(brandRequestDto);
 
     assertAll(
         () -> assertEquals(expected.getId(), result.getId()),
@@ -110,8 +110,7 @@ class BrandServiceImplTest {
     given(projectionFactory.createProjection(BrandResponseDto.class, expected))
         .willReturn(brandResponseDto);
 
-    final BrandResponseDto result =
-        sut.update(expected.getId(), BrandTestDataFactory.getBrandRequestDto());
+    final BrandResponseDto result = sut.update(expected.getId(), brandRequestDto);
 
     assertAll(
         () -> assertEquals(expected.getId(), result.getId()),
@@ -124,7 +123,9 @@ class BrandServiceImplTest {
   void deleteBrand() {
     final BrandEntity expected = getBrandEntityIdNull();
     given(brandRepository.findById(expected.getId())).willReturn(Optional.of(expected));
+
     sut.delete(expected.getId());
+
     verify(brandRepository, atLeastOnce()).delete(expected);
   }
 
@@ -134,8 +135,10 @@ class BrandServiceImplTest {
   void deleteBrandThrowsError() {
     final BrandEntity brandEntity = getBrandEntityWithItems();
     given(brandRepository.findById(brandEntity.getId())).willReturn(Optional.of(brandEntity));
+
     final ConflictException conflictException =
         assertThrows(ConflictException.class, () -> sut.delete(brandEntity.getId()));
+
     assertEquals("brand.error.invalid.delete", conflictException.getMessage());
     verify(brandRepository, never()).delete(brandEntity);
   }

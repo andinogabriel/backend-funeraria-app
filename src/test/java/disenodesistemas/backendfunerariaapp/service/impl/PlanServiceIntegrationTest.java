@@ -20,6 +20,7 @@ import disenodesistemas.backendfunerariaapp.repository.PlanRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,16 +42,20 @@ class PlanServiceIntegrationTest {
   @Autowired private PlanRepository planRepository;
   @Autowired private PlanServiceImpl sut;
   @Autowired private ItemRepository itemRepository;
-
+  private static PlanRequestDto planRequestDto;
   private static final Long EXISTING_PLAN_ID = 1L;
   private static final String EXISTING_PLAN_NAME_1 = "Plan Simple";
   private static final String EXISTING_PLAN_NAME_2 = "Plan nivel medio";
+
+  @BeforeEach
+  void setUp() {
+    planRequestDto = getPlanRequest();
+  }
 
   @DisplayName(
       "Given a valid plan request when create method is called then it returns a created plan response dto")
   @Test
   void create() {
-    final PlanRequestDto planRequestDto = getPlanRequest();
     final PlanResponseDto actualPlanCreated = sut.create(planRequestDto);
 
     assertAll(
@@ -62,9 +67,9 @@ class PlanServiceIntegrationTest {
       "Given an invalid plan request with an item without price when create method is called then it throws a ConflictException")
   @Test
   void createThrowsError() {
+    planRequestDto = getInvalidPlanRequestItemWithoutPrice();
     final ConflictException exception =
-        assertThrows(
-            ConflictException.class, () -> sut.create(getInvalidPlanRequestItemWithoutPrice()));
+        assertThrows(ConflictException.class, () -> sut.create(planRequestDto));
 
     assertAll(
         () -> assertNotNull(exception.getMessage()),
@@ -87,8 +92,9 @@ class PlanServiceIntegrationTest {
   @DisplayName(
       "Given a plan request dto with an item with code not found when call create method is called then it throws an IllegalArgumentException")
   void createThrowsAnError() {
+    planRequestDto = getInvalidPlanRequest();
     final IllegalArgumentException exception =
-        assertThrows(IllegalArgumentException.class, () -> sut.create(getInvalidPlanRequest()));
+        assertThrows(IllegalArgumentException.class, () -> sut.create(planRequestDto));
 
     assertAll(
         () -> assertNotNull(exception.getMessage()),
@@ -99,7 +105,7 @@ class PlanServiceIntegrationTest {
       "Given a valid plan request dto when update method is called then it returns the updated plan response dto")
   @Test
   void update() {
-    final PlanRequestDto updatePlanRequest = getPlanRequest();
+    final PlanRequestDto updatePlanRequest = planRequestDto;
     final PlanResponseDto actualPlanUpdated = sut.update(EXISTING_PLAN_ID, updatePlanRequest);
 
     assertAll(

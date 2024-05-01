@@ -2,6 +2,7 @@ package disenodesistemas.backendfunerariaapp.utils;
 
 import disenodesistemas.backendfunerariaapp.dto.request.CategoryRequestDto;
 import disenodesistemas.backendfunerariaapp.entities.CategoryEntity;
+import disenodesistemas.backendfunerariaapp.entities.ItemEntity;
 import java.util.List;
 import lombok.experimental.UtilityClass;
 
@@ -20,6 +21,13 @@ public class CategoryTestDataFactory {
     final CategoryEntity categoryEntity = new CategoryEntity(NAME, DESCRIPTION);
     categoryEntity.setId(null);
     categoryEntity.setItems(List.of());
+    return categoryEntity;
+  }
+
+  public static CategoryEntity getCategoryEntityWithItems() {
+    final CategoryEntity categoryEntity = new CategoryEntity(NAME, DESCRIPTION);
+    categoryEntity.setId(null);
+    categoryEntity.setItems(List.of(new ItemEntity()));
     return categoryEntity;
   }
 }
