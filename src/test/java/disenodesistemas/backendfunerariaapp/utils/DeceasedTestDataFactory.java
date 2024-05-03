@@ -1,8 +1,10 @@
 package disenodesistemas.backendfunerariaapp.utils;
 
+import static disenodesistemas.backendfunerariaapp.utils.GenderTestDataFactory.getEntityFemaleGender;
 import static disenodesistemas.backendfunerariaapp.utils.GenderTestDataFactory.getFemaleGender;
 import static disenodesistemas.backendfunerariaapp.utils.GenderTestDataFactory.getMaleGender;
 import static disenodesistemas.backendfunerariaapp.utils.RelationshipTestDataFactory.getGrandMotherRelationship;
+import static disenodesistemas.backendfunerariaapp.utils.RelationshipTestDataFactory.getGrandMotherRelationshipEntity;
 import static disenodesistemas.backendfunerariaapp.utils.RelationshipTestDataFactory.getGrandParentRelationship;
 import static disenodesistemas.backendfunerariaapp.utils.UserTestDataFactory.getUserDto;
 
@@ -11,6 +13,7 @@ import disenodesistemas.backendfunerariaapp.dto.request.CityDto;
 import disenodesistemas.backendfunerariaapp.dto.request.DeathCauseDto;
 import disenodesistemas.backendfunerariaapp.dto.request.DeceasedRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.ProvinceDto;
+import disenodesistemas.backendfunerariaapp.entities.DeceasedEntity;
 import java.time.LocalDate;
 import java.time.Month;
 import lombok.experimental.UtilityClass;
@@ -35,7 +38,19 @@ public class DeceasedTestDataFactory {
         .gender(getFemaleGender())
         .deceasedRelationship(getGrandMotherRelationship())
         .deathCause(getDeathCause())
-        .user(getUserDto())
+        .deceasedUser(getUserDto())
+        .build();
+  }
+
+  public static DeceasedEntity getDeceasedEntity() {
+    return DeceasedEntity.builder()
+        .lastName(LAST_NAME)
+        .firstName(FIRST_NAME)
+        .dni(DNI)
+        .birthDate(BIRTH_DATE)
+        .deathDate(DEATH_DATE)
+        .deceasedRelationship(getGrandMotherRelationshipEntity())
+        .gender(getEntityFemaleGender())
         .build();
   }
 
@@ -50,7 +65,7 @@ public class DeceasedTestDataFactory {
         .gender(getFemaleGender())
         .deceasedRelationship(getGrandMotherRelationship())
         .deathCause(getDeathCause())
-        .user(getUserDto())
+        .deceasedUser(getUserDto())
         .build();
   }
 
@@ -65,7 +80,7 @@ public class DeceasedTestDataFactory {
         .gender(getMaleGender())
         .deceasedRelationship(getGrandParentRelationship())
         .deathCause(getDeathCause())
-        .user(getUserDto())
+        .deceasedUser(getUserDto())
         .build();
   }
 
@@ -80,7 +95,7 @@ public class DeceasedTestDataFactory {
         .gender(getFemaleGender())
         .deceasedRelationship(getGrandMotherRelationship())
         .deathCause(getDeathCause())
-        .user(getUserDto())
+        .deceasedUser(getUserDto())
         .build();
   }
 

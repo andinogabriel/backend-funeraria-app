@@ -19,25 +19,33 @@ import java.time.LocalDate;
 @Builder(toBuilder = true)
 public class DeceasedRequestDto {
 
-    @NotBlank(message = "{deceased.error.blank.firstName}") String firstName;
+  @NotBlank(message = "{deceased.error.blank.firstName}")
+  String firstName;
 
-    @NotBlank(message = "{deceased.deceased.blank.lastName}") String lastName;
+  @NotBlank(message = "{deceased.deceased.blank.lastName}")
+  String lastName;
 
-    @NotEmpty(message = "{deceased.error.empty.dni}")
-    @Positive(message = "{deceased.error.positive.dni}") Integer dni;
+  @NotEmpty(message = "{deceased.error.empty.dni}")
+  @Positive(message = "{deceased.error.positive.dni}")
+  Integer dni;
 
-    @NotNull(message = "{deceased.error.empty.birthDate}")
-    @Past(message = "{deceased.error.past.birthDate}") LocalDate birthDate;
+  @NotNull(message = "{deceased.error.empty.birthDate}")
+  @Past(message = "{deceased.error.past.birthDate}")
+  LocalDate birthDate;
 
-    @NotNull(message = "{deceased.error.empty.deathDate}") LocalDate deathDate;
+  @NotNull(message = "{deceased.error.empty.deathDate}")
+  LocalDate deathDate;
 
-    AddressRequestDto placeOfDeath;
+  AddressRequestDto placeOfDeath;
 
-    @NotNull(message = "{deceased.error.empty.gender}") GenderDto gender;
+  @NotNull(message = "{deceased.error.empty.gender}")
+  GenderDto gender;
 
-    @NotNull(message = "{deceased.error.empty.relationship}") RelationshipDto deceasedRelationship;
+  @NotNull(message = "{deceased.error.empty.relationship}")
+  RelationshipDto deceasedRelationship;
 
-    @NotNull(message = "{deceased.error.empty.deathCause}") DeathCauseDto deathCause;
+  @NotNull(message = "{deceased.error.empty.deathCause}")
+  DeathCauseDto deathCause;
 
-    UserDto user;
+  UserDto deceasedUser;
 }

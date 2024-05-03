@@ -1,15 +1,14 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
-import disenodesistemas.backendfunerariaapp.entities.UserEntity;
-import disenodesistemas.backendfunerariaapp.repository.ConfirmationTokenRepository;
 import disenodesistemas.backendfunerariaapp.entities.ConfirmationTokenEntity;
+import disenodesistemas.backendfunerariaapp.entities.UserEntity;
+import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
+import disenodesistemas.backendfunerariaapp.repository.ConfirmationTokenRepository;
 import disenodesistemas.backendfunerariaapp.service.ConfirmationTokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import javax.persistence.EntityNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +21,7 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
   public ConfirmationTokenEntity findByToken(final String token) {
     return confirmationTokenRepository
         .findByToken(token)
-        .orElseThrow(() -> new EntityNotFoundException("confirmationToken.error.invalid"));
+        .orElseThrow(() -> new NotFoundException("confirmationToken.error.invalid"));
   }
 
   @Override
@@ -30,7 +29,7 @@ public class ConfirmationTokenServiceImpl implements ConfirmationTokenService {
   public ConfirmationTokenEntity findByUser(final UserEntity user) {
     return confirmationTokenRepository
         .findByUser(user)
-        .orElseThrow(() -> new EntityNotFoundException("user.error.id.not.found"));
+        .orElseThrow(() -> new NotFoundException("user.error.id.not.found"));
   }
 
   @Override

@@ -1,5 +1,7 @@
 package disenodesistemas.backendfunerariaapp.service.converters;
 
+import static java.util.Objects.nonNull;
+
 import disenodesistemas.backendfunerariaapp.dto.request.DeceasedRequestDto;
 import disenodesistemas.backendfunerariaapp.entities.AddressEntity;
 import disenodesistemas.backendfunerariaapp.entities.DeathCauseEntity;
@@ -12,8 +14,6 @@ import lombok.val;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-
-import static java.util.Objects.nonNull;
 
 @Component(value = "deceasedConverter")
 @RequiredArgsConstructor
@@ -30,8 +30,8 @@ public class DeceasedConverter implements AbstractConverter<DeceasedEntity, Dece
         .birthDate(dto.getBirthDate())
         .deathDate(dto.getDeathDate())
         .deceasedUser(
-            nonNull(dto.getUser())
-                ? userService.getUserByEmail(dto.getUser().getEmail())
+            nonNull(dto.getDeceasedUser())
+                ? userService.getUserByEmail(dto.getDeceasedUser().getEmail())
                 : userService.getUserByEmail(authentication.getName()))
         .deathCause(mapper.map(dto.getDeathCause(), DeathCauseEntity.class))
         .gender(mapper.map(dto.getGender(), GenderEntity.class))

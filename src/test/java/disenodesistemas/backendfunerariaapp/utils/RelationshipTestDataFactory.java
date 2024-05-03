@@ -13,6 +13,12 @@ public class RelationshipTestDataFactory {
     return parentRelationship;
   }
 
+  public static RelationshipEntity getGrandMotherRelationshipEntity() {
+    final RelationshipEntity parentRelationship = new RelationshipEntity("Abuela");
+    parentRelationship.setId(1L);
+    return parentRelationship;
+  }
+
   public static RelationshipDto getParentRelationshipDto() {
     return RelationshipDto.builder().id(1L).name("Padre").build();
   }

@@ -20,4 +20,10 @@ public class GenderTestDataFactory {
     maleGender.setId(1L);
     return maleGender;
   }
+
+  public static GenderEntity getEntityFemaleGender() {
+    final GenderEntity maleGender = new GenderEntity("Femenino");
+    maleGender.setId(2L);
+    return maleGender;
+  }
 }
