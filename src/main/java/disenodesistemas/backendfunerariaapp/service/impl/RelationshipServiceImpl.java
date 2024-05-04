@@ -2,14 +2,12 @@ package disenodesistemas.backendfunerariaapp.service.impl;
 
 import disenodesistemas.backendfunerariaapp.dto.response.RelationshipResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.RelationshipEntity;
-import disenodesistemas.backendfunerariaapp.exceptions.AppException;
+import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
 import disenodesistemas.backendfunerariaapp.repository.RelationshipRepository;
 import disenodesistemas.backendfunerariaapp.service.RelationshipService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +24,6 @@ public class RelationshipServiceImpl implements RelationshipService {
   public RelationshipEntity getRelationshipById(final Long id) {
     return relationshipRepository
         .findById(id)
-        .orElseThrow(() -> new AppException("relationship.error.not.found", HttpStatus.NOT_FOUND));
+        .orElseThrow(() -> new NotFoundException("relationship.error.not.found"));
   }
 }

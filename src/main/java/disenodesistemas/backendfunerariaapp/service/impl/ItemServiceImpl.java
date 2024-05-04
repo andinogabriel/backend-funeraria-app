@@ -7,19 +7,19 @@ import disenodesistemas.backendfunerariaapp.dto.response.ItemResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.BrandEntity;
 import disenodesistemas.backendfunerariaapp.entities.CategoryEntity;
 import disenodesistemas.backendfunerariaapp.entities.ItemEntity;
-import disenodesistemas.backendfunerariaapp.exceptions.AppException;
+import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
 import disenodesistemas.backendfunerariaapp.repository.ItemRepository;
 import disenodesistemas.backendfunerariaapp.service.CategoryService;
 import disenodesistemas.backendfunerariaapp.service.FileStoreService;
 import disenodesistemas.backendfunerariaapp.service.ItemService;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.projection.ProjectionFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -62,7 +62,7 @@ public class ItemServiceImpl implements ItemService {
             .itemWidth(itemRequestDto.getItemWidth())
             .build();
     return projectionFactory.createProjection(
-        ItemResponseDto.class, itemRepository.save(itemRepository.save(itemEntity)));
+        ItemResponseDto.class, itemRepository.save(itemEntity));
   }
 
   @Override
@@ -94,22 +94,24 @@ public class ItemServiceImpl implements ItemService {
   @Transactional
   public void uploadItemImage(final String code, final MultipartFile image) {
     val itemEntity = getItemByCode(code);
-    if (nonNull(image)) itemEntity.setItemImageLink(fileStoreService.save(itemEntity, image));
+    Optional.ofNullable(image)
+        .ifPresentOrElse(
+            imageToUpload -> {
+              itemEntity.setItemImageLink(fileStoreService.save(itemEntity, image));
+              itemRepository.save(itemEntity);
+            },
+            () -> log.info("archivo invalido para imagen"));
   }
 
   @Override
   @Transactional(readOnly = true)
   public ItemResponseDto findItemByCode(final String code) {
-    return itemRepository
-        .findByCode(code)
-        .map(itemEntity -> projectionFactory.createProjection(ItemResponseDto.class, itemEntity))
-        .orElseThrow(() -> new AppException("item.error.code.not.found", HttpStatus.NOT_FOUND));
+    return projectionFactory.createProjection(ItemResponseDto.class, getItemByCode(code));
   }
 
-  @Transactional(readOnly = true)
-  public ItemEntity getItemByCode(final String code) {
+  private ItemEntity getItemByCode(final String code) {
     return itemRepository
         .findByCode(code)
-        .orElseThrow(() -> new AppException("item.error.code.not.found", HttpStatus.NOT_FOUND));
+        .orElseThrow(() -> new NotFoundException("item.error.code.not.found"));
   }
 }

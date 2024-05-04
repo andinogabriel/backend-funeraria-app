@@ -2,6 +2,7 @@ package disenodesistemas.backendfunerariaapp.utils;
 
 import disenodesistemas.backendfunerariaapp.dto.RelationshipDto;
 import disenodesistemas.backendfunerariaapp.entities.RelationshipEntity;
+import java.util.List;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
@@ -17,6 +18,10 @@ public class RelationshipTestDataFactory {
     final RelationshipEntity parentRelationship = new RelationshipEntity("Abuela");
     parentRelationship.setId(1L);
     return parentRelationship;
+  }
+
+  public static List<RelationshipEntity> getRelationshipEntities() {
+    return List.of(getParentRelationship(), getGrandMotherRelationshipEntity());
   }
 
   public static RelationshipDto getParentRelationshipDto() {
