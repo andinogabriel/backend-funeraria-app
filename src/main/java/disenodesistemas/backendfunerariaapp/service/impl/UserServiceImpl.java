@@ -1,13 +1,11 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
-import static java.util.Objects.isNull;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 import disenodesistemas.backendfunerariaapp.dto.JwtDto;
 import disenodesistemas.backendfunerariaapp.dto.request.AddressRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.LogOutRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.MobileNumberRequestDto;
-import disenodesistemas.backendfunerariaapp.dto.request.PasswordResetByEmailDto;
 import disenodesistemas.backendfunerariaapp.dto.request.PasswordResetDto;
 import disenodesistemas.backendfunerariaapp.dto.request.RolRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.TokenRefreshRequestDto;
@@ -202,22 +200,7 @@ public class UserServiceImpl implements UserService {
     return messageSource.getMessage(
         "confirmationToken.successful.activation", null, Locale.getDefault());
   }
-
-  @Override
-  public String resetUserPasswordByEmail(
-      final PasswordResetByEmailDto passwordResetDto, final String token) {
-    final ConfirmationTokenEntity tokenEntity = confirmationTokenService.findByToken(token);
-    if (isNull(tokenEntity.getUser()) || Instant.now().isBefore(tokenEntity.getExpiryDate()))
-      throw new AppException("confirmationToken.error.invalid.link", HttpStatus.GONE);
-
-    final UserEntity userEntity = tokenEntity.getUser();
-    userEntity.setEncryptedPassword(bCryptPasswordEncoder.encode(passwordResetDto.getPassword()));
-    userRepository.save(userEntity);
-
-    return messageSource.getMessage(
-        "confirmationToken.successful.reset.password", null, Locale.getDefault());
-  }
-
+  
   @Transactional
   @Override
   public Map<String, String> changeOldPassword(final PasswordResetDto passwordResetDto) {

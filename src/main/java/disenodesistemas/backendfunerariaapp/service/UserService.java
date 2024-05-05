@@ -4,7 +4,6 @@ import disenodesistemas.backendfunerariaapp.dto.JwtDto;
 import disenodesistemas.backendfunerariaapp.dto.request.AddressRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.LogOutRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.MobileNumberRequestDto;
-import disenodesistemas.backendfunerariaapp.dto.request.PasswordResetByEmailDto;
 import disenodesistemas.backendfunerariaapp.dto.request.PasswordResetDto;
 import disenodesistemas.backendfunerariaapp.dto.request.RolRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.TokenRefreshRequestDto;
@@ -15,16 +14,14 @@ import disenodesistemas.backendfunerariaapp.dto.response.MobileNumberResponseDto
 import disenodesistemas.backendfunerariaapp.dto.response.UserAddressAndPhoneDto;
 import disenodesistemas.backendfunerariaapp.dto.response.UserResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.UserEntity;
-import disenodesistemas.backendfunerariaapp.entities.UserMain;
 import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public interface UserService extends UserDetailsService {
   UserEntity save(UserEntity user);
@@ -38,8 +35,6 @@ public interface UserService extends UserDetailsService {
   UserEntity getUserByEmail(String email);
 
   String confirmationUser(String token);
-
-  String resetUserPasswordByEmail(PasswordResetByEmailDto passwordResetDto, String token);
 
   Map<String, String> changeOldPassword(PasswordResetDto passwordResetDto);
 

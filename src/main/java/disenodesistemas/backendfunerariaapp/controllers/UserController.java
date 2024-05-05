@@ -4,7 +4,6 @@ import disenodesistemas.backendfunerariaapp.dto.JwtDto;
 import disenodesistemas.backendfunerariaapp.dto.request.AddressRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.LogOutRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.MobileNumberRequestDto;
-import disenodesistemas.backendfunerariaapp.dto.request.PasswordResetByEmailDto;
 import disenodesistemas.backendfunerariaapp.dto.request.PasswordResetDto;
 import disenodesistemas.backendfunerariaapp.dto.request.RolRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.TokenRefreshRequestDto;
@@ -14,7 +13,6 @@ import disenodesistemas.backendfunerariaapp.dto.response.AddressResponseDto;
 import disenodesistemas.backendfunerariaapp.dto.response.MobileNumberResponseDto;
 import disenodesistemas.backendfunerariaapp.dto.response.UserAddressAndPhoneDto;
 import disenodesistemas.backendfunerariaapp.dto.response.UserResponseDto;
-import disenodesistemas.backendfunerariaapp.service.EmailService;
 import disenodesistemas.backendfunerariaapp.service.UserService;
 import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import java.util.List;
@@ -43,7 +41,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
   private final UserService userService;
-  private final EmailService emailService;
   private final ProjectionFactory projectionFactory;
 
   @GetMapping(path = "/me")
@@ -88,18 +85,6 @@ public class UserController {
   public ResponseEntity<JwtDto> refreshJwtToken(
       @Valid @RequestBody final TokenRefreshRequestDto tokenRefreshRequest) {
     return ResponseEntity.ok(userService.refreshJwtToken(tokenRefreshRequest));
-  }
-
-  @PostMapping(path = "/forgot-password")
-  public String forgotUserPassword(@RequestParam(value = "email") final String email) {
-    return emailService.sendForgotPassword(email);
-  }
-
-  @PostMapping(path = "/reset-password-by-email")
-  public String resetUserPasswordByEmail(
-      @Valid @RequestBody final PasswordResetByEmailDto passwordResetDto,
-      @RequestParam("token") final String token) {
-    return userService.resetUserPasswordByEmail(passwordResetDto, token);
   }
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
