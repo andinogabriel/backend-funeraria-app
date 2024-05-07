@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.utils;
 
+import disenodesistemas.backendfunerariaapp.dto.request.CityDto;
 import disenodesistemas.backendfunerariaapp.entities.CityEntity;
 import lombok.experimental.UtilityClass;
 
@@ -17,5 +18,9 @@ public class CityTestDataFactory {
         .zipCode(ZIP_CODE)
         .province(ProvinceTestDataFactory.getChacoProvince())
         .build();
+  }
+
+  public static CityDto getCityDto() {
+    return CityDto.builder().id(ID).name(NAME).zipCode(ZIP_CODE).build();
   }
 }

@@ -26,7 +26,10 @@ public class RoleServiceImpl implements RoleService {
                     .id(role.getId())
                     .name(
                         StringUtils.capitalize(
-                            role.getName().name().replace(ROLE_PREFIX, "").toLowerCase()))
+                            role.getName()
+                                .name()
+                                .replace(ROLE_PREFIX, StringUtils.EMPTY)
+                                .toLowerCase()))
                     .build())
         .collect(Collectors.toUnmodifiableList());
   }

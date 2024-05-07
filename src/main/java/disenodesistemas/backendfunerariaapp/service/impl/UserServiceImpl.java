@@ -93,12 +93,6 @@ public class UserServiceImpl implements UserService {
 
   @Override
   @Transactional
-  public UserEntity save(final UserEntity user) {
-    return userRepository.save(user);
-  }
-
-  @Override
-  @Transactional
   public UserResponseDto createUser(final UserRegisterDto user) {
     if (userRepository.findByEmail(user.getEmail()).isPresent())
       throw new ConflictException("user.error.email.already.registered");
@@ -116,14 +110,6 @@ public class UserServiceImpl implements UserService {
     userEntity.activate();
     userEntity.setMobileNumbers(mobileNumberConverter.fromDTOs(user.getMobileNumbers()));
     userEntity.setAddresses(addressConverter.fromDTOs(user.getAddresses()));
-
-    /*final Optional<UserEntity> userSaved = Optional.of(save(userEntity));
-    Optional.of(save(userEntity)).ifPresent(
-            u -> {
-                confirmationTokenService.save(u, UUID.randomUUID().toString());
-                emailService.sendHtmlMail(u);
-            }
-    );*/
     return projectionFactory.createProjection(
         UserResponseDto.class, userRepository.save(userEntity));
   }
@@ -171,7 +157,7 @@ public class UserServiceImpl implements UserService {
   public UserEntity getUserById(final Long id) {
     return userRepository
         .findById(id)
-        .orElseThrow(() -> new AppException("user.error.id.not.found", HttpStatus.NOT_FOUND));
+        .orElseThrow(() -> new NotFoundException("user.error.id.not.found"));
   }
 
   @Override
@@ -179,8 +165,7 @@ public class UserServiceImpl implements UserService {
   public UserEntity getUserByEmail(final String email) {
     return userRepository
         .findByEmail(email)
-        .orElseThrow(
-            () -> new AppException("user.error.email.not.registered", HttpStatus.NOT_FOUND));
+        .orElseThrow(() -> new NotFoundException("user.error.email.not.registered"));
   }
 
   @Override
@@ -200,7 +185,7 @@ public class UserServiceImpl implements UserService {
     return messageSource.getMessage(
         "confirmationToken.successful.activation", null, Locale.getDefault());
   }
-  
+
   @Transactional
   @Override
   public Map<String, String> changeOldPassword(final PasswordResetDto passwordResetDto) {

@@ -4,25 +4,30 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.util.IOUtils;
 import disenodesistemas.backendfunerariaapp.exceptions.AppException;
 import disenodesistemas.backendfunerariaapp.service.FileStoreService;
-import lombok.val;
+import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
-
 @Service
+@Slf4j
 public class FileStoreServiceImpl implements FileStoreService {
+
+  private static final String FILE_SEPARATOR = "/";
+  private static final String UPLOAD_ERROR_MESSAGE = "Error uploading file to S3: ";
+  private static final String DOWNLOAD_ERROR_MESSAGE = "Error downloading file from S3: ";
+  private static final String DELETE_ERROR_MESSAGE = "Error deleting file from S3: ";
 
   private final AmazonS3 s3;
   private final String bucketName;
@@ -43,38 +48,25 @@ public class FileStoreServiceImpl implements FileStoreService {
     fileIsEmpty(file);
     isAnImage(file);
 
-    val metadata = new ObjectMetadata();
-    extractMetadata(file)
-        .ifPresent(
-            map -> {
-              if (!map.isEmpty()) {
-                map.forEach(metadata::addUserMetadata);
-              }
-            });
-
+    final ObjectMetadata metadata = createMetadata(file);
     final String folderName = getFolderName(object);
+    final String filename = generateFileName(file);
 
     try {
-      val path = String.format("%s/%s", bucketName, folderName);
-      val filename =
-          String.format(
-              "%s",
-              Objects.requireNonNullElse(file.getOriginalFilename(), UUID.randomUUID().toString())
-                  .replaceAll("\\s+", SEPARATOR));
+      final String path = bucketName + FILE_SEPARATOR + folderName;
       s3.putObject(path, filename, file.getInputStream(), metadata);
-      return bucketUrl + folderName + "/" + filename;
-    } catch (AmazonServiceException | IOException | IllegalStateException ex) {
-      throw new IllegalStateException("s3bucket.error.upload.file" + " " + ex.getMessage());
+      return constructFileUrl(folderName, filename);
+    } catch (AmazonServiceException | IOException ex) {
+      throw new IllegalStateException(UPLOAD_ERROR_MESSAGE + ex.getMessage(), ex);
     }
   }
 
   @Override
   public byte[] download(final String path, final String key) {
-    try {
-      final S3Object object = s3.getObject(path, key);
-      return IOUtils.toByteArray(object.getObjectContent());
+    try (final S3ObjectInputStream objectContent = s3.getObject(path, key).getObjectContent()) {
+      return IOUtils.toByteArray(objectContent);
     } catch (AmazonServiceException | IOException ex) {
-      throw new IllegalStateException(ex);
+      throw new IllegalStateException(DOWNLOAD_ERROR_MESSAGE + ex.getMessage(), ex);
     }
   }
 
@@ -86,7 +78,23 @@ public class FileStoreServiceImpl implements FileStoreService {
           s3.listObjects(bucketName, folderName).getObjectSummaries();
       files.forEach(file -> s3.deleteObject(bucketName, file.getKey()));
     } catch (SdkClientException e) {
-      throw new AppException("Error al eliminar la imagen.", HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new AppException(
+          DELETE_ERROR_MESSAGE + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  private ObjectMetadata createMetadata(final MultipartFile file) {
+    final ObjectMetadata metadata = new ObjectMetadata();
+    extractMetadata(file).ifPresent(map -> map.forEach(metadata::addUserMetadata));
+    return metadata;
+  }
+
+  private String generateFileName(final MultipartFile file) {
+    return Objects.requireNonNullElse(file.getOriginalFilename(), UUID.randomUUID().toString())
+        .replaceAll("\\s+", SEPARATOR);
+  }
+
+  private String constructFileUrl(String folderName, String filename) {
+    return bucketUrl + folderName + FILE_SEPARATOR + filename;
   }
 }

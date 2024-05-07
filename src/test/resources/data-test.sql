@@ -24,8 +24,18 @@ VALUES (1, 'ROLE_ADMIN'),
        (2, 'ROLE_USER');
 
 INSERT INTO users (id, active, email, enabled, encrypted_password, first_name, last_name, start_date)
-VALUES (1, true, 'email_test@gmail.com', false, '$2a$10$/.VBx8PROOR/pzjMubIYO.aveWvkUWBrb2JpVavhDRgsOd6YzlnpO', 'Juan',
-        'Perez', '2023-09-26');
+VALUES (12345, true, 'email_test@gmail.com', true, '$2a$10$/.VBx8PROOR/pzjMubIYO.aveWvkUWBrb2JpVavhDRgsOd6YzlnpO',
+        'Juan',
+        'Perez', '2023-09-26'),
+       (123456, false, 'email_registered@gmail.com', false,
+        '$2a$10$/.VBx8PROOR/pzjMubIYO.aveWvkUWBrb2JpVavhDRgsOd6YzlnpO',
+        'Pedro',
+        'Acosta', '2024-02-26');
+
+INSERT INTO user_role (user_id, role_id)
+VALUES (12345, 1),
+       (123456, 2),
+       (12345, 2);
 
 INSERT INTO suppliers (id, email, name, nif, web_page)
 VALUES (1, 'proveedor@gmail.com', 'Proveedorazo', 'NIF123ASD', null);
@@ -140,12 +150,12 @@ VALUES (7871, 16, 'PRESIDENCIA ROQUE SAENZ PEÑA', '3700'),
 
 INSERT INTO affiliates (id, birth_date, deceased, dni, first_name, last_name, start_date, gender_id, relationship_id,
                         user_id)
-VALUES (98, '1950-10-31', null, 11236549, 'Juan', 'Acosta', '2024-09-10', 2, 9, 1);
+VALUES (98, '1950-10-31', null, 11236549, 'Juan', 'Acosta', '2024-09-10', 2, 9, 12345);
 
 INSERT INTO incomes (id, deleted, receipt_number, receipt_series, tax, total_amount,
                      user_id, user_modified_id, receipt_type_id, supplier_id)
-VALUES (555555, false, 20231108223102347, 1, 21.00, 12100.00, 1,
-        1, 1, 1);
+VALUES (555555, false, 20231108223102347, 1, 21.00, 12100.00, 12345,
+        12345, 1, 1);
 
 INSERT INTO income_details (id, purchase_price, quantity, sale_price, income_id, item_id)
 VALUES (1, 1500.00, 2, 3000.00, 555555, 1);
@@ -156,9 +166,10 @@ VALUES (45, null, 500, null, 'Belgrano', 7871, null, null),
 
 INSERT INTO deceased (id, affiliated, birth_date, death_date, dni, first_name, last_name, register_date, death_cause_id,
                       relationship_id, user_id, gender_id, address_id)
-VALUES (38, true, '1965-07-15', '2024-11-10', 22156961, 'Marta', 'Perez', '2023-11-13 16:26:26.818638', 2, 10, 1, 1,
+VALUES (38, true, '1965-07-15', '2024-11-10', 22156961, 'Marta', 'Perez', '2023-11-13 16:26:26.818638', 2, 10, 12345, 1,
         45),
-       (72, false, '1960-03-28', '2024-12-10', 17621970, 'Maria', 'Perez', '2023-08-25 16:26:26.818638', 2, 10, 1, 1,
+       (72, false, '1960-03-28', '2024-12-10', 17621970, 'Maria', 'Perez', '2023-08-25 16:26:26.818638', 2, 10, 12345,
+        1,
         59);
 
 INSERT INTO funeral (id, funeral_date, receipt_number, receipt_series, register_date, tax, total_amount, deceased_id,
@@ -167,5 +178,11 @@ VALUES (120, '2024-11-12 03:00:00', '2024290420241A', '1', '2023-05-12 18:59:36.
         2),
        (45, '2024-11-11 03:00:00', '123465sad465', '465asd4as', '2023-11-12 18:59:36.345607', 21.00, 130680.00, 38, 2,
         2);
+
+INSERT INTO confirmation_tokens (id, expiry_date, token, user_id)
+VALUES (654, '2024-12-12 03:00:00', '972d8f36-7051-4867-a314-0e175a3b1065', 12345),
+       (672, '2024-03-12 03:00:00', '5cb86e45-aabd-4479-a328-a4e22b753bff', 123456),
+       (696, CURRENT_TIMESTAMP + INTERVAL '3' HOUR, '66155026-24ed-4696-9396-76120b9457ef', 123456)
+;
 
 
