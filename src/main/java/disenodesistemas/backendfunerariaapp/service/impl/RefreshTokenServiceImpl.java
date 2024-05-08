@@ -1,5 +1,7 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
+import static org.springframework.http.HttpStatus.EXPECTATION_FAILED;
+
 import disenodesistemas.backendfunerariaapp.dto.JwtDto;
 import disenodesistemas.backendfunerariaapp.dto.request.TokenRefreshRequestDto;
 import disenodesistemas.backendfunerariaapp.entities.RefreshToken;
@@ -11,16 +13,13 @@ import disenodesistemas.backendfunerariaapp.security.SecurityConstants;
 import disenodesistemas.backendfunerariaapp.security.jwt.JwtProvider;
 import disenodesistemas.backendfunerariaapp.service.RefreshTokenService;
 import disenodesistemas.backendfunerariaapp.service.UserDeviceService;
+import java.time.Instant;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static org.springframework.http.HttpStatus.EXPECTATION_FAILED;
 
 @Service
 @RequiredArgsConstructor
@@ -44,9 +43,10 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
   @Override
   public RefreshToken createRefreshToken() {
+    final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     final RefreshToken refreshToken = new RefreshToken();
     refreshToken.setExpiryDate(Instant.now().plusMillis(3600000));
-    refreshToken.setToken(UUID.randomUUID().toString());
+    refreshToken.setToken(jwtProvider.generateToken(authentication));
     refreshToken.setRefreshCount(0L);
     return refreshToken;
   }
@@ -58,8 +58,8 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   }
 
   @Override
-  public void deleteById(final Long id) {
-    refreshTokenRepository.deleteById(id);
+  public void delete(final RefreshToken refreshToken) {
+    refreshTokenRepository.delete(refreshToken);
   }
 
   @Override

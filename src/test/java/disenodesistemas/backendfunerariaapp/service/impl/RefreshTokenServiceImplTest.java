@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
+import static disenodesistemas.backendfunerariaapp.enums.Role.ROLE_ADMIN;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -96,6 +97,13 @@ class RefreshTokenServiceImplTest {
 
   @Test
   void createRefreshToken() {
+    final Authentication authentication =
+        new UsernamePasswordAuthenticationToken(
+            "email@gmail.com", "asd123asd", List.of(new SimpleGrantedAuthority(ROLE_ADMIN.name())));
+    final String refreshJwtToken =
+        "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbkBnbWFpbC5jb20iLCJhdXRob3JpdGllcyI6IlJPTEVfQURNSU4sUk9MRV9VU0VSIiwiaWF0IjoxNzE1MTI3ODMyLCJleHAiOjE4MDE1Mjc4MzJ9.wFaYSqujYe4xgKmIcJZQEMFR3rrw39Raw6o7KXIRyJM0xFplOEsGCygRQRD-Tglr641q0bcTVDKYQ7Ky-NG7rA";
+    given(jwtProvider.generateToken(authentication)).willReturn(refreshJwtToken);
+
     final RefreshToken refreshToken = sut.createRefreshToken();
 
     assertAll(
@@ -126,13 +134,13 @@ class RefreshTokenServiceImplTest {
   }
 
   @Test
-  void deleteById() {
-    final Long tokenId = 1L;
-    willDoNothing().given(refreshTokenRepository).deleteById(tokenId);
+  void delete() {
+    final RefreshToken refreshToken = new RefreshToken();
+    willDoNothing().given(refreshTokenRepository).delete(refreshToken);
 
-    sut.deleteById(tokenId);
+    sut.delete(refreshToken);
 
-    then(refreshTokenRepository).should(times(1)).deleteById(tokenId);
+    then(refreshTokenRepository).should(times(1)).delete(refreshToken);
   }
 
   @Test

@@ -160,8 +160,11 @@ VALUES (555555, false, 20231108223102347, 1, 21.00, 12100.00, 12345,
 INSERT INTO income_details (id, purchase_price, quantity, sale_price, income_id, item_id)
 VALUES (1, 1500.00, 2, 3000.00, 555555, 1);
 
+INSERT INTO mobile_numbers (id, mobile_number, supplier_id, user_id)
+VALUES (7532, 3644123456, null, 12345);
+
 INSERT INTO addresses (id, apartment, block_street, flat, street_name, city_id, supplier_id, user_id)
-VALUES (45, null, 500, null, 'Belgrano', 7871, null, null),
+VALUES (45, null, 500, null, 'Belgrano', 7871, null, 12345),
        (59, null, 500, null, 'Belgrano', 7871, null, null);
 
 INSERT INTO deceased (id, affiliated, birth_date, death_date, dni, first_name, last_name, register_date, death_cause_id,
@@ -182,7 +185,12 @@ VALUES (120, '2024-11-12 03:00:00', '2024290420241A', '1', '2023-05-12 18:59:36.
 INSERT INTO confirmation_tokens (id, expiry_date, token, user_id)
 VALUES (654, '2024-12-12 03:00:00', '972d8f36-7051-4867-a314-0e175a3b1065', 12345),
        (672, '2024-03-12 03:00:00', '5cb86e45-aabd-4479-a328-a4e22b753bff', 123456),
-       (696, CURRENT_TIMESTAMP + INTERVAL '3' HOUR, '66155026-24ed-4696-9396-76120b9457ef', 123456)
-;
+       (696, CURRENT_TIMESTAMP + INTERVAL '3' HOUR, '66155026-24ed-4696-9396-76120b9457ef', 123456);
 
+INSERT INTO user_devices (id, device_id, device_type, is_refresh_active, user_id)
+VALUES (4831, 'd520c7a8-421b-4563-b955-f5abc56b97ec', 'windows-10-desktop-Chrome-v117.0.0.0', true, 12345);
 
+INSERT INTO refresh_tokens (id, expiry_date, refresh_count, token, user_device_id)
+VALUES (7532, CURRENT_TIMESTAMP + INTERVAL '3' HOUR, 0,
+        'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhbm9ueW1vdXNVc2VyIiwiYXV0aG9yaXRpZXMiOiJST0xFX0FOT05ZTU9VUyIsImlhdCI6MTcxNTEyNzgyMywiZXhwIjoxNzE1MjE0MjIzfQ.wVIX5T-Wz5tUpnkf30ufe1pzTQExuGCZmU3EucO50TBIMWYGfA3ZNrRX3la2TiVIaPTp6kdlhjbJzfShVz--6A',
+        4831);

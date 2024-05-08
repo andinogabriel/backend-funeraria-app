@@ -39,6 +39,7 @@ import disenodesistemas.backendfunerariaapp.service.UserService;
 import disenodesistemas.backendfunerariaapp.service.converters.AbstractConverter;
 import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -116,17 +117,7 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public JwtDto login(final UserLoginDto loginUser) {
-    final UserEntity user =
-        userRepository
-            .findByEmail(loginUser.getEmail())
-            .orElseThrow(
-                () -> new AppException("user.error.email.not.registered", HttpStatus.UNAUTHORIZED));
-
-    if (!bCryptPasswordEncoder.matches(loginUser.getPassword(), user.getEncryptedPassword()))
-      throw new AppException("password.error.wrong", HttpStatus.UNAUTHORIZED);
-
-    if (Boolean.FALSE.equals(user.getActive()))
-      throw new AppException("user.error.deactivated.locked", HttpStatus.BAD_REQUEST);
+    final UserEntity user = getLoginUser(loginUser);
 
     final Authentication authentication =
         authenticationManager.authenticate(
@@ -213,44 +204,24 @@ public class UserServiceImpl implements UserService {
   @Transactional
   public List<AddressResponseDto> addAddressesUser(
       final List<AddressRequestDto> addressesRequestDto) {
-    if (CollectionUtils.isEmpty(addressesRequestDto))
-      throw new AppException("user.error.empty.addresses", HttpStatus.BAD_REQUEST);
+    validateRequest(addressesRequestDto, "user.error.empty.addresses");
     final UserEntity userEntity = getLoggedUser();
 
-    val deletedAddresses = getDeletedAddresses(userEntity, addressesRequestDto);
-    deletedAddresses.forEach(userEntity::removeAddress);
-    final List<AddressEntity> address = addressConverter.fromDTOs(addressesRequestDto);
-    userEntity.setAddresses(address);
-    userRepository.save(userEntity);
+    updateUserAddresses(addressesRequestDto, userEntity);
 
-    return userEntity.getAddresses().stream()
-        .filter(Objects::nonNull)
-        .map(
-            addressEntity ->
-                projectionFactory.createProjection(AddressResponseDto.class, addressEntity))
-        .collect(Collectors.toUnmodifiableList());
+    return mapEntitiesToResponseDto(userEntity.getAddresses(), AddressResponseDto.class);
   }
 
   @Override
   @Transactional
   public List<MobileNumberResponseDto> addMobileNumbersUser(
       final List<MobileNumberRequestDto> mobileNumbersRequestDto) {
-    if (CollectionUtils.isEmpty(mobileNumbersRequestDto))
-      throw new AppException("user.error.empty.mobileNumbers", HttpStatus.BAD_REQUEST);
+    validateRequest(mobileNumbersRequestDto, "user.error.empty.mobileNumbers");
     final UserEntity userEntity = getLoggedUser();
 
-    val deletedMobileNumbers = getDeletedMobileNumbers(userEntity, mobileNumbersRequestDto);
-    deletedMobileNumbers.forEach(userEntity::removeMobileNumber);
-    final List<MobileNumberEntity> mobileNumberEntities =
-        mobileNumberConverter.fromDTOs(mobileNumbersRequestDto);
-    userEntity.setMobileNumbers(mobileNumberEntities);
+    updateUserMobileNumbers(mobileNumbersRequestDto, userEntity);
 
-    return userRepository.save(userEntity).getMobileNumbers().stream()
-        .map(
-            mobileNumberEntity ->
-                projectionFactory.createProjection(
-                    MobileNumberResponseDto.class, mobileNumberEntity))
-        .collect(Collectors.toUnmodifiableList());
+    return mapEntitiesToResponseDto(userEntity.getMobileNumbers(), MobileNumberResponseDto.class);
   }
 
   @Override
@@ -262,7 +233,7 @@ public class UserServiceImpl implements UserService {
     if (!deviceId.equals(userDevice.getDeviceId()))
       throw new AppException("user.error.invalid.device.id", HttpStatus.EXPECTATION_FAILED);
 
-    refreshTokenService.deleteById(userDevice.getRefreshToken().getId());
+    refreshTokenService.delete(userDevice.getRefreshToken());
 
     final OnUserLogoutSuccessEvent logoutSuccessEvent =
         new OnUserLogoutSuccessEvent(
@@ -314,7 +285,7 @@ public class UserServiceImpl implements UserService {
   @Transactional
   public Set<RolRequestDto> updateUserRol(final String email, final RolRequestDto rolRequestDto) {
     final UserEntity user = getUserByEmail(email);
-    if (Role.ROLE_USER.equals(rolRequestDto.getName())
+    if (Role.ROLE_ADMIN.equals(rolRequestDto.getName())
         && user.getRoles().stream().anyMatch(rol -> rol.getName().equals(Role.ROLE_ADMIN)))
       user.removeRol(getAdminRole());
 
@@ -337,6 +308,35 @@ public class UserServiceImpl implements UserService {
     return getUserByEmail(email);
   }
 
+  private UserEntity getLoginUser(final UserLoginDto loginUser) {
+    final UserEntity user =
+        userRepository
+            .findByEmail(loginUser.getEmail())
+            .orElseThrow(
+                () -> new AppException("user.error.email.not.registered", HttpStatus.UNAUTHORIZED));
+
+    if (!bCryptPasswordEncoder.matches(loginUser.getPassword(), user.getEncryptedPassword()))
+      throw new AppException("password.error.wrong", HttpStatus.UNAUTHORIZED);
+
+    if (Boolean.FALSE.equals(user.getActive()))
+      throw new AppException("user.error.deactivated.locked", HttpStatus.BAD_REQUEST);
+    return user;
+  }
+
+  private void validateRequest(final Collection<?> collection, final String errorMessageKey) {
+    if (CollectionUtils.isEmpty(collection)) {
+      throw new AppException(errorMessageKey, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  private <T, R> List<R> mapEntitiesToResponseDto(
+      final Collection<T> entities, final Class<R> responseDtoClass) {
+    return entities.stream()
+        .filter(Objects::nonNull)
+        .map(entity -> projectionFactory.createProjection(responseDtoClass, entity))
+        .collect(Collectors.toUnmodifiableList());
+  }
+
   private List<AddressEntity> getDeletedAddresses(
       final UserEntity userEntity, final List<AddressRequestDto> addressesRequest) {
     return !isEmpty(userEntity.getAddresses())
@@ -353,5 +353,25 @@ public class UserServiceImpl implements UserService {
             .filter(mDb -> !mobileNumbersRequest.contains(mobileNumberConverter.toDTO(mDb)))
             .collect(Collectors.toUnmodifiableList())
         : List.of();
+  }
+
+  private void updateUserAddresses(
+      final List<AddressRequestDto> addressesRequestDto, final UserEntity userEntity) {
+    final List<AddressEntity> deletedAddresses =
+        getDeletedAddresses(userEntity, addressesRequestDto);
+    deletedAddresses.forEach(userEntity::removeAddress);
+    final List<AddressEntity> address = addressConverter.fromDTOs(addressesRequestDto);
+    userEntity.setAddresses(address);
+    userRepository.save(userEntity);
+  }
+
+  private void updateUserMobileNumbers(
+      final List<MobileNumberRequestDto> mobileNumbersRequestDto, final UserEntity userEntity) {
+    final List<MobileNumberEntity> deletedMobileNumbers =
+        getDeletedMobileNumbers(userEntity, mobileNumbersRequestDto);
+    deletedMobileNumbers.forEach(userEntity::removeMobileNumber);
+    final List<MobileNumberEntity> mobileNumberEntities =
+        mobileNumberConverter.fromDTOs(mobileNumbersRequestDto);
+    userEntity.setMobileNumbers(mobileNumberEntities);
   }
 }
