@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.only;
-import static org.mockito.Mockito.verify;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
 
 import disenodesistemas.backendfunerariaapp.dto.request.AffiliateRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.AffiliateResponseDto;
@@ -30,8 +30,8 @@ import org.springframework.http.ResponseEntity;
 class AffiliateControllerTest {
 
   @Mock private AffiliateService affiliateService;
-
   @InjectMocks private AffiliateController affiliateController;
+
   private static final Integer VALID_DNI = 123456789;
   private static final String SEARCH_VALUE = "searchValue";
   private AffiliateRequestDto affiliateRequest;
@@ -58,7 +58,7 @@ class AffiliateControllerTest {
         () -> assertEquals(HttpStatus.CREATED, actualResponse.getStatusCode()),
         () -> assertEquals(affiliateResponseDto, actualResponse.getBody()));
 
-    verify(affiliateService, only()).create(affiliateRequest);
+    then(affiliateService).should(times(1)).create(affiliateRequest);
   }
 
   @Test
@@ -75,7 +75,8 @@ class AffiliateControllerTest {
     assertAll(
         () -> assertEquals(HttpStatus.OK, responseEntity.getStatusCode()),
         () -> assertEquals(actualResponse, responseEntity.getBody()));
-    verify(affiliateService, only())
+    then(affiliateService)
+        .should(times(1))
         .findAffiliatesByFirstNameOrLastNameOrDniContaining(SEARCH_VALUE);
   }
 
@@ -92,7 +93,7 @@ class AffiliateControllerTest {
     assertAll(
         () -> assertEquals(HttpStatus.OK, responseEntity.getStatusCode()),
         () -> assertEquals(actualResponse, responseEntity.getBody()));
-    verify(affiliateService, only()).findAllByDeceasedFalse();
+    then(affiliateService).should(times(1)).findAllByDeceasedFalse();
   }
 
   @Test
@@ -106,7 +107,7 @@ class AffiliateControllerTest {
     assertAll(
         () -> assertEquals(HttpStatus.OK, responseEntity.getStatusCode()),
         () -> assertEquals(actualResponse, responseEntity.getBody()));
-    verify(affiliateService, only()).findAll();
+    then(affiliateService).should(times(1)).findAll();
   }
 
   @Test
@@ -122,7 +123,7 @@ class AffiliateControllerTest {
     assertAll(
         () -> assertEquals(HttpStatus.OK, actualResponse.getStatusCode()),
         () -> assertEquals(expectedResponse, actualResponse.getBody()));
-    verify(affiliateService, only()).findAffiliatesByUser();
+    then(affiliateService).should(times(1)).findAffiliatesByUser();
   }
 
   @Test
@@ -136,7 +137,7 @@ class AffiliateControllerTest {
         () -> assertEquals(HttpStatus.OK, expectedResponse.getStatusCode()),
         () -> assertEquals("DELETE AFFILIATE", expectedResponse.getBody().getName()),
         () -> assertEquals("SUCCESS", expectedResponse.getBody().getResult()));
-    verify(affiliateService, only()).delete(VALID_DNI);
+    then(affiliateService).should(times(1)).delete(VALID_DNI);
   }
 
   @Test
@@ -151,6 +152,6 @@ class AffiliateControllerTest {
     assertAll(
         () -> assertEquals(HttpStatus.OK, actualResponse.getStatusCode()),
         () -> assertEquals(affiliateResponseDto, actualResponse.getBody()));
-    verify(affiliateService, only()).update(VALID_DNI, affiliateRequest);
+    then(affiliateService).should(times(1)).update(VALID_DNI, affiliateRequest);
   }
 }

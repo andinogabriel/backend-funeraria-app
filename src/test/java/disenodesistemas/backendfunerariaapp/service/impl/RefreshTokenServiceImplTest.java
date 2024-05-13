@@ -1,6 +1,5 @@
 package disenodesistemas.backendfunerariaapp.service.impl;
 
-import static disenodesistemas.backendfunerariaapp.enums.Role.ROLE_ADMIN;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -99,7 +98,12 @@ class RefreshTokenServiceImplTest {
   void createRefreshToken() {
     final Authentication authentication =
         new UsernamePasswordAuthenticationToken(
-            "email@gmail.com", "asd123asd", List.of(new SimpleGrantedAuthority(ROLE_ADMIN.name())));
+            "email@gmail.com", "asd123asd", List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+
+    final SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+    SecurityContextHolder.setContext(securityContext);
+    securityContext.setAuthentication(authentication);
+
     final String refreshJwtToken =
         "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbkBnbWFpbC5jb20iLCJhdXRob3JpdGllcyI6IlJPTEVfQURNSU4sUk9MRV9VU0VSIiwiaWF0IjoxNzE1MTI3ODMyLCJleHAiOjE4MDE1Mjc4MzJ9.wFaYSqujYe4xgKmIcJZQEMFR3rrw39Raw6o7KXIRyJM0xFplOEsGCygRQRD-Tglr641q0bcTVDKYQ7Ky-NG7rA";
     given(jwtProvider.generateToken(authentication)).willReturn(refreshJwtToken);
