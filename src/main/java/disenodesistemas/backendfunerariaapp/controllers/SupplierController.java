@@ -42,7 +42,7 @@ public class SupplierController {
   @GetMapping(path = "/{nif}")
   public SupplierResponseDto getSupplierByNif(@PathVariable final String nif) {
     return projectionFactory.createProjection(
-        SupplierResponseDto.class, supplierService.findSupplierByNif(nif));
+        SupplierResponseDto.class, supplierService.findById(nif));
   }
 
   @PreAuthorize("hasRole('ADMIN')")

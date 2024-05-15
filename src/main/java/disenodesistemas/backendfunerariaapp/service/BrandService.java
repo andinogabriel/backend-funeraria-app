@@ -5,5 +5,7 @@ import disenodesistemas.backendfunerariaapp.dto.response.BrandResponseDto;
 import disenodesistemas.backendfunerariaapp.entities.BrandEntity;
 
 public interface BrandService extends CommonService<BrandResponseDto, BrandRequestDto, Long> {
-    BrandEntity getBrandById(Long id);
+  BrandEntity getBrandById(Long id);
+
+  BrandResponseDto findById(Long id);
 }

@@ -43,7 +43,7 @@ public class ItemServiceImpl implements ItemService {
   @Override
   @Transactional(readOnly = true)
   public List<ItemResponseDto> getItemsByCategoryId(final Long id) {
-    return itemRepository.findByCategoryOrderByName(categoryService.findCategoryById(id));
+    return itemRepository.findByCategoryOrderByName(categoryService.findCategoryEntityById(id));
   }
 
   @Override
@@ -105,7 +105,7 @@ public class ItemServiceImpl implements ItemService {
 
   @Override
   @Transactional(readOnly = true)
-  public ItemResponseDto findItemByCode(final String code) {
+  public ItemResponseDto findById(final String code) {
     return projectionFactory.createProjection(ItemResponseDto.class, getItemByCode(code));
   }
 

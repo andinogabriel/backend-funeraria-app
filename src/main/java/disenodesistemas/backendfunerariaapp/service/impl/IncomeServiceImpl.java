@@ -102,6 +102,13 @@ public class IncomeServiceImpl implements IncomeService {
   }
 
   @Override
+  @Transactional(readOnly = true)
+  public IncomeResponseDto findById(final Long receiptNumber) {
+    return projectionFactory.createProjection(
+        IncomeResponseDto.class, findEntityByReceiptNumber(receiptNumber));
+  }
+
+  @Override
   @Transactional
   public IncomeResponseDto update(
       final Long receiptNumber, final IncomeRequestDto incomeRequestDto) {

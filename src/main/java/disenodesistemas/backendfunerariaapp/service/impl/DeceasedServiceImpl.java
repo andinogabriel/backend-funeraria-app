@@ -12,15 +12,14 @@ import disenodesistemas.backendfunerariaapp.exceptions.NotFoundException;
 import disenodesistemas.backendfunerariaapp.repository.DeceasedRepository;
 import disenodesistemas.backendfunerariaapp.service.DeceasedService;
 import disenodesistemas.backendfunerariaapp.service.converters.AbstractConverter;
+import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -78,7 +77,7 @@ public class DeceasedServiceImpl implements DeceasedService {
 
   @Override
   @Transactional(readOnly = true)
-  public DeceasedResponseDto findByDni(final Integer dni) {
+  public DeceasedResponseDto findById(final Integer dni) {
     final DeceasedEntity entity = getDeceasedByDni(dni);
     return projectionFactory.createProjection(DeceasedResponseDto.class, entity);
   }

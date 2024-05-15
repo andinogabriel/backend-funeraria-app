@@ -36,6 +36,15 @@ public class BrandServiceImpl implements BrandService {
   }
 
   @Override
+  @Transactional(readOnly = true)
+  public BrandResponseDto findById(Long id) {
+    return brandRepository
+        .findById(id)
+        .map(brandEntity -> projectionFactory.createProjection(BrandResponseDto.class, brandEntity))
+        .orElseThrow(() -> new NotFoundException("brand.error.not.found"));
+  }
+
+  @Override
   @Transactional
   public BrandResponseDto create(final BrandRequestDto brandDto) {
     val brandEntity = new BrandEntity(brandDto.getName(), brandDto.getWebPage());

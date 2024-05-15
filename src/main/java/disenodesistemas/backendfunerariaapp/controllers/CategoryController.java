@@ -7,7 +7,8 @@ import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,38 +25,38 @@ import org.springframework.web.bind.annotation.RestController;
 public class CategoryController {
 
   private final CategoryService categoryService;
-  private final ProjectionFactory projectionFactory;
 
   @GetMapping
-  public List<CategoryResponseDto> getAllCategories() {
-    return categoryService.findAll();
+  public ResponseEntity<List<CategoryResponseDto>> findAll() {
+    return ResponseEntity.ok(categoryService.findAll());
   }
 
   @GetMapping(path = "/{id}")
-  public CategoryResponseDto getCategoryById(@PathVariable final Long id) {
-    return projectionFactory.createProjection(
-        CategoryResponseDto.class, categoryService.findCategoryById(id));
+  public ResponseEntity<CategoryResponseDto> findById(@PathVariable final Long id) {
+    return ResponseEntity.ok(categoryService.findById(id));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @PostMapping
-  public CategoryResponseDto createCategory(
+  public ResponseEntity<CategoryResponseDto> create(
       @RequestBody @Valid final CategoryRequestDto categoryRequestDto) {
-    return categoryService.create(categoryRequestDto);
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(categoryService.create(categoryRequestDto));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @PutMapping("/{id}")
-  public CategoryResponseDto updateCategory(
+  public ResponseEntity<CategoryResponseDto> update(
       @PathVariable final Long id,
       @RequestBody @Valid final CategoryRequestDto categoryRequestDto) {
-    return categoryService.update(id, categoryRequestDto);
+    return ResponseEntity.ok(categoryService.update(id, categoryRequestDto));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping("/{id}")
-  public OperationStatusModel deleteCategory(@PathVariable final Long id) {
+  public ResponseEntity<OperationStatusModel> delete(@PathVariable final Long id) {
     categoryService.delete(id);
-    return OperationStatusModel.builder().name("DELETE").result("SUCCESS").build();
+    return ResponseEntity.ok(
+        OperationStatusModel.builder().name("DELETE CATEGORY").result("SUCCESSFUL").build());
   }
 }

@@ -7,7 +7,7 @@ import disenodesistemas.backendfunerariaapp.entities.SupplierEntity;
 public interface SupplierService
     extends CommonService<SupplierResponseDto, SupplierRequestDto, String> {
 
-  SupplierResponseDto findSupplierByNif(String nif);
+  SupplierResponseDto findById(String nif);
 
   SupplierEntity findSupplierEntityByNif(String nif);
 }

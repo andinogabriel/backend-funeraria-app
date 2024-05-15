@@ -8,9 +8,9 @@ import disenodesistemas.backendfunerariaapp.entities.Plan;
 import java.util.List;
 
 public interface PlanService extends CommonService<PlanResponseDto, PlanRequestDto, Long> {
-  PlanResponseDto getById(final Long id);
+  PlanResponseDto findById(Long id);
 
-  Plan findById(Long id);
+  Plan findEntityById(Long id);
 
   void updatePlansPrice(List<ItemEntity> items);
 }

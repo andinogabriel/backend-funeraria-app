@@ -31,7 +31,7 @@ public class AffiliateController {
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   @PostMapping
-  public ResponseEntity<AffiliateResponseDto> createAffiliate(
+  public ResponseEntity<AffiliateResponseDto> create(
       @RequestBody @Valid final AffiliateRequestDto affiliateRequestDto) {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(affiliateService.create(affiliateRequestDto));
@@ -66,15 +66,15 @@ public class AffiliateController {
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   @DeleteMapping("/{dni}")
-  public ResponseEntity<OperationStatusModel> deleteAffiliate(@PathVariable final Integer dni) {
+  public ResponseEntity<OperationStatusModel> delete(@PathVariable final Integer dni) {
     affiliateService.delete(dni);
     return ResponseEntity.ok(
-        OperationStatusModel.builder().name("DELETE AFFILIATE").result("SUCCESS").build());
+        OperationStatusModel.builder().name("DELETE AFFILIATE").result("SUCCESSFUL").build());
   }
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   @PutMapping("/{dni}")
-  public ResponseEntity<AffiliateResponseDto> updateAffiliate(
+  public ResponseEntity<AffiliateResponseDto> update(
       @PathVariable final Integer dni,
       @RequestBody @Valid final AffiliateRequestDto affiliateRequestDto) {
     return ResponseEntity.ok(affiliateService.update(dni, affiliateRequestDto));

@@ -143,13 +143,13 @@ class DeceasedServiceImplTest {
   }
 
   @Test
-  void findByDni() {
+  void findById() {
     final DeceasedEntity deceasedEntity = getDeceasedEntity();
     given(deceasedRepository.findByDni(EXISTING_DNI)).willReturn(Optional.of(deceasedEntity));
     given(projectionFactory.createProjection(DeceasedResponseDto.class, deceasedEntity))
         .willReturn(deceasedResponseDto);
 
-    final DeceasedResponseDto actualResult = sut.findByDni(EXISTING_DNI);
+    final DeceasedResponseDto actualResult = sut.findById(EXISTING_DNI);
 
     assertAll(
         () -> assertEquals(EXISTING_DNI, actualResult.getDni()),
@@ -162,14 +162,14 @@ class DeceasedServiceImplTest {
   }
 
   @Test
-  void findByDniThrowsException() {
+  void findByIdThrowsException() {
     final Integer NON_EXISTING_DNI = 621564;
     willThrow(new NotFoundException("deceased.not.found"))
         .given(deceasedRepository)
         .findByDni(NON_EXISTING_DNI);
 
     final NotFoundException exception =
-        assertThrows(NotFoundException.class, () -> sut.findByDni(NON_EXISTING_DNI));
+        assertThrows(NotFoundException.class, () -> sut.findById(NON_EXISTING_DNI));
 
     assertAll(
         () -> assertEquals(HttpStatus.NOT_FOUND, exception.getStatus()),

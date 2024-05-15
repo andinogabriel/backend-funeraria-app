@@ -87,13 +87,13 @@ class SupplierServiceImplTest {
   }
 
   @Test
-  void findSupplierByNif() {
+  void findById() {
     final SupplierEntity expectedResult = getSupplierEntity();
     given(supplierRepository.findByNif(EXISTING_NIF)).willReturn(Optional.of(expectedResult));
     given(projectionFactory.createProjection(SupplierResponseDto.class, expectedResult))
         .willReturn(supplierResponseDto);
 
-    final SupplierResponseDto actualResult = sut.findSupplierByNif(EXISTING_NIF);
+    final SupplierResponseDto actualResult = sut.findById(EXISTING_NIF);
 
     supplierAsserts(expectedResult, actualResult);
     then(supplierRepository).should(times(1)).findByNif(EXISTING_NIF);

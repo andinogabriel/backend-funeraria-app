@@ -59,7 +59,7 @@ public class PlanServiceImpl implements PlanService {
   @Override
   @Transactional
   public PlanResponseDto update(final Long id, final PlanRequestDto planRequestDto) {
-    final Plan planToUpdate = findById(id);
+    final Plan planToUpdate = findPlanById(id);
     planToUpdate.setName(planRequestDto.getName());
     planToUpdate.setDescription(planRequestDto.getDescription());
     planToUpdate.setProfitPercentage(planRequestDto.getProfitPercentage());
@@ -77,22 +77,20 @@ public class PlanServiceImpl implements PlanService {
 
   @Override
   @Transactional(readOnly = true)
-  public PlanResponseDto getById(final Long id) {
-    return projectionFactory.createProjection(PlanResponseDto.class, findById(id));
+  public PlanResponseDto findById(final Long id) {
+    return projectionFactory.createProjection(PlanResponseDto.class, findPlanById(id));
   }
 
   @Override
   @Transactional(readOnly = true)
-  public Plan findById(final Long id) {
-    return planRepository
-        .findById(id)
-        .orElseThrow(() -> new NotFoundException("plan.error.not.found"));
+  public Plan findEntityById(final Long id) {
+    return findPlanById(id);
   }
 
   @Override
   @Transactional
   public void delete(final Long id) {
-    planRepository.delete(findById(id));
+    planRepository.delete(findPlanById(id));
   }
 
   @Override
@@ -108,6 +106,12 @@ public class PlanServiceImpl implements PlanService {
     plansToUpdatePrice.forEach(
         plan -> plan.setPrice(priceCalculator(plan.getProfitPercentage(), plan.getItemsPlan())));
     planRepository.saveAll(plansToUpdatePrice);
+  }
+
+  private Plan findPlanById(final Long id) {
+    return planRepository
+        .findById(id)
+        .orElseThrow(() -> new NotFoundException("plan.error.not.found"));
   }
 
   private Set<ItemPlanEntity> getItemsPlanEntities(

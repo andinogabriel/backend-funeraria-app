@@ -10,4 +10,6 @@ public interface CommonService<T, S, ID> {
   void delete(ID id);
 
   List<T> findAll();
+
+  T findById(ID id);
 }

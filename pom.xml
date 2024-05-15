@@ -15,7 +15,6 @@
     <description>Backend para el sistema de una funeraria</description>
     <properties>
         <java.version>11</java.version>
-        <cucumber.version>7.15.0</cucumber.version>
         <junit.platform.version>1.10.2</junit.platform.version>
     </properties>
     <dependencies>
@@ -69,27 +68,6 @@
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-suite</artifactId>
             <version>${junit.platform.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.cucumber</groupId>
-            <artifactId>cucumber-java</artifactId>
-            <version>${cucumber.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.cucumber</groupId>
-            <artifactId>cucumber-spring</artifactId>
-            <version>${cucumber.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.cucumber</groupId>
-            <artifactId>cucumber-junit-platform-engine</artifactId>
-            <version>${cucumber.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -151,7 +129,6 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
         </dependency>
-
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -215,5 +192,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

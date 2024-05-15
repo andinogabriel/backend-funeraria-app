@@ -41,7 +41,7 @@ public class ItemController {
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping(path = "/{code}")
   public ItemResponseDto getItemByCode(@PathVariable final String code) {
-    return itemService.findItemByCode(code);
+    return itemService.findById(code);
   }
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")

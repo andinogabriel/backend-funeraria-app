@@ -7,5 +7,7 @@ import disenodesistemas.backendfunerariaapp.entities.CategoryEntity;
 public interface CategoryService
     extends CommonService<CategoryResponseDto, CategoryRequestDto, Long> {
 
-  CategoryEntity findCategoryById(Long id);
+  CategoryResponseDto findById(Long id);
+
+  CategoryEntity findCategoryEntityById(Long id);
 }

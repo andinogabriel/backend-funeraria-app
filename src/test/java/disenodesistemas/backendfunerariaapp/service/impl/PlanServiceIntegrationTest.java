@@ -148,7 +148,7 @@ class PlanServiceIntegrationTest {
       "Given an existing plan identifier when getById method is called then it returns a plan response dto")
   @Test
   void getById() {
-    PlanResponseDto actualResponse = sut.getById(EXISTING_PLAN_ID);
+    PlanResponseDto actualResponse = sut.findById(EXISTING_PLAN_ID);
 
     assertAll(
         () -> assertNotNull(actualResponse),

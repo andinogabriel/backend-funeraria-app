@@ -5,5 +5,5 @@ import disenodesistemas.backendfunerariaapp.dto.response.DeceasedResponseDto;
 
 public interface DeceasedService
     extends CommonService<DeceasedResponseDto, DeceasedRequestDto, Integer> {
-  DeceasedResponseDto findByDni(Integer dni);
+  DeceasedResponseDto findById(Integer dni);
 }

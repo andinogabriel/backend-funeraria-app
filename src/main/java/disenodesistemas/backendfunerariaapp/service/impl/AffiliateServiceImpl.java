@@ -101,6 +101,12 @@ public class AffiliateServiceImpl implements AffiliateService {
 
   @Override
   @Transactional(readOnly = true)
+  public AffiliateResponseDto findById(final Integer dni) {
+    return projectionFactory.createProjection(AffiliateResponseDto.class, findByDni(dni));
+  }
+
+  @Override
+  @Transactional(readOnly = true)
   public List<AffiliateResponseDto> findAffiliatesByUser() {
     final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     final UserEntity userEntity = userService.getUserByEmail(authentication.getName());

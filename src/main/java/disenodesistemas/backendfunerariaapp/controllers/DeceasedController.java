@@ -35,7 +35,7 @@ public class DeceasedController {
   @GetMapping("/{dni}")
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   public ResponseEntity<DeceasedResponseDto> findByDni(@PathVariable final Integer dni) {
-    return ResponseEntity.ok(deceasedService.findByDni(dni));
+    return ResponseEntity.ok(deceasedService.findById(dni));
   }
 
   @PostMapping

@@ -40,7 +40,7 @@ public class CategoryServiceImpl implements CategoryService {
   @Override
   @Transactional
   public CategoryResponseDto update(final Long id, final CategoryRequestDto categoryDto) {
-    val categoryEntity = findCategoryById(id);
+    val categoryEntity = findCategoryEntityById(id);
     categoryEntity.setName(categoryDto.getName());
     categoryEntity.setDescription(categoryDto.getDescription());
     return projectionFactory.createProjection(
@@ -50,7 +50,7 @@ public class CategoryServiceImpl implements CategoryService {
   @Override
   @Transactional
   public void delete(final Long id) {
-    final CategoryEntity categoryEntity = findCategoryById(id);
+    final CategoryEntity categoryEntity = findCategoryEntityById(id);
     if (!categoryEntity.getItems().isEmpty())
       throw new ConflictException("category.error.invalid.delete");
     categoryRepository.delete(categoryEntity);
@@ -58,7 +58,18 @@ public class CategoryServiceImpl implements CategoryService {
 
   @Override
   @Transactional(readOnly = true)
-  public CategoryEntity findCategoryById(final Long id) {
+  public CategoryResponseDto findById(final Long id) {
+    return categoryRepository
+        .findById(id)
+        .map(
+            categoryEntity ->
+                projectionFactory.createProjection(CategoryResponseDto.class, categoryEntity))
+        .orElseThrow(() -> new NotFoundException("category.error.not.found"));
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public CategoryEntity findCategoryEntityById(final Long id) {
     return categoryRepository
         .findById(id)
         .orElseThrow(() -> new NotFoundException("category.error.not.found"));

@@ -81,8 +81,9 @@ class ItemServiceImplTest {
     final CategoryEntity categoryEntity = itemEntity.getCategory();
     final Long id = categoryEntity.getId();
     final List<ItemResponseDto> expectedResult = List.of(itemResponseDto);
-    given(categoryService.findCategoryById(id)).willReturn(categoryEntity);
-    given(itemRepository.findByCategoryOrderByName(categoryEntity)).willReturn(expectedResult);
+    given(categoryService.findCategoryEntityById(id)).willReturn(categoryEntity);
+    given(itemRepository.findByCategoryOrderByName(itemEntity.getCategory()))
+        .willReturn(expectedResult);
 
     final List<ItemResponseDto> actualResult = sut.getItemsByCategoryId(id);
 
@@ -97,8 +98,10 @@ class ItemServiceImplTest {
                 expectedResult.get(0).getCategory().getName(),
                 actualResult.get(0).getCategory().getName()));
     final InOrder inOrder = inOrder(categoryService, itemRepository);
-    then(categoryService).should(inOrder, times(1)).findCategoryById(id);
-    then(itemRepository).should(inOrder, times(1)).findByCategoryOrderByName(categoryEntity);
+    then(categoryService).should(inOrder, times(1)).findCategoryEntityById(id);
+    then(itemRepository)
+        .should(inOrder, times(1))
+        .findByCategoryOrderByName(itemEntity.getCategory());
   }
 
   @Test
@@ -175,12 +178,12 @@ class ItemServiceImplTest {
   }
 
   @Test
-  void findItemByCode() {
+  void findById() {
     given(itemRepository.findByCode(EXISTING_ITEM_CODE)).willReturn(Optional.of(itemEntity));
     given(projectionFactory.createProjection(ItemResponseDto.class, itemEntity))
         .willReturn(itemResponseDto);
 
-    final ItemResponseDto actualResult = sut.findItemByCode(EXISTING_ITEM_CODE);
+    final ItemResponseDto actualResult = sut.findById(EXISTING_ITEM_CODE);
 
     itemAsserts(itemResponseDto, actualResult);
     then(itemRepository).should(times(1)).findByCode(EXISTING_ITEM_CODE);
@@ -188,13 +191,13 @@ class ItemServiceImplTest {
   }
 
   @Test
-  void findItemByCodeThrowsNotFoundException() {
+  void findByIdThrowsNotFoundException() {
     final String NON_EXISTING_ITEM_CODE = UUID.randomUUID().toString();
     given(itemRepository.findByCode(NON_EXISTING_ITEM_CODE))
         .willThrow(new NotFoundException("item.error.code.not.found"));
 
     final NotFoundException actualResult =
-        assertThrows(NotFoundException.class, () -> sut.findItemByCode(NON_EXISTING_ITEM_CODE));
+        assertThrows(NotFoundException.class, () -> sut.findById(NON_EXISTING_ITEM_CODE));
 
     assertAll(
         () -> assertEquals(HttpStatus.NOT_FOUND, actualResult.getStatus()),

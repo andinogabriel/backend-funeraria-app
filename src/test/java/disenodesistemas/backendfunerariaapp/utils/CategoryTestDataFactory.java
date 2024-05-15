@@ -24,6 +24,13 @@ public class CategoryTestDataFactory {
     return categoryEntity;
   }
 
+  public static CategoryEntity getCategoryEntityWithId() {
+    final CategoryEntity categoryEntity = new CategoryEntity(NAME, DESCRIPTION);
+    categoryEntity.setId(ID);
+    categoryEntity.setItems(List.of());
+    return categoryEntity;
+  }
+
   public static CategoryEntity getCategoryEntityWithItems() {
     final CategoryEntity categoryEntity = new CategoryEntity(NAME, DESCRIPTION);
     categoryEntity.setId(null);

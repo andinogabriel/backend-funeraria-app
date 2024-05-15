@@ -40,13 +40,13 @@ class CityServiceImplTest {
   }
 
   @Test
-  void getCityById() {
+  void findById() {
     final CityEntity expected = CityTestDataFactory.getCityEntity();
     final Long id = expected.getId();
 
     given(cityRepository.getById(id)).willReturn(Optional.ofNullable(cityResponseDto));
 
-    final CityResponseDto actualResult = sut.getCityById(id);
+    final CityResponseDto actualResult = sut.findById(id);
 
     assertAll(
         () -> assertEquals(expected.getId(), actualResult.getId()),
@@ -57,12 +57,12 @@ class CityServiceImplTest {
   }
 
   @Test
-  void getCitiesByProvinceId() {
+  void findByProvinceId() {
     final ProvinceEntity provinceEntity = ProvinceTestDataFactory.getChacoProvince();
     final List<CityResponseDto> expected = List.of(cityResponseDto);
     given(cityRepository.findByProvinceOrderByName(provinceEntity)).willReturn(expected);
 
-    final List<CityResponseDto> actualResult = sut.getCitiesByProvinceId(provinceEntity.getId());
+    final List<CityResponseDto> actualResult = sut.findByProvinceId(provinceEntity.getId());
 
     assertAll(
         () -> assertEquals(expected.size(), actualResult.size()),

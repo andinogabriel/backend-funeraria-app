@@ -60,7 +60,7 @@ public class SupplierServiceImpl implements SupplierService {
   }
 
   @Override
-  public SupplierResponseDto findSupplierByNif(final String nif) {
+  public SupplierResponseDto findById(final String nif) {
     return projectionFactory.createProjection(
         SupplierResponseDto.class, findSupplierEntityByNif(nif));
   }

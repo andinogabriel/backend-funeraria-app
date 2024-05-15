@@ -7,10 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.only;
-import static org.mockito.Mockito.verify;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
 
 import disenodesistemas.backendfunerariaapp.dto.request.CategoryRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.response.CategoryResponseDto;
@@ -59,7 +57,7 @@ class CategoryServiceImplTest {
     assertAll(
         () -> assertEquals(expected.size(), result.size()),
         () -> assertEquals(expected.get(0).getName(), result.get(0).getName()));
-    verify(categoryRepository, only()).findAllByOrderByName();
+    then(categoryRepository).should(times(1)).findAllByOrderByName();
   }
 
   @Test
@@ -75,7 +73,7 @@ class CategoryServiceImplTest {
         () -> assertEquals(expected.getId(), result.getId()),
         () -> assertEquals(expected.getDescription(), result.getDescription()),
         () -> assertEquals(expected.getName(), result.getName()));
-    verify(categoryRepository, only()).save(any(CategoryEntity.class));
+    then(categoryRepository).should(times(1)).save(any(CategoryEntity.class));
   }
 
   @Test
@@ -93,8 +91,8 @@ class CategoryServiceImplTest {
         () -> assertEquals(expected.getId(), result.getId()),
         () -> assertEquals(expected.getDescription(), result.getDescription()),
         () -> assertEquals(expected.getName(), result.getName()));
-    verify(categoryRepository, atLeastOnce()).save(any(CategoryEntity.class));
-    verify(categoryRepository, atLeastOnce()).findById(id);
+    then(categoryRepository).should(times(1)).save(any(CategoryEntity.class));
+    then(categoryRepository).should(times(1)).findById(id);
   }
 
   @Test
@@ -105,8 +103,8 @@ class CategoryServiceImplTest {
 
     sut.delete(id);
 
-    verify(categoryRepository, atLeastOnce()).delete(expected);
-    verify(categoryRepository, atLeastOnce()).findById(id);
+    then(categoryRepository).should(times(1)).delete(expected);
+    then(categoryRepository).should(times(1)).findById(id);
   }
 
   @Test
@@ -120,34 +118,37 @@ class CategoryServiceImplTest {
     assertAll(
         () -> assertEquals(HttpStatus.CONFLICT, result.getStatus()),
         () -> assertEquals("category.error.invalid.delete", result.getMessage()));
-    verify(categoryRepository, never()).delete(expected);
-    verify(categoryRepository, atLeastOnce()).findById(id);
+    then(categoryRepository).should(times(1)).findById(id);
+    then(categoryRepository).should(times(0)).delete(expected);
   }
 
   @Test
-  void findCategoryById() {
+  void findById() {
     final Long id = categoryRequestDto.getId();
     final CategoryEntity expected = getCategoryEntity();
     given(categoryRepository.findById(id)).willReturn(Optional.of(expected));
+    given(projectionFactory.createProjection(CategoryResponseDto.class, expected))
+        .willReturn(categoryResponseDto);
 
-    final CategoryEntity result = sut.findCategoryById(id);
+    final CategoryResponseDto result = sut.findById(id);
 
     assertAll(
         () -> assertEquals(expected.getId(), result.getId()),
         () -> assertEquals(expected.getDescription(), result.getDescription()),
         () -> assertEquals(expected.getName(), result.getName()));
-    verify(categoryRepository, only()).findById(id);
+    then(categoryRepository).should(times(1)).findById(id);
+    then(projectionFactory).should(times(1)).createProjection(CategoryResponseDto.class, expected);
   }
 
   @Test
-  void findCategoryByIdNotFoundException() {
+  void findByIdNotFoundException() {
     final Long id = 2L;
     final NotFoundException notFoundException =
-        assertThrows(NotFoundException.class, () -> sut.findCategoryById(id));
+        assertThrows(NotFoundException.class, () -> sut.findById(id));
 
     assertAll(
         () -> assertEquals("category.error.not.found", notFoundException.getMessage()),
         () -> assertEquals(HttpStatus.NOT_FOUND, notFoundException.getStatus()));
-    verify(categoryRepository, only()).findById(id);
+    then(categoryRepository).should(times(1)).findById(id);
   }
 }

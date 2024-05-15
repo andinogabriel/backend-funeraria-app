@@ -54,7 +54,7 @@ public class FuneralServiceImpl implements FuneralService {
   public FuneralResponseDto create(final FuneralRequestDto funeralRequest) {
     validateReceiptNumber(funeralRequest.getReceiptNumber());
     validateDeceasedDniRequest(funeralRequest.getDeceased().getDni());
-    final Plan funeralPlan = planService.findById(funeralRequest.getPlan().getId());
+    final Plan funeralPlan = planService.findEntityById(funeralRequest.getPlan().getId());
     final Optional<AffiliateEntity> affiliateEntityOptional =
         affiliateRepository.findByDni(funeralRequest.getDeceased().getDni());
     affiliateEntityOptional.ifPresent(
