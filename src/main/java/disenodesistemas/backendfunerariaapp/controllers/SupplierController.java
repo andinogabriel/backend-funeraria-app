@@ -7,7 +7,8 @@ import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,39 +25,39 @@ import org.springframework.web.bind.annotation.RestController;
 public class SupplierController {
 
   private final SupplierService supplierService;
-  private final ProjectionFactory projectionFactory;
 
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping
-  public List<SupplierResponseDto> getSuppliers() {
-    return supplierService.findAll();
+  public ResponseEntity<List<SupplierResponseDto>> findAll() {
+    return ResponseEntity.ok(supplierService.findAll());
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @PostMapping
-  public SupplierResponseDto createSupplier(@RequestBody @Valid final SupplierRequestDto supplier) {
-    return supplierService.create(supplier);
+  public ResponseEntity<SupplierResponseDto> create(
+      @RequestBody @Valid final SupplierRequestDto supplier) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(supplierService.create(supplier));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping(path = "/{nif}")
-  public SupplierResponseDto getSupplierByNif(@PathVariable final String nif) {
-    return projectionFactory.createProjection(
-        SupplierResponseDto.class, supplierService.findById(nif));
+  public ResponseEntity<SupplierResponseDto> findById(@PathVariable final String nif) {
+    return ResponseEntity.ok(supplierService.findById(nif));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping(path = "/{nif}")
-  public OperationStatusModel deleteSupplier(@PathVariable final String nif) {
+  public ResponseEntity<OperationStatusModel> delete(@PathVariable final String nif) {
     supplierService.delete(nif);
-    return OperationStatusModel.builder().name("DELETE").result("SUCCESSFUL").build();
+    return ResponseEntity.ok(
+        OperationStatusModel.builder().name("DELETE SUPPLIER").result("SUCCESSFUL").build());
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @PutMapping(path = "/{nif}")
-  public SupplierResponseDto updateSupplier(
+  public ResponseEntity<SupplierResponseDto> update(
       @PathVariable final String nif,
       @RequestBody @Valid final SupplierRequestDto supplierRequestDto) {
-    return supplierService.update(nif, supplierRequestDto);
+    return ResponseEntity.ok(supplierService.update(nif, supplierRequestDto));
   }
 }

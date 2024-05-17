@@ -45,6 +45,14 @@ public class PlanTestDataFactory {
         .build();
   }
 
+  public static Plan getPlanEntity() {
+    final Plan planToReturn =
+        new Plan("Plan nivel medio", "Plan con mas variedad de prestaciones", new BigDecimal("15"));
+    planToReturn.setId(2L);
+    planToReturn.setPrice(PRICE);
+    return planToReturn;
+  }
+
   public static PlanRequestDto getInvalidPlanRequest() {
     return PlanRequestDto.builder()
         .name("Plan1")

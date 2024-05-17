@@ -1,10 +1,11 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
 import disenodesistemas.backendfunerariaapp.dto.request.FuneralRequestDto;
-import disenodesistemas.backendfunerariaapp.dto.response.AffiliateResponseDto;
 import disenodesistemas.backendfunerariaapp.dto.response.FuneralResponseDto;
 import disenodesistemas.backendfunerariaapp.service.FuneralService;
 import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
+import java.util.List;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.Valid;
-import java.util.List;
-
 @RestController
 @RequestMapping("api/v1/funerals")
 @RequiredArgsConstructor
@@ -30,14 +28,14 @@ public class FuneralController {
 
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping
-  public List<FuneralResponseDto> getAll() {
-    return funeralService.findAll();
+  public ResponseEntity<List<FuneralResponseDto>> findAll() {
+    return ResponseEntity.ok(funeralService.findAll());
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping("/{id}")
-  public FuneralResponseDto getFuneralById(@PathVariable final Long id) {
-    return funeralService.findById(id);
+  public ResponseEntity<FuneralResponseDto> findById(@PathVariable final Long id) {
+    return ResponseEntity.ok(funeralService.findById(id));
   }
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
@@ -59,7 +57,7 @@ public class FuneralController {
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final Long id) {
     funeralService.delete(id);
     return ResponseEntity.ok(
-        OperationStatusModel.builder().name("DELETE FUNERAL").result("SUCCESS").build());
+        OperationStatusModel.builder().name("DELETE FUNERAL").result("SUCCESSFUL").build());
   }
 
   @PreAuthorize("hasRole('USER')")

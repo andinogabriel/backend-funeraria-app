@@ -2,11 +2,11 @@ package disenodesistemas.backendfunerariaapp.controllers;
 
 import disenodesistemas.backendfunerariaapp.dto.response.ProvinceResponseDto;
 import disenodesistemas.backendfunerariaapp.service.ProvinceService;
+import java.util.List;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/provinces")
@@ -19,7 +19,7 @@ public class ProvinceController {
   }
 
   @GetMapping
-  public List<ProvinceResponseDto> getAllProvinces() {
-    return provinceService.getAllProvinces();
+  public ResponseEntity<List<ProvinceResponseDto>> findAll() {
+    return ResponseEntity.ok(provinceService.getAllProvinces());
   }
 }

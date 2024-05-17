@@ -53,8 +53,8 @@ public class UserController {
 
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping
-  public List<UserResponseDto> getAllUsers() {
-    return userService.findAll();
+  public ResponseEntity<List<UserResponseDto>> findAll() {
+    return ResponseEntity.ok(userService.findAll());
   }
 
   @PostMapping
@@ -102,16 +102,16 @@ public class UserController {
 
   @PreAuthorize("hasRole('ADMIN')")
   @PostMapping(path = "/rol/{email}")
-  public Set<RolRequestDto> updateUserRol(
+  public ResponseEntity<Set<RolRequestDto>> updateUserRol(
       @PathVariable final String email, @Valid @RequestBody final RolRequestDto rolRequestDto) {
-    return userService.updateUserRol(email, rolRequestDto);
+    return ResponseEntity.ok(userService.updateUserRol(email, rolRequestDto));
   }
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   @PostMapping(path = "/address")
-  public List<AddressResponseDto> addUserAddresses(
+  public ResponseEntity<List<AddressResponseDto>> addUserAddresses(
       @RequestBody final List<@Valid AddressRequestDto> addressesRequest) {
-    return userService.addAddressesUser(addressesRequest);
+    return ResponseEntity.ok(userService.addAddressesUser(addressesRequest));
   }
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")

@@ -24,4 +24,10 @@ public class ReceiptTypeTestDataFactory {
   public static ReceiptTypeDto getEgressCashReceipt() {
     return ReceiptTypeDto.builder().id(1L).name(EGRESS_CASH_RECEIPT).build();
   }
+
+  public static ReceiptTypeEntity getEgressCashReceiptEntity() {
+    final ReceiptTypeEntity receiptType = new ReceiptTypeEntity(EGRESS_CASH_RECEIPT);
+    receiptType.setId(1L);
+    return receiptType;
+  }
 }

@@ -12,6 +12,8 @@ import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,41 +36,43 @@ public class ItemController {
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   @GetMapping
-  public List<ItemResponseDto> getAllItems() {
-    return itemService.findAll();
+  public ResponseEntity<List<ItemResponseDto>> findAll() {
+    return ResponseEntity.ok(itemService.findAll());
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping(path = "/{code}")
-  public ItemResponseDto getItemByCode(@PathVariable final String code) {
-    return itemService.findById(code);
+  public ResponseEntity<ItemResponseDto> findById(@PathVariable final String code) {
+    return ResponseEntity.ok(itemService.findById(code));
   }
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   @GetMapping(path = "/category/{id}")
-  public List<ItemResponseDto> getItemsByCategoryId(@PathVariable final Long id) {
-    return itemService.getItemsByCategoryId(id);
+  public ResponseEntity<List<ItemResponseDto>> findItemsByCategoryId(@PathVariable final Long id) {
+    return ResponseEntity.ok(itemService.getItemsByCategoryId(id));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @PostMapping
-  public ItemResponseDto createItem(@RequestBody @Valid final ItemRequestDto itemRequestModel) {
-    return itemService.create(itemRequestModel);
+  public ResponseEntity<ItemResponseDto> create(
+      @RequestBody @Valid final ItemRequestDto itemRequestModel) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(itemService.create(itemRequestModel));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @PutMapping(path = "/{code}")
-  public ItemResponseDto updateItem(
+  public ResponseEntity<ItemResponseDto> update(
       @PathVariable(name = "code") final String code,
       @RequestBody @Valid final ItemRequestDto itemRequestModel) {
-    return itemService.update(code, itemRequestModel);
+    return ResponseEntity.ok(itemService.update(code, itemRequestModel));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping(path = "/{code}")
-  public OperationStatusModel deleteItem(@PathVariable final String code) {
+  public ResponseEntity<OperationStatusModel> delete(@PathVariable final String code) {
     itemService.delete(code);
-    return OperationStatusModel.builder().name("DELETE").result("SUCCESS").build();
+    return ResponseEntity.ok(
+        OperationStatusModel.builder().name("DELETE ITEM").result("SUCCESS").build());
   }
 
   @PreAuthorize("hasRole('ADMIN')")

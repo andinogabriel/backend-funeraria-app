@@ -4,6 +4,8 @@ import disenodesistemas.backendfunerariaapp.dto.request.DeathCauseDto;
 import disenodesistemas.backendfunerariaapp.dto.response.DeathCauseResponseDto;
 import disenodesistemas.backendfunerariaapp.service.DeathCauseService;
 import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
+import java.util.List;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +18,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.validation.Valid;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,7 +34,7 @@ public class DeathCauseController {
 
   @GetMapping("/{id}")
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-  public ResponseEntity<DeathCauseResponseDto> findByDni(@PathVariable final Long id) {
+  public ResponseEntity<DeathCauseResponseDto> findById(@PathVariable final Long id) {
     return ResponseEntity.ok(deathCauseService.findById(id));
   }
 

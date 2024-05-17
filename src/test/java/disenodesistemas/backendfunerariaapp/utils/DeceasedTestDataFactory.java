@@ -13,6 +13,7 @@ import disenodesistemas.backendfunerariaapp.dto.request.CityDto;
 import disenodesistemas.backendfunerariaapp.dto.request.DeathCauseDto;
 import disenodesistemas.backendfunerariaapp.dto.request.DeceasedRequestDto;
 import disenodesistemas.backendfunerariaapp.dto.request.ProvinceDto;
+import disenodesistemas.backendfunerariaapp.entities.DeathCauseEntity;
 import disenodesistemas.backendfunerariaapp.entities.DeceasedEntity;
 import java.time.LocalDate;
 import java.time.Month;
@@ -99,8 +100,12 @@ public class DeceasedTestDataFactory {
         .build();
   }
 
-  private static DeathCauseDto getDeathCause() {
+  public static DeathCauseDto getDeathCause() {
     return DeathCauseDto.builder().id(2L).name("'Muerte clínica").build();
+  }
+
+  public static DeathCauseEntity getDeathCauseEntity() {
+    return DeathCauseEntity.builder().id(1L).name("Muerte clínica").build();
   }
 
   private static AddressRequestDto getDeceasedPlaceOfDeath() {

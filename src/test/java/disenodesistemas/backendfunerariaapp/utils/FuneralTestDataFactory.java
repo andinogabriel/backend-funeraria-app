@@ -5,9 +5,12 @@ import static disenodesistemas.backendfunerariaapp.utils.DeceasedTestDataFactory
 import static disenodesistemas.backendfunerariaapp.utils.DeceasedTestDataFactory.getDeceasedRequestDto;
 import static disenodesistemas.backendfunerariaapp.utils.DeceasedTestDataFactory.getSavedInDbDeceasedRequestDto;
 import static disenodesistemas.backendfunerariaapp.utils.PlanTestDataFactory.getExistingPlanRequest;
+import static disenodesistemas.backendfunerariaapp.utils.PlanTestDataFactory.getPlanEntity;
 import static disenodesistemas.backendfunerariaapp.utils.ReceiptTypeTestDataFactory.getEgressCashReceipt;
+import static disenodesistemas.backendfunerariaapp.utils.ReceiptTypeTestDataFactory.getEgressCashReceiptEntity;
 
 import disenodesistemas.backendfunerariaapp.dto.request.FuneralRequestDto;
+import disenodesistemas.backendfunerariaapp.entities.Funeral;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -42,6 +45,20 @@ public class FuneralTestDataFactory {
         .deceased(getSavedInDbDeceasedRequestDto())
         .plan(getExistingPlanRequest())
         .build();
+  }
+
+  public static Funeral getFuneralEntity() {
+    final Funeral entity =
+        Funeral.builder()
+            .receiptNumber("123465sad465")
+            .receiptSeries("465asd4as")
+            .funeralDate(FUNERAL_DATE)
+            .receiptType(getEgressCashReceiptEntity())
+            .plan(getPlanEntity())
+            .tax(TAX)
+            .build();
+    entity.setId(1L);
+    return entity;
   }
 
   public static FuneralRequestDto getSavedInDBFuneralRequestDtoThrowsException() {

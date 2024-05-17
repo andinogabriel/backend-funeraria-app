@@ -13,6 +13,8 @@ import lombok.val;
 import org.hibernate.Filter;
 import org.hibernate.Session;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -35,14 +37,14 @@ public class IncomeController {
 
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping
-  public List<IncomeResponseDto> getIncomes() {
-    return incomeService.findAll();
+  public ResponseEntity<List<IncomeResponseDto>> findAll() {
+    return ResponseEntity.ok(incomeService.findAll());
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping(path = "/{receiptNumber}")
-  public IncomeResponseDto getIncomeById(@PathVariable final Long receiptNumber) {
-    return incomeService.findByReceiptNumber(receiptNumber);
+  public ResponseEntity<IncomeResponseDto> findById(@PathVariable final Long receiptNumber) {
+    return ResponseEntity.ok(incomeService.findByReceiptNumber(receiptNumber));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
@@ -65,7 +67,8 @@ public class IncomeController {
 
   @PreAuthorize("hasRole('ADMIN')")
   @PostMapping
-  public IncomeResponseDto createIncome(@RequestBody @Valid final IncomeRequestDto incomeRequest) {
+  public ResponseEntity<IncomeResponseDto> create(
+      @RequestBody @Valid final IncomeRequestDto incomeRequest) {
     val authentication = SecurityContextHolder.getContext().getAuthentication();
     final String email = authentication.getName();
     val incomeRequestDto =
@@ -76,12 +79,12 @@ public class IncomeController {
             .receiptType(incomeRequest.getReceiptType())
             .tax(incomeRequest.getTax())
             .build();
-    return incomeService.create(incomeRequestDto);
+    return ResponseEntity.status(HttpStatus.CREATED).body(incomeService.create(incomeRequestDto));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @PutMapping(path = "/{receiptNumber}")
-  public IncomeResponseDto updateIncome(
+  public ResponseEntity<IncomeResponseDto> update(
       @PathVariable final Long receiptNumber,
       @Valid @RequestBody final IncomeRequestDto incomeRequest) {
     val authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -94,13 +97,14 @@ public class IncomeController {
             .receiptType(incomeRequest.getReceiptType())
             .tax(incomeRequest.getTax())
             .build();
-    return incomeService.update(receiptNumber, incomeRequestDto);
+    return ResponseEntity.ok(incomeService.update(receiptNumber, incomeRequestDto));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping(path = "/{receiptNumber}")
-  public OperationStatusModel deleteIncome(@PathVariable final Long receiptNumber) {
+  public ResponseEntity<OperationStatusModel> delete(@PathVariable final Long receiptNumber) {
     incomeService.delete(receiptNumber);
-    return OperationStatusModel.builder().name("DELETE").result("SUCCESS").build();
+    return ResponseEntity.ok(
+        OperationStatusModel.builder().name("DELETE INCOME").result("SUCCESS").build());
   }
 }
