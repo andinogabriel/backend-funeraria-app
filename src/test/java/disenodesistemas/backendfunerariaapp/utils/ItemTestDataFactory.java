@@ -1,5 +1,8 @@
 package disenodesistemas.backendfunerariaapp.utils;
 
+import static disenodesistemas.backendfunerariaapp.utils.BrandTestDataFactory.getBrandRequestDto;
+import static disenodesistemas.backendfunerariaapp.utils.CategoryTestDataFactory.getCategoryRequestDto;
+
 import disenodesistemas.backendfunerariaapp.dto.request.ItemRequestDto;
 import disenodesistemas.backendfunerariaapp.entities.BrandEntity;
 import disenodesistemas.backendfunerariaapp.entities.CategoryEntity;
@@ -7,14 +10,11 @@ import disenodesistemas.backendfunerariaapp.entities.ItemEntity;
 import java.math.BigDecimal;
 import lombok.experimental.UtilityClass;
 
-import static disenodesistemas.backendfunerariaapp.utils.BrandTestDataFactory.getBrandRequestDto;
-import static disenodesistemas.backendfunerariaapp.utils.CategoryTestDataFactory.getCategoryRequestDto;
-
 @UtilityClass
 public class ItemTestDataFactory {
 
   private static final String NAME = "Corona simple";
-  private static final String CODE = "itemCode";
+  private static final String CODE = "67ad6c26-f586-4cb2-9d5e-3fbcc3e2e8eb";
   private static final BigDecimal PRICE = BigDecimal.valueOf(3000);
 
   public static ItemEntity getItem() {
@@ -35,7 +35,7 @@ public class ItemTestDataFactory {
         .id(1L)
         .brand(getBrandRequestDto())
         .category(getCategoryRequestDto())
-        .code("67ad6c26-f586-4cb2-9d5e-3fbcc3e2e8eb")
+        .code(CODE)
         .price(PRICE)
         .name(NAME)
         .build();

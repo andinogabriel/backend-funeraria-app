@@ -72,7 +72,7 @@ public class ItemController {
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final String code) {
     itemService.delete(code);
     return ResponseEntity.ok(
-        OperationStatusModel.builder().name("DELETE ITEM").result("SUCCESS").build());
+        OperationStatusModel.builder().name("DELETE ITEM").result("SUCCESSFUL").build());
   }
 
   @PreAuthorize("hasRole('ADMIN')")

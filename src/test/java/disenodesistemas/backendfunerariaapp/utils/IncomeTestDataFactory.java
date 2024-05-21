@@ -35,7 +35,7 @@ public class IncomeTestDataFactory {
 
   public static IncomeRequestDto getIncomeRequest() {
     return IncomeRequestDto.builder()
-        .tax(BigDecimal.TEN)
+        .tax(TAX)
         .receiptType(getIncomeCashReceipt())
         .supplier(getSupplierRequestDto())
         .incomeUser(getUserDto())

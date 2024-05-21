@@ -59,10 +59,10 @@ public class IncomeController {
     final Session session = entityManager.unwrap(Session.class);
     final Filter filter = session.enableFilter("deletedIncomesFilter");
     filter.setParameter("isDeleted", isDeleted);
-    final Page<IncomeResponseDto> entries =
+    final Page<IncomeResponseDto> incomes =
         incomeService.getIncomesPaginated(page, limit, sortBy, sortDir);
     session.disableFilter("deletedIncomesFilter");
-    return entries;
+    return incomes;
   }
 
   @PreAuthorize("hasRole('ADMIN')")
@@ -105,6 +105,6 @@ public class IncomeController {
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final Long receiptNumber) {
     incomeService.delete(receiptNumber);
     return ResponseEntity.ok(
-        OperationStatusModel.builder().name("DELETE INCOME").result("SUCCESS").build());
+        OperationStatusModel.builder().name("DELETE INCOME").result("SUCCESSFUL").build());
   }
 }

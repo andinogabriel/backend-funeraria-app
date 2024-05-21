@@ -34,7 +34,7 @@ public class UserTestDataFactory {
   }
 
   public static UserDto getUserDto() {
-    return UserDto.builder().email(EMAIL).firstName(FIRST_NAME).lastName(LAST_NAME).build();
+    return UserDto.builder().email(EMAIL).build();
   }
 
   public static UserLoginDto getUserLoginDto() {
