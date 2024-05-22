@@ -1,7 +1,7 @@
 package disenodesistemas.backendfunerariaapp.controllers;
 
 import disenodesistemas.backendfunerariaapp.dto.response.RelationshipResponseDto;
-import disenodesistemas.backendfunerariaapp.service.impl.RelationshipServiceImpl;
+import disenodesistemas.backendfunerariaapp.service.RelationshipService;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("api/v1/relationships")
 public class RelationshipController {
 
-  private final RelationshipServiceImpl relationshipService;
+  private final RelationshipService relationshipService;
 
-  public RelationshipController(final RelationshipServiceImpl relationshipService) {
+  public RelationshipController(final RelationshipService relationshipService) {
     this.relationshipService = relationshipService;
   }
 

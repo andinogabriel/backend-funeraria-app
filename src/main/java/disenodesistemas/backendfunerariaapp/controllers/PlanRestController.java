@@ -49,7 +49,7 @@ public class PlanRestController {
   @PreAuthorize("hasRole('ADMIN')")
   @PutMapping({"/{id}"})
   public ResponseEntity<PlanResponseDto> update(
-      @Valid @RequestBody final PlanRequestDto planRequestDto, @PathVariable final Long id) {
+      @PathVariable final Long id, @Valid @RequestBody final PlanRequestDto planRequestDto) {
     return ResponseEntity.ok(planService.update(id, planRequestDto));
   }
 }
