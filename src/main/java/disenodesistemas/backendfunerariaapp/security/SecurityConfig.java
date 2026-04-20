@@ -17,11 +17,11 @@ import disenodesistemas.backendfunerariaapp.security.request.SecurityRequestProp
 import disenodesistemas.backendfunerariaapp.security.ratelimit.LoginRateLimitProperties;
 import disenodesistemas.backendfunerariaapp.security.threat.ThreatProtectionProperties;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -32,6 +32,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -85,9 +86,17 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain securityFilterChain(
-      final HttpSecurity http, final JwtTokenFilter jwtTokenFilter) throws Exception {
+      final HttpSecurity http,
+      final JwtTokenFilter jwtTokenFilter,
+      final ObjectProvider<CorsConfigurationSource> corsConfigurationSourceProvider)
+      throws Exception {
+    final CorsConfigurationSource corsConfigurationSource =
+        corsConfigurationSourceProvider.getIfAvailable();
+    if (corsConfigurationSource != null) {
+      http.cors(cors -> cors.configurationSource(corsConfigurationSource));
+    }
+
     http
-        .cors(Customizer.withDefaults())
         .csrf(AbstractHttpConfigurer::disable)
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtEntryPoint))
