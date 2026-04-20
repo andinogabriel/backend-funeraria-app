@@ -34,6 +34,7 @@
     <testcontainers.version>1.20.6</testcontainers.version>
     <logstash.logback.encoder.version>8.1</logstash.logback.encoder.version>
     <checkstyle.plugin.version>3.6.0</checkstyle.plugin.version>
+    <jackson2.version>2.20.1</jackson2.version>
 
     <project.build.outputTimestamp>2026-01-21T00:00:00Z</project.build.outputTimestamp>
   </properties>
@@ -52,6 +53,17 @@
         <groupId>software.amazon.awssdk</groupId>
         <artifactId>bom</artifactId>
         <version>${aws.sdk.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- JJWT still inherits jackson-databind 2.12.7.1 from its parent POM. Re-import the
+           Spring Boot-aligned Jackson BOM afterwards so every com.fasterxml.jackson module stays
+           on the same compatible 2.20.x line in runtime and tests. -->
+      <dependency>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>${jackson2.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -149,6 +161,12 @@
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-jackson</artifactId>
       <scope>runtime</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- Apache Commons (explicit: you rely on Strings.CI) -->
@@ -186,6 +204,7 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
+      <version>${jackson2.version}</version>
     </dependency>
 
     <!-- Tests -->
