@@ -1,8 +1,10 @@
 package disenodesistemas.backendfunerariaapp.modern.support;
 
+import disenodesistemas.backendfunerariaapp.application.port.out.FileStoragePort;
 import org.flywaydb.core.Flyway;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -13,6 +15,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  */
 @Testcontainers(disabledWithoutDocker = true)
 public abstract class AbstractPostgresIntegrationTest {
+
+  @MockitoBean protected FileStoragePort fileStoragePort;
 
   @Container
   @SuppressWarnings("resource")
