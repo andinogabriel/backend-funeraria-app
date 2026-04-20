@@ -31,6 +31,7 @@ import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -83,7 +84,8 @@ public class SecurityConfig {
   }
 
   @Bean
-  public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
+  public SecurityFilterChain securityFilterChain(
+      final HttpSecurity http, final JwtTokenFilter jwtTokenFilter) throws Exception {
     http
         .cors(Customizer.withDefaults())
         .csrf(AbstractHttpConfigurer::disable)
@@ -113,8 +115,8 @@ public class SecurityConfig {
             .anyRequest().authenticated()
         );
 
-    http.addFilterBefore(requestTracingFilter, JwtTokenFilter.class);
-    http.addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+    http.addFilterBefore(requestTracingFilter, SecurityContextHolderFilter.class);
+    http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
     return http.build();
   }
 }
