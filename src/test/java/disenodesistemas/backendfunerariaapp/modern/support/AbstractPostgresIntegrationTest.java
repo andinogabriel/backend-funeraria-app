@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.modern.support;
 
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -14,6 +15,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 public abstract class AbstractPostgresIntegrationTest {
 
   @Container
+  @ServiceConnection
   @SuppressWarnings("resource")
   protected static final PostgreSQLContainer<?> POSTGRESQL =
       new PostgreSQLContainer<>("postgres:17-alpine")
@@ -23,13 +25,11 @@ public abstract class AbstractPostgresIntegrationTest {
 
   /**
    * Registers the dynamic properties required for Spring Boot to use the running PostgreSQL
-   * container, Flyway migrations and local file-storage defaults during integration testing.
+   * container together with the non-database defaults needed by the application during
+   * integration testing.
    */
   @DynamicPropertySource
   static void registerPostgresProperties(final DynamicPropertyRegistry registry) {
-    registry.add("spring.datasource.url", POSTGRESQL::getJdbcUrl);
-    registry.add("spring.datasource.username", POSTGRESQL::getUsername);
-    registry.add("spring.datasource.password", POSTGRESQL::getPassword);
     registry.add("spring.jpa.show-sql", () -> "false");
     registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
     registry.add("spring.flyway.enabled", () -> "true");
