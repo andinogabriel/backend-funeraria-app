@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -82,6 +83,7 @@ public class LoginRateLimiter {
    * uses this constructor while tests can inject a custom clock through the overload below for
    * deterministic assertions around rate-limiting windows.
    */
+  @Autowired
   public LoginRateLimiter(final LoginRateLimitProperties props) {
     this(props, Clock.systemUTC());
   }
