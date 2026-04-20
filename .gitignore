@@ -4,35 +4,54 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+### Build and runtime artifacts ###
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+*.log
+*.class
+.jshell-prefs/
 
-### IntelliJ IDEA ###
-.idea
+### IDEs ###
+.idea/
 *.iws
 *.iml
 *.ipr
-
-
-### NetBeans ###
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+.apt_generated/
+.vscode/
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
-.vscode/
+### Docker and local env ###
+.env
+.env.*
+!.env.example
+docker/.env
+docker/*.env
 
-### Sensitive Data ###
-src/main/resources/application.properties
+### Local application overrides and secrets ###
 application.properties
+application-*.local.properties
+application-*.local.yaml
+src/main/resources/application-local.properties
+src/main/resources/application-local.yaml
+*.pem
+*.key
+*.p12
+
+### Local storage ###
+.data/
+storage/
+
+### Local tooling ###
+.m2/
+src.zip

@@ -1,9 +1,9 @@
 package disenodesistemas.backendfunerariaapp.security;
 
-import disenodesistemas.backendfunerariaapp.dto.request.UserRegisterDto;
+import disenodesistemas.backendfunerariaapp.web.dto.request.UserRegisterDto;
 
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 public class PasswordMatchesValidator implements ConstraintValidator<PasswordMatches, Object> {
 
@@ -15,6 +15,6 @@ public class PasswordMatchesValidator implements ConstraintValidator<PasswordMat
   @Override
   public boolean isValid(final Object obj, final ConstraintValidatorContext context) {
     final UserRegisterDto user = (UserRegisterDto) obj;
-    return user.getPassword().equals(user.getMatchingPassword());
+    return user.password().equals(user.matchingPassword());
   }
 }

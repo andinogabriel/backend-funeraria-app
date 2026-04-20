@@ -1,0 +1,19 @@
+package disenodesistemas.backendfunerariaapp.persistence.repository;
+
+import disenodesistemas.backendfunerariaapp.domain.entity.ReceiptTypeEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface ReceiptTypeRepository extends JpaRepository<ReceiptTypeEntity, Long> {
+
+    List<ReceiptTypeEntity> findAllByOrderByName();
+
+    Optional<ReceiptTypeEntity> findById(Long id);
+
+    Optional<ReceiptTypeEntity> findByNameIsContainingIgnoreCase(String name);
+
+}
