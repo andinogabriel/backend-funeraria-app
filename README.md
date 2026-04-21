@@ -497,19 +497,35 @@ Generated coverage report:
 
 ## Continuous Integration
 
-GitHub Actions runs the main quality pipeline on pushes and pull requests:
+GitHub Actions now covers quality, image validation and repository hygiene through separate
+workflows:
 
-- Maven `verify`
-- unit and integration tests
-- Flyway + Testcontainers validation
-- OpenAPI contract validation
-- Checkstyle report artifact upload
-- JaCoCo artifact upload
-- Docker image build validation
+- `CI`
+  - Maven `verify`
+  - unit and integration tests
+  - Flyway + Testcontainers validation
+  - OpenAPI contract validation
+  - Checkstyle, JaCoCo and Surefire artifact upload
+  - Docker image build validation with Buildx cache
+- `Dependency Review`
+  - pull-request diff inspection for risky dependency changes
+- `CodeQL`
+  - static security analysis for the Java codebase on PRs, protected branches and a weekly schedule
+- Dependabot
+  - weekly dependency updates for Maven and GitHub Actions
 
-Workflow file:
+Workflow files:
 
 - [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+- [`.github/workflows/dependency-review.yml`](.github/workflows/dependency-review.yml)
+- [`.github/workflows/codeql.yml`](.github/workflows/codeql.yml)
+- [`.github/dependabot.yml`](.github/dependabot.yml)
+
+Recommended repository settings for the default branch:
+
+- require `CI`, `Dependency Review` and `CodeQL` before merge
+- enable squash merge as the default strategy
+- enable auto-merge only after required checks pass
 
 ## Architecture Decision Records
 
