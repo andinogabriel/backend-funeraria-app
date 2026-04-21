@@ -1,13 +1,104 @@
-version: '3.9'
-
 services:
-  java_app:
-    container_name: java_app
-    image: backend-funerary-app:1.0.0
-    build: .
-    ports:
-      - "8081:8081"
+  postgres:
+    image: postgres:17-alpine
+    container_name: backend-funeraria-postgres
     environment:
-      DATA
+      POSTGRES_DB: ${POSTGRES_DB:-funerariadb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-funerariadb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
-  java_db:
+  app:
+    build:
+      context: .
+    container_name: backend-funeraria-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker,json-logs
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-funerariadb}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JWT_TOKEN_SECRET: ${JWT_TOKEN_SECRET:-local-dev-jwt-secret-change-me}
+      SECURITY_PASSWORD_PEPPER: ${SECURITY_PASSWORD_PEPPER:-local-dev-pepper}
+      SECURITY_REQUEST_FINGERPRINT_SECRET: ${SECURITY_REQUEST_FINGERPRINT_SECRET:-local-dev-fingerprint-secret}
+      APP_STORAGE_LOCAL_ROOT_PATH: /data/storage
+      APP_STORAGE_LOCAL_PUBLIC_BASE_URL: ${APP_STORAGE_LOCAL_PUBLIC_BASE_URL:-http://localhost:8081/files/}
+      APP_BOOTSTRAP_ADMIN_ENABLED: ${APP_BOOTSTRAP_ADMIN_ENABLED:-true}
+      APP_BOOTSTRAP_ADMIN_EMAIL: ${APP_BOOTSTRAP_ADMIN_EMAIL:-admin@funeraria.local}
+      APP_BOOTSTRAP_ADMIN_PASSWORD: ${APP_BOOTSTRAP_ADMIN_PASSWORD:-Admin123!}
+      APP_BOOTSTRAP_ADMIN_FIRST_NAME: ${APP_BOOTSTRAP_ADMIN_FIRST_NAME:-Admin}
+      APP_BOOTSTRAP_ADMIN_LAST_NAME: ${APP_BOOTSTRAP_ADMIN_LAST_NAME:-Funeraria}
+    ports:
+      - "${SERVER_PORT:-8081}:8081"
+    volumes:
+      - app_storage:/data/storage
+
+  prometheus:
+    profiles:
+      - observability
+    image: prom/prometheus:latest
+    container_name: backend-funeraria-prometheus
+    depends_on:
+      app:
+        condition: service_started
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./config/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/observability/prometheus/alerts:/etc/prometheus/rules:ro
+      - prometheus_data:/prometheus
+
+  alertmanager:
+    profiles:
+      - observability
+    image: prom/alertmanager:latest
+    container_name: backend-funeraria-alertmanager
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    ports:
+      - "${ALERTMANAGER_PORT:-9093}:9093"
+    volumes:
+      - ./config/observability/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+
+  grafana:
+    profiles:
+      - observability
+    image: grafana/grafana:latest
+    container_name: backend-funeraria-grafana
+    depends_on:
+      prometheus:
+        condition: service_started
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - ./config/observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./config/observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  postgres_data:
+  app_storage:
+  prometheus_data:
+  alertmanager_data:
+  grafana_data:

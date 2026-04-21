@@ -1,28 +1,21 @@
 package disenodesistemas.backendfunerariaapp.event;
 
-import disenodesistemas.backendfunerariaapp.dto.request.LogOutRequestDto;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.context.ApplicationEvent;
-
+import disenodesistemas.backendfunerariaapp.web.dto.request.LogOutRequestDto;
 import java.time.Instant;
-import java.util.Date;
 
-@Getter
-@Setter
-public class OnUserLogoutSuccessEvent extends ApplicationEvent {
-  private static final long serialVersionUID = 1L;
-  private final String userEmail;
-  private final String token;
-  private final transient LogOutRequestDto logOutRequest;
-  private final Date eventTime;
+/**
+ * Captures the data required to invalidate tokens and audit a completed logout request.
+ *
+ * @param userEmail principal that closed the session
+ * @param token access token presented during logout
+ * @param logOutRequest logout payload received from the client
+ * @param eventTime timestamp used to correlate the logout with token invalidation
+ */
+public record OnUserLogoutSuccessEvent(
+    String userEmail, String token, LogOutRequestDto logOutRequest, Instant eventTime) {
 
   public OnUserLogoutSuccessEvent(
       final String userEmail, final String token, final LogOutRequestDto logOutRequest) {
-    super(userEmail);
-    this.userEmail = userEmail;
-    this.token = token;
-    this.logOutRequest = logOutRequest;
-    this.eventTime = Date.from(Instant.now());
+    this(userEmail, token, logOutRequest, Instant.now());
   }
 }

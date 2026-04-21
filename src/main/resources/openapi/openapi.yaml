@@ -1,32 +1,3263 @@
-openapi: "3.0.3"
+openapi: 3.1.0
 info:
-  title: "backend_funeraria_app API"
-  description: "backend_funeraria_app API"
-  version: "1.0.0"
+  title: Backend Funeraria App API
+  version: 2.1.0
+  description: |
+    Contrato HTTP del monolito `backend-funeraria-app`.
+
+    La API esta organizada por slices funcionales y documenta:
+    - endpoints disponibles hoy en controllers reales
+    - requests y responses con sus DTOs actuales
+    - reglas de seguridad por JWT ligado a dispositivo
+    - errores esperables por validacion, autorizacion y reglas de negocio
+
+    Convenciones importantes:
+    - Los endpoints autenticados requieren `Authorization: Bearer <token>`.
+    - Los endpoints autenticados tambien requieren `X-Device-Id`.
+    - `POST /api/v1/users/login` y `POST /api/v1/users/refresh` aceptan `Idempotency-Key`.
+    - Todas las respuestas incluyen `X-Trace-Id`; si el cliente envia `X-Correlation-Id`, la API lo propaga.
+    - Los errores de negocio y validacion siguen el modelo `ProblemDetail`.
 servers:
-  - url: "https://backend_funeraria_app"
+  - url: http://localhost:8081
+    description: Entorno local
+tags:
+  - name: Authentication
+    description: Registro, login, refresh, logout y activacion de cuenta.
+  - name: Users
+    description: Perfil del usuario autenticado, roles y datos de contacto.
+  - name: Affiliates
+    description: Gestion de afiliados.
+  - name: Deceased
+    description: Gestion de fallecidos.
+  - name: Funerals
+    description: Gestion de funerales.
+  - name: Incomes
+    description: Gestion de ingresos y compras.
+  - name: Items
+    description: Inventario y carga de imagenes.
+  - name: Plans
+    description: Planes funerarios.
+  - name: Suppliers
+    description: Gestion de proveedores.
+  - name: Catalogs
+    description: Catalogos de apoyo para formularios y reglas de negocio.
 paths:
+  /api/v1/users:
+    get:
+      tags: [Users]
+      summary: Listar usuarios
+      description: Solo ADMIN. Devuelve todos los usuarios registrados ordenados por la regla actual del servicio.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Lista de usuarios.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    post:
+      tags: [Authentication]
+      summary: Registrar usuario
+      description: Crea una cuenta nueva. El backend puede asignar roles, direcciones y telefonos iniciales.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegisterDto'
+      responses:
+        '201':
+          description: Usuario creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/users/me:
+    get:
+      tags: [Users]
+      summary: Obtener usuario autenticado
+      description: Devuelve el recurso HATEOAS del usuario autenticado con link `me`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Usuario autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserMeResource'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/users/login:
+    post:
+      tags: [Authentication]
+      summary: Iniciar sesion
+      description: |
+        Autentica por email y password y devuelve un access token JWT mas un refresh token opaco.
+        El token queda ligado al dispositivo declarado en `deviceInfo`.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLoginDto'
+      responses:
+        '200':
+          description: Sesion iniciada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JwtDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/users/refresh:
+    post:
+      tags: [Authentication]
+      summary: Rotar refresh token
+      description: Valida el refresh token y el dispositivo y devuelve un nuevo par de tokens.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequestDto'
+      responses:
+        '200':
+          description: Tokens rotados correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JwtDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/users/logout:
+    put:
+      tags: [Authentication]
+      summary: Cerrar sesion
+      description: Invalida la sesion activa del dispositivo informado.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogOutRequestDto'
+      responses:
+        '200':
+          description: Sesion invalidada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationStatusModel'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/users/activation:
+    get:
+      tags: [Authentication]
+      summary: Confirmar cuenta
+      description: Activa la cuenta usando el token de confirmacion.
+      parameters:
+        - name: token
+          in: query
+          required: true
+          description: Token de activacion recibido por el usuario.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Mensaje textual con el resultado del proceso.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/users/reset-password:
+    post:
+      tags: [Users]
+      summary: Cambiar password del usuario autenticado
+      description: Requiere sesion valida. Cambia la password a partir de la password anterior.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetDto'
+      responses:
+        '200':
+          description: Confirmacion del cambio de password.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/users/addresses-and-phones:
+    get:
+      tags: [Users]
+      summary: Obtener direcciones y telefonos del usuario autenticado
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Direcciones y telefonos del usuario actual.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAddressAndPhoneDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/users/rol/{email}:
+    post:
+      tags: [Users]
+      summary: Agregar o actualizar rol de un usuario
+      description: Solo ADMIN. Devuelve el set de roles actualizado del usuario.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/EmailPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RolRequestDto'
+      responses:
+        '200':
+          description: Roles actualizados.
+          content:
+            application/json:
+              schema:
+                type: array
+                uniqueItems: true
+                items:
+                  $ref: '#/components/schemas/RolRequestDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/users/address:
+    post:
+      tags: [Users]
+      summary: Reemplazar direcciones del usuario autenticado
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AddressRequestDto'
+      responses:
+        '200':
+          description: Direcciones persistidas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AddressResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/users/mobile-numbers:
+    post:
+      tags: [Users]
+      summary: Reemplazar telefonos del usuario autenticado
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/MobileNumberRequestDto'
+      responses:
+        '200':
+          description: Telefonos persistidos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MobileNumberResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/affiliates:
-    $ref: ./affiliateOpenApi.yaml
+    get:
+      tags: [Affiliates]
+      summary: Listar afiliados activos
+      description: Solo ADMIN. Devuelve afiliados con `deceased=false`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Lista de afiliados activos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AffiliateResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    post:
+      tags: [Affiliates]
+      summary: Crear afiliado
+      description: Disponible para ADMIN y USER.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AffiliateRequestDto'
+      responses:
+        '201':
+          description: Afiliado creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AffiliateResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/affiliates/search:
-    $ref: ./paths/affiliate/getAffiliatesSearchPath.yaml
+    get:
+      tags: [Affiliates]
+      summary: Buscar afiliados por nombre, apellido o DNI
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/SearchValueQuery'
+      responses:
+        '200':
+          description: Resultado de busqueda.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AffiliateResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/affiliates/deceased:
-    $ref: ./paths/affiliate/getAffiliatesDeceasedPath.yaml
+    get:
+      tags: [Affiliates]
+      summary: Listar afiliados historicos o fallecidos
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Lista historica.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AffiliateResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/affiliates/by-user:
-    $ref: ./paths/affiliate/getAffiliatesByUserPath.yaml
+    get:
+      tags: [Affiliates]
+      summary: Listar afiliados del usuario autenticado
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Afiliados asociados al usuario autenticado.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AffiliateResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/affiliates/{dni}:
+    put:
+      tags: [Affiliates]
+      summary: Actualizar afiliado
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/DniPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AffiliateRequestDto'
+      responses:
+        '200':
+          description: Afiliado actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AffiliateResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    delete:
+      tags: [Affiliates]
+      summary: Eliminar afiliado
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/DniPath'
+      responses:
+        '200':
+          description: Operacion completada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationStatusModel'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/brands:
+    get:
+      tags: [Catalogs]
+      summary: Listar marcas
+      description: Requiere autenticacion aunque no exija rol ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Lista de marcas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BrandResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    post:
+      tags: [Catalogs]
+      summary: Crear marca
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrandRequestDto'
+      responses:
+        '201':
+          description: Marca creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/brands/{id}:
+    get:
+      tags: [Catalogs]
+      summary: Obtener marca por id
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/LongIdPath'
+      responses:
+        '200':
+          description: Marca encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    put:
+      tags: [Catalogs]
+      summary: Actualizar marca
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/LongIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrandRequestDto'
+      responses:
+        '200':
+          description: Marca actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    delete:
+      tags: [Catalogs]
+      summary: Eliminar marca
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/LongIdPath'
+      responses:
+        '200':
+          description: Marca eliminada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationStatusModel'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/categories:
+    get:
+      tags: [Catalogs]
+      summary: Listar categorias
+      description: Endpoint publico utilizado para formularios y catalogos.
+      responses:
+        '200':
+          description: Lista de categorias.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryResponseDto'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    post:
+      tags: [Catalogs]
+      summary: Crear categoria
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequestDto'
+      responses:
+        '201':
+          description: Categoria creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/categories/{id}:
+    get:
+      tags: [Catalogs]
+      summary: Obtener categoria por id
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/LongIdPath'
+      responses:
+        '200':
+          description: Categoria encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    put:
+      tags: [Catalogs]
+      summary: Actualizar categoria
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/LongIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequestDto'
+      responses:
+        '200':
+          description: Categoria actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    delete:
+      tags: [Catalogs]
+      summary: Eliminar categoria
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/LongIdPath'
+      responses:
+        '200':
+          description: Categoria eliminada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationStatusModel'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/cities:
+    get:
+      tags: [Catalogs]
+      summary: Listar ciudades por provincia
+      description: Endpoint publico. Requiere el query param `province_id`.
+      parameters:
+        - $ref: '#/components/parameters/ProvinceIdQuery'
+      responses:
+        '200':
+          description: Ciudades de la provincia indicada.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CityResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/cities/{id}:
+    get:
+      tags: [Catalogs]
+      summary: Obtener ciudad por id
+      description: Requiere autenticacion.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/LongIdPath'
+      responses:
+        '200':
+          description: Ciudad encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CityResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/death-causes:
+    get:
+      tags: [Catalogs]
+      summary: Listar causas de fallecimiento
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Lista de causas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeathCauseResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    post:
+      tags: [Catalogs]
+      summary: Crear causa de fallecimiento
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeathCauseDto'
+      responses:
+        '201':
+          description: Causa creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeathCauseResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/death-causes/{id}:
+    get:
+      tags: [Catalogs]
+      summary: Obtener causa de fallecimiento por id
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/LongIdPath'
+      responses:
+        '200':
+          description: Causa encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeathCauseResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    put:
+      tags: [Catalogs]
+      summary: Actualizar causa de fallecimiento
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/LongIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeathCauseDto'
+      responses:
+        '200':
+          description: Causa actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeathCauseResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    delete:
+      tags: [Catalogs]
+      summary: Eliminar causa de fallecimiento
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/LongIdPath'
+      responses:
+        '200':
+          description: Operacion completada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationStatusModel'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/deceased:
-    $ref: ./deceasedOpenApi.yaml
+    get:
+      tags: [Deceased]
+      summary: Listar fallecidos
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Lista de fallecidos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeceasedResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    post:
+      tags: [Deceased]
+      summary: Registrar fallecido
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeceasedRequestDto'
+      responses:
+        '201':
+          description: Fallecido registrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeceasedResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/deceased/{dni}:
-    $ref: ./paths/deceased/getDeceasedByDniPath.yaml
+    get:
+      tags: [Deceased]
+      summary: Buscar fallecido por DNI
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/DniPath'
+      responses:
+        '200':
+          description: Fallecido encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeceasedResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    put:
+      tags: [Deceased]
+      summary: Actualizar fallecido
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/DniPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeceasedRequestDto'
+      responses:
+        '200':
+          description: Fallecido actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeceasedResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    delete:
+      tags: [Deceased]
+      summary: Eliminar fallecido
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/DniPath'
+      responses:
+        '200':
+          description: Operacion completada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationStatusModel'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/funerals:
-    $ref: ./funeralOpenApi.yaml
+    get:
+      tags: [Funerals]
+      summary: Listar funerales
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Lista de funerales.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FuneralResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    post:
+      tags: [Funerals]
+      summary: Crear funeral
+      description: Disponible para ADMIN y USER.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuneralRequestDto'
+      responses:
+        '201':
+          description: Funeral creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuneralResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/funerals/{id}:
-    $ref: ./paths/funeral/getFuneralById.yaml
+    get:
+      tags: [Funerals]
+      summary: Obtener funeral por id
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/LongIdPath'
+      responses:
+        '200':
+          description: Funeral encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuneralResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    put:
+      tags: [Funerals]
+      summary: Actualizar funeral
+      description: Disponible para ADMIN y USER.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/LongIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuneralRequestDto'
+      responses:
+        '200':
+          description: Funeral actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuneralResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    delete:
+      tags: [Funerals]
+      summary: Eliminar funeral
+      description: Disponible para ADMIN y USER.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/LongIdPath'
+      responses:
+        '200':
+          description: Operacion completada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationStatusModel'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/funerals/by-user:
-    $ref: ./paths/funeral/getFuneralByLoggedUser.yaml
+    get:
+      tags: [Funerals]
+      summary: Listar funerales del usuario autenticado
+      description: Solo USER.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Funerales del usuario autenticado.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FuneralResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/genders:
+    get:
+      tags: [Catalogs]
+      summary: Listar generos
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Lista de generos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GenderResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/incomes:
-    $ref: ./incomeOpenApi.yaml
+    get:
+      tags: [Incomes]
+      summary: Listar ingresos
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Lista de ingresos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IncomeResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    post:
+      tags: [Incomes]
+      summary: Crear ingreso
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IncomeRequestDto'
+      responses:
+        '201':
+          description: Ingreso creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncomeResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/incomes/{receiptNumber}:
-    $ref: ./paths/income/getIncomeByReceiptNumber.yaml
+    get:
+      tags: [Incomes]
+      summary: Obtener ingreso por numero de comprobante
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/ReceiptNumberPath'
+      responses:
+        '200':
+          description: Ingreso encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncomeResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    put:
+      tags: [Incomes]
+      summary: Actualizar ingreso
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/ReceiptNumberPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IncomeRequestDto'
+      responses:
+        '200':
+          description: Ingreso actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncomeResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    delete:
+      tags: [Incomes]
+      summary: Eliminar ingreso
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/ReceiptNumberPath'
+      responses:
+        '200':
+          description: Operacion completada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationStatusModel'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/incomes/paginated:
-    $ref: ./paths/income/getIncomesPaginated.yaml
+    get:
+      tags: [Incomes]
+      summary: Listar ingresos paginados
+      description: Solo ADMIN. Expone la serializacion actual de `Page<IncomeResponseDto>` de Spring Data.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/IsDeletedQuery'
+        - $ref: '#/components/parameters/PageQuery'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/SortByQuery'
+        - $ref: '#/components/parameters/SortDirQuery'
+      responses:
+        '200':
+          description: Pagina de ingresos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncomePageResponse'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/items:
+    get:
+      tags: [Items]
+      summary: Listar items
+      description: Disponible para ADMIN y USER.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Lista de items.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ItemResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    post:
+      tags: [Items]
+      summary: Crear item
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemRequestDto'
+      responses:
+        '201':
+          description: Item creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/items/{code}:
+    get:
+      tags: [Items]
+      summary: Obtener item por codigo
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/ItemCodePath'
+      responses:
+        '200':
+          description: Item encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    put:
+      tags: [Items]
+      summary: Actualizar item
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/ItemCodePath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemRequestDto'
+      responses:
+        '200':
+          description: Item actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    delete:
+      tags: [Items]
+      summary: Eliminar item
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/ItemCodePath'
+      responses:
+        '200':
+          description: Operacion completada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationStatusModel'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/items/category/{id}:
+    get:
+      tags: [Items]
+      summary: Listar items por categoria
+      description: Disponible para ADMIN y USER.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/LongIdPath'
+      responses:
+        '200':
+          description: Items de la categoria indicada.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ItemResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/items/{code}/image/upload:
+    post:
+      tags: [Items]
+      summary: Cargar imagen de item
+      description: Solo ADMIN. Sube la imagen al proveedor de almacenamiento configurado y actualiza el item.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/ItemCodePath'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Imagen cargada correctamente.
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/plans:
+    get:
+      tags: [Plans]
+      summary: Listar planes
+      description: Requiere autenticacion.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Lista de planes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlanResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    post:
+      tags: [Plans]
+      summary: Crear plan
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanRequestDto'
+      responses:
+        '201':
+          description: Plan creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/plans/{id}:
+    put:
+      tags: [Plans]
+      summary: Actualizar plan
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/LongIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanRequestDto'
+      responses:
+        '200':
+          description: Plan actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    delete:
+      tags: [Plans]
+      summary: Eliminar plan
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/LongIdPath'
+      responses:
+        '200':
+          description: Operacion completada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationStatusModel'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/provinces:
+    get:
+      tags: [Catalogs]
+      summary: Listar provincias
+      description: Endpoint publico.
+      responses:
+        '200':
+          description: Lista de provincias.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProvinceResponseDto'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/receiptTypes:
+    get:
+      tags: [Catalogs]
+      summary: Listar tipos de comprobante
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Lista de tipos de comprobante.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReceiptTypeResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/relationships:
+    get:
+      tags: [Catalogs]
+      summary: Listar parentescos
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Lista de parentescos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RelationshipResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/roles:
+    get:
+      tags: [Users]
+      summary: Listar roles disponibles
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Roles disponibles.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RolesDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/suppliers:
+    get:
+      tags: [Suppliers]
+      summary: Listar proveedores
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Lista de proveedores.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupplierResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    post:
+      tags: [Suppliers]
+      summary: Crear proveedor
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierRequestDto'
+      responses:
+        '201':
+          description: Proveedor creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/suppliers/{nif}:
+    get:
+      tags: [Suppliers]
+      summary: Obtener proveedor por NIF
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/NifPath'
+      responses:
+        '200':
+          description: Proveedor encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    put:
+      tags: [Suppliers]
+      summary: Actualizar proveedor
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/NifPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierRequestDto'
+      responses:
+        '200':
+          description: Proveedor actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    delete:
+      tags: [Suppliers]
+      summary: Eliminar proveedor
+      description: Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - $ref: '#/components/parameters/NifPath'
+      responses:
+        '200':
+          description: Operacion completada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationStatusModel'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT de acceso emitido por `/api/v1/users/login`.
+  parameters:
+    XDeviceId:
+      name: X-Device-Id
+      in: header
+      required: true
+      description: Identificador estable del dispositivo o cliente que creo la sesion.
+      schema:
+        type: string
+        example: web-chrome-gabriel
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: Clave opcional para evitar reintentos duplicados en login y refresh.
+      schema:
+        type: string
+        example: 31d8e812-3f3c-40c0-86db-23458f5bfe0b
+    DniPath:
+      name: dni
+      in: path
+      required: true
+      description: Documento nacional de identidad.
+      schema:
+        type: integer
+        format: int32
+        example: 35123456
+    LongIdPath:
+      name: id
+      in: path
+      required: true
+      description: Identificador numerico.
+      schema:
+        type: integer
+        format: int64
+        example: 1
+    EmailPath:
+      name: email
+      in: path
+      required: true
+      description: Email del usuario.
+      schema:
+        type: string
+        format: email
+        example: admin@funeraria.local
+    SearchValueQuery:
+      name: value
+      in: query
+      required: true
+      description: Texto de busqueda por nombre, apellido o DNI.
+      schema:
+        type: string
+        example: gomez
+    ProvinceIdQuery:
+      name: province_id
+      in: query
+      required: true
+      description: Id de la provincia.
+      schema:
+        type: integer
+        format: int64
+        example: 6
+    ReceiptNumberPath:
+      name: receiptNumber
+      in: path
+      required: true
+      description: Numero de comprobante.
+      schema:
+        type: integer
+        format: int64
+        example: 10025
+    ItemCodePath:
+      name: code
+      in: path
+      required: true
+      description: Codigo del item.
+      schema:
+        type: string
+        example: ATAUD-ROBLE-01
+    NifPath:
+      name: nif
+      in: path
+      required: true
+      description: Identificador fiscal del proveedor.
+      schema:
+        type: string
+        example: 30-12345678-9
+    IsDeletedQuery:
+      name: isDeleted
+      in: query
+      required: false
+      description: Filtra ingresos borrados logicamente.
+      schema:
+        type: boolean
+        default: false
+    PageQuery:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    LimitQuery:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 5
+    SortByQuery:
+      name: sortBy
+      in: query
+      required: false
+      schema:
+        type: string
+        default: incomeDate
+    SortDirQuery:
+      name: sortDir
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: desc
+  responses:
+    ValidationResponse:
+      description: Error de validacion de request.
+      headers:
+        X-Trace-Id:
+          $ref: '#/components/headers/TraceIdHeader'
+        X-Correlation-Id:
+          $ref: '#/components/headers/CorrelationIdHeader'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ValidationProblem'
+          example:
+            type: about:blank
+            title: Validacion fallida
+            status: 400
+            detail: La solicitud contiene datos invalidos.
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            errors:
+              - field: email
+                message: El email es requerido.
+    UnauthorizedResponse:
+      description: Request sin credenciales validas, token invalido o dispositivo no coincidente.
+      headers:
+        X-Trace-Id:
+          $ref: '#/components/headers/TraceIdHeader'
+        X-Correlation-Id:
+          $ref: '#/components/headers/CorrelationIdHeader'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            type: about:blank
+            title: Error de aplicacion
+            status: 401
+            detail: El token no coincide con el dispositivo actual.
+            code: security.jwt.device.mismatch
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            correlationId: corr-request-0001
+    ForbiddenResponse:
+      description: El usuario autenticado no tiene permisos para ejecutar la operacion.
+      headers:
+        X-Trace-Id:
+          $ref: '#/components/headers/TraceIdHeader'
+        X-Correlation-Id:
+          $ref: '#/components/headers/CorrelationIdHeader'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            type: about:blank
+            title: Acceso denegado
+            status: 403
+            detail: Access Denied
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    NotFoundResponse:
+      description: Recurso no encontrado.
+      headers:
+        X-Trace-Id:
+          $ref: '#/components/headers/TraceIdHeader'
+        X-Correlation-Id:
+          $ref: '#/components/headers/CorrelationIdHeader'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            type: about:blank
+            title: Error de aplicacion
+            status: 404
+            detail: No existe afiliado con el DNI especificado.
+            code: affiliate.error.not.found
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    ConflictResponse:
+      description: Conflicto de negocio, duplicado o estado incompatible.
+      headers:
+        X-Trace-Id:
+          $ref: '#/components/headers/TraceIdHeader'
+        X-Correlation-Id:
+          $ref: '#/components/headers/CorrelationIdHeader'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            type: about:blank
+            title: Error de aplicacion
+            status: 409
+            detail: Ya existe un afiliado registrado con el DNI especificado.
+            code: affiliate.error.dni.already.exists
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    TooManyRequestsResponse:
+      description: Se alcanzo el limite de intentos o se detecto una conducta sospechosa.
+      headers:
+        X-Trace-Id:
+          $ref: '#/components/headers/TraceIdHeader'
+        X-Correlation-Id:
+          $ref: '#/components/headers/CorrelationIdHeader'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            type: about:blank
+            title: Demasiados intentos de inicio de sesion
+            status: 429
+            detail: Demasiados intentos de inicio de sesion. Intente nuevamente mas tarde.
+            code: auth.login.rate.limit.exceeded
+            retryAfterSeconds: 120
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    InternalServerErrorResponse:
+      description: Error interno del servidor.
+      headers:
+        X-Trace-Id:
+          $ref: '#/components/headers/TraceIdHeader'
+        X-Correlation-Id:
+          $ref: '#/components/headers/CorrelationIdHeader'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            type: about:blank
+            title: Error interno del servicio
+            status: 500
+            detail: Ocurrio un error interno inesperado.
+            code: error.internal
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+  headers:
+    TraceIdHeader:
+      description: Identificador unico de la request generado o propagado por el servicio.
+      schema:
+        type: string
+        example: 4bf92f3577b34da6a3ce929d0e0e4736
+    CorrelationIdHeader:
+      description: Identificador opcional provisto por el cliente para correlacionar requests entre sistemas.
+      schema:
+        type: string
+        example: corr-request-0001
+  schemas:
+    ProblemDetail:
+      type: object
+      description: Modelo de error estandar usado por el backend.
+      example:
+        type: about:blank
+        title: Error de aplicacion
+        status: 404
+        detail: No existe afiliado con el DNI especificado.
+        code: affiliate.error.not.found
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        correlationId: corr-request-0001
+      properties:
+        type:
+          type: string
+          format: uri
+          nullable: true
+          example: about:blank
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri
+          nullable: true
+        code:
+          type: string
+          description: Clave funcional vinculada a `messages_es.properties`.
+        traceId:
+          type: string
+          description: Identificador unico de la request para correlacionar logs, errores y metricas.
+          example: 4bf92f3577b34da6a3ce929d0e0e4736
+        correlationId:
+          type: string
+          nullable: true
+          description: Identificador opcional provisto por el cliente y propagado por el backend.
+          example: corr-request-0001
+        retryAfterSeconds:
+          type: integer
+          nullable: true
+      additionalProperties: false
+    ValidationProblem:
+      example:
+        type: about:blank
+        title: Validacion fallida
+        status: 400
+        detail: La solicitud contiene datos invalidos.
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        errors:
+          - field: email
+            message: El email es requerido.
+      allOf:
+        - $ref: '#/components/schemas/ProblemDetail'
+        - type: object
+          properties:
+            errors:
+              type: array
+              items:
+                $ref: '#/components/schemas/ValidationError'
+    ValidationError:
+      type: object
+      properties:
+        field:
+          type: string
+          example: email
+        message:
+          type: string
+          example: no debe estar vacio
+      required: [field, message]
+    HalLink:
+      type: object
+      properties:
+        href:
+          type: string
+          example: http://localhost:8080/api/v1/users/me
+      required: [href]
+    OperationStatusModel:
+      type: object
+      properties:
+        name:
+          type: string
+          example: DELETE ITEM
+        result:
+          type: string
+          example: SUCCESSFUL
+      required: [name, result]
+    UserDto:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: usuario@funeraria.local
+        lastName:
+          type: string
+          example: Perez
+        firstName:
+          type: string
+          example: Ana
+      required: [email, lastName, firstName]
+    UserMeResource:
+      allOf:
+        - $ref: '#/components/schemas/UserDto'
+        - type: object
+          properties:
+            _links:
+              type: object
+              properties:
+                me:
+                  $ref: '#/components/schemas/HalLink'
+    RolesDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          enum: [ROLE_ADMIN, ROLE_USER]
+      required: [id, name]
+    DeviceInfo:
+      type: object
+      properties:
+        deviceId:
+          type: string
+          example: web-chrome-gabriel
+        deviceType:
+          type: string
+          example: browser
+      required: [deviceId, deviceType]
+    ProvinceDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        code31662:
+          type: string
+          example: AR-B
+        name:
+          type: string
+          example: Buenos Aires
+    ProvinceResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        code31662:
+          type: string
+      required: [id, name]
+    CityDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        province:
+          $ref: '#/components/schemas/ProvinceDto'
+        name:
+          type: string
+          example: La Plata
+        zipCode:
+          type: string
+          example: 1900
+    CityResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        zipCode:
+          type: string
+        province:
+          $ref: '#/components/schemas/ProvinceResponseDto'
+      required: [id, name]
+    AddressRequestDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        apartment:
+          type: string
+          example: B
+        blockStreet:
+          type: integer
+          example: 1234
+        flat:
+          type: string
+          example: 4
+        streetName:
+          type: string
+          example: Calle 50
+        city:
+          $ref: '#/components/schemas/CityDto'
+      required: [streetName, city]
+    AddressResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        streetName:
+          type: string
+        blockStreet:
+          type: integer
+        apartment:
+          type: string
+        flat:
+          type: string
+        city:
+          $ref: '#/components/schemas/CityResponseDto'
+    MobileNumberRequestDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        mobileNumber:
+          type: string
+          example: +5492215551212
+      required: [mobileNumber]
+    MobileNumberResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        mobileNumber:
+          type: string
+    BrandDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        webPage:
+          type: string
+          example: https://brand.example
+    BrandRequestDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        webPage:
+          type: string
+      required: [name]
+    BrandResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        webPage:
+          type: string
+    CategoryDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+    CategoryRequestDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+      required: [name]
+    CategoryResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+    GenderDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+      required: [id, name]
+    GenderResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+      required: [id, name]
+    RelationshipDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+      required: [id, name]
+    RelationshipResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+      required: [id, name]
+    ReceiptTypeDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+      required: [id, name]
+    ReceiptTypeResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+      required: [id, name]
+    DeathCauseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+    DeathCauseResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+    UserRegisterDto:
+      type: object
+      properties:
+        lastName:
+          type: string
+          example: Perez
+        firstName:
+          type: string
+          example: Ana
+        email:
+          type: string
+          format: email
+          example: ana@funeraria.local
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 30
+        matchingPassword:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 30
+        roles:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            enum: [ROLE_ADMIN, ROLE_USER]
+        mobileNumbers:
+          type: array
+          items:
+            $ref: '#/components/schemas/MobileNumberRequestDto'
+        addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddressRequestDto'
+      required: [lastName, firstName, email, password, matchingPassword]
+    UserLoginDto:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        deviceInfo:
+          $ref: '#/components/schemas/DeviceInfo'
+      required: [email, password, deviceInfo]
+    TokenRefreshRequestDto:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+        deviceInfo:
+          $ref: '#/components/schemas/DeviceInfo'
+      required: [refreshToken, deviceInfo]
+    LogOutRequestDto:
+      type: object
+      properties:
+        deviceInfo:
+          $ref: '#/components/schemas/DeviceInfo'
+        token:
+          type: string
+          description: Access token actual o token de sesion que se desea invalidar.
+      required: [deviceInfo, token]
+    PasswordResetDto:
+      type: object
+      properties:
+        oldPassword:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 30
+        newPassword:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 30
+        matchingNewPassword:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 30
+      required: [oldPassword, newPassword, matchingNewPassword]
+    JwtDto:
+      type: object
+      properties:
+        authorization:
+          type: string
+          description: Access token JWT.
+        refreshToken:
+          type: string
+          description: Refresh token opaco rotatorio.
+        expiryDuration:
+          type: integer
+          format: int64
+          description: Duracion del access token en milisegundos.
+        authorities:
+          type: array
+          items:
+            type: string
+      required: [authorization, refreshToken, expiryDuration, authorities]
+    RolRequestDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          enum: [ROLE_ADMIN, ROLE_USER]
+      required: [name]
+    UserResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        active:
+          type: boolean
+        startDate:
+          type: string
+          description: Fecha con formato `dd-MM-yyyy`.
+          example: 17-04-2026
+        enabled:
+          type: boolean
+        mobileNumbers:
+          type: array
+          items:
+            $ref: '#/components/schemas/MobileNumberResponseDto'
+        addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddressResponseDto'
+        roles:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/RolesDto'
+    UserAddressAndPhoneDto:
+      type: object
+      properties:
+        addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddressResponseDto'
+        mobileNumbers:
+          type: array
+          items:
+            $ref: '#/components/schemas/MobileNumberResponseDto'
+    AffiliateRequestDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        firstName:
+          type: string
+        lastName:
+          type: string
+        birthDate:
+          type: string
+          format: date
+          example: 1984-08-10
+        dni:
+          type: integer
+          format: int32
+        relationship:
+          $ref: '#/components/schemas/RelationshipDto'
+        gender:
+          $ref: '#/components/schemas/GenderDto'
+      required: [firstName, lastName, birthDate, dni, relationship, gender]
+    AffiliateResponseDto:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dni:
+          type: integer
+          format: int32
+        birthDate:
+          type: string
+          description: Fecha con formato `dd-MM-yyyy`.
+          example: 10-08-1984
+        startDate:
+          type: string
+          description: Fecha con formato `dd-MM-yyyy`.
+          example: 17-04-2026
+        deceased:
+          type: boolean
+        gender:
+          $ref: '#/components/schemas/GenderResponseDto'
+        relationship:
+          $ref: '#/components/schemas/RelationshipResponseDto'
+        user:
+          $ref: '#/components/schemas/UserDto'
+        mobileNumbers:
+          type: array
+          items:
+            $ref: '#/components/schemas/MobileNumberResponseDto'
+        addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddressResponseDto'
+    DeceasedRequestDto:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dni:
+          type: integer
+          format: int32
+        birthDate:
+          type: string
+          format: date
+          example: 1948-02-05
+        deathDate:
+          type: string
+          format: date
+          example: 2026-04-16
+        placeOfDeath:
+          $ref: '#/components/schemas/AddressRequestDto'
+        gender:
+          $ref: '#/components/schemas/GenderDto'
+        deceasedRelationship:
+          $ref: '#/components/schemas/RelationshipDto'
+        deathCause:
+          $ref: '#/components/schemas/DeathCauseDto'
+        deceasedUser:
+          $ref: '#/components/schemas/UserDto'
+      required:
+        [firstName, lastName, dni, birthDate, deathDate, gender, deceasedRelationship, deathCause]
+    DeceasedResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dni:
+          type: integer
+          format: int32
+        affiliated:
+          type: boolean
+        birthDate:
+          type: string
+          description: Fecha con formato `dd-MM-yyyy`.
+          example: 05-02-1948
+        registerDate:
+          type: string
+          description: Fecha y hora con formato `dd-MM-yyyy HH:mm`.
+          example: 17-04-2026 15:30
+        deathDate:
+          type: string
+          description: Fecha con formato `dd-MM-yyyy`.
+          example: 16-04-2026
+        placeOfDeath:
+          $ref: '#/components/schemas/AddressResponseDto'
+        deceasedRelationship:
+          $ref: '#/components/schemas/RelationshipResponseDto'
+        deceasedUser:
+          $ref: '#/components/schemas/UserDto'
+        gender:
+          $ref: '#/components/schemas/GenderResponseDto'
+        deathCause:
+          $ref: '#/components/schemas/DeathCauseResponseDto'
+    ItemRequestPlanDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        code:
+          type: string
+      description: Referencia resumida a un item dentro de un plan.
+    ItemPlanRequestDto:
+      type: object
+      properties:
+        item:
+          $ref: '#/components/schemas/ItemRequestPlanDto'
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 200
+      required: [item, quantity]
+    ItemPlanResponseDto:
+      type: object
+      properties:
+        item:
+          $ref: '#/components/schemas/ItemResponseDto'
+        quantity:
+          type: integer
+    PlanRequestDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        profitPercentage:
+          type: number
+          example: 25.50
+        itemsPlan:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/ItemPlanRequestDto'
+      required: [name, profitPercentage, itemsPlan]
+    PlanResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        imageUrl:
+          type: string
+          example: https://storage.example/plans/plan-basico.png
+        price:
+          type: number
+        profitPercentage:
+          type: number
+        itemsPlan:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/ItemPlanResponseDto'
+    ItemRequestDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        code:
+          type: string
+        price:
+          type: number
+          example: 150000.00
+        itemLength:
+          type: number
+        itemHeight:
+          type: number
+        itemWidth:
+          type: number
+        brand:
+          $ref: '#/components/schemas/BrandDto'
+        category:
+          $ref: '#/components/schemas/CategoryDto'
+      required: [name, price]
+    ItemResponseDto:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        code:
+          type: string
+        itemImageLink:
+          type: string
+          example: https://storage.example/items/ataud-roble-01.png
+        stock:
+          type: integer
+        price:
+          type: number
+        itemLength:
+          type: number
+        itemHeight:
+          type: number
+        itemWidth:
+          type: number
+        category:
+          $ref: '#/components/schemas/CategoryResponseDto'
+        brand:
+          $ref: '#/components/schemas/BrandResponseDto'
+    SupplierRequestDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        nif:
+          type: string
+        webPage:
+          type: string
+        email:
+          type: string
+          format: email
+        mobileNumbers:
+          type: array
+          items:
+            $ref: '#/components/schemas/MobileNumberRequestDto'
+        addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddressRequestDto'
+      required: [name, nif, email]
+    SupplierResponseDto:
+      type: object
+      properties:
+        name:
+          type: string
+        nif:
+          type: string
+        webPage:
+          type: string
+        email:
+          type: string
+          format: email
+        addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddressResponseDto'
+        mobileNumbers:
+          type: array
+          items:
+            $ref: '#/components/schemas/MobileNumberResponseDto'
+    IncomeDetailRequestDto:
+      type: object
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+        purchasePrice:
+          type: number
+          example: 100000.00
+        salePrice:
+          type: number
+          example: 130000.00
+        item:
+          $ref: '#/components/schemas/ItemRequestDto'
+      required: [quantity, purchasePrice, salePrice, item]
+    IncomeDetailResponseDto:
+      type: object
+      properties:
+        quantity:
+          type: integer
+        purchasePrice:
+          type: number
+        salePrice:
+          type: number
+        item:
+          $ref: '#/components/schemas/ItemResponseDto'
+    IncomeRequestDto:
+      type: object
+      properties:
+        receiptNumber:
+          type: integer
+          format: int64
+        receiptSeries:
+          type: integer
+          format: int64
+        tax:
+          type: number
+        incomeUser:
+          $ref: '#/components/schemas/UserDto'
+        receiptType:
+          $ref: '#/components/schemas/ReceiptTypeDto'
+        supplier:
+          $ref: '#/components/schemas/SupplierRequestDto'
+        incomeDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/IncomeDetailRequestDto'
+      required: [tax, incomeDetails]
+    IncomeResponseDto:
+      type: object
+      properties:
+        receiptNumber:
+          type: string
+        receiptSeries:
+          type: string
+        incomeDate:
+          type: string
+          description: Fecha y hora con formato `dd-MM-yyyy HH:mm`.
+          example: 17-04-2026 14:10
+        lastModifiedDate:
+          type: string
+          description: Fecha y hora con formato `dd-MM-yyyy HH:mm`.
+          example: 17-04-2026 15:05
+        tax:
+          type: number
+        totalAmount:
+          type: number
+        receiptType:
+          $ref: '#/components/schemas/ReceiptTypeResponseDto'
+        supplier:
+          $ref: '#/components/schemas/SupplierResponseDto'
+        incomeUser:
+          $ref: '#/components/schemas/UserDto'
+        lastModifiedBy:
+          $ref: '#/components/schemas/UserDto'
+        incomeDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/IncomeDetailResponseDto'
+    IncomePageResponse:
+      type: object
+      description: Serializacion del `Page<IncomeResponseDto>` devuelto por Spring Data.
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/IncomeResponseDto'
+        pageable:
+          $ref: '#/components/schemas/PageableObject'
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        last:
+          type: boolean
+        size:
+          type: integer
+        number:
+          type: integer
+        sort:
+          $ref: '#/components/schemas/SortObject'
+        first:
+          type: boolean
+        numberOfElements:
+          type: integer
+        empty:
+          type: boolean
+    PageableObject:
+      type: object
+      properties:
+        sort:
+          $ref: '#/components/schemas/SortObject'
+        offset:
+          type: integer
+          format: int64
+        pageNumber:
+          type: integer
+        pageSize:
+          type: integer
+        paged:
+          type: boolean
+        unpaged:
+          type: boolean
+    SortObject:
+      type: object
+      properties:
+        empty:
+          type: boolean
+        sorted:
+          type: boolean
+        unsorted:
+          type: boolean
+    FuneralRequestDto:
+      type: object
+      properties:
+        funeralDate:
+          type: string
+          format: date-time
+          example: 2026-04-18T10:30:00
+        receiptNumber:
+          type: string
+        receiptSeries:
+          type: string
+        tax:
+          type: number
+        receiptType:
+          $ref: '#/components/schemas/ReceiptTypeDto'
+        deceased:
+          $ref: '#/components/schemas/DeceasedRequestDto'
+        plan:
+          $ref: '#/components/schemas/PlanRequestDto'
+      required: [funeralDate, deceased, plan]
+    FuneralResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        funeralDate:
+          type: string
+          description: Fecha y hora con formato `dd-MM-yyyy HH:mm`.
+          example: 18-04-2026 10:30
+        registerDate:
+          type: string
+          description: Fecha y hora con formato `dd-MM-yyyy HH:mm`.
+          example: 17-04-2026 16:00
+        receiptNumber:
+          type: string
+        receiptSeries:
+          type: string
+        tax:
+          type: number
+        totalAmount:
+          type: number
+        receiptType:
+          $ref: '#/components/schemas/ReceiptTypeResponseDto'
+        deceased:
+          $ref: '#/components/schemas/DeceasedResponseDto'
+        plan:
+          $ref: '#/components/schemas/PlanResponseDto'

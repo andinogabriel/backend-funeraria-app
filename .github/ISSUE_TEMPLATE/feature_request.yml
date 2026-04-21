@@ -1,0 +1,30 @@
+name: Feature request
+description: Propose a new business capability or technical improvement.
+title: "[Feature] "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or opportunity
+      description: Explain the business or technical need.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the desired behavior and affected flows.
+    validations:
+      required: true
+  - type: textarea
+    id: api
+    attributes:
+      label: API or contract impact
+      description: Mention whether controllers, DTOs, OpenAPI or integrations would change.
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks and migration notes
+      description: Note compatibility, security, data migration or rollout concerns.

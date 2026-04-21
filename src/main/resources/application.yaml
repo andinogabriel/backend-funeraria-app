@@ -1,19 +1,81 @@
-
 amazon-s3:
-  secret-key: VNrroMPyKEUXVsrkXgwptkc1+hDXkdNb144cs0DB
-  access-key: AKIA4QHJKA6664X3J5PG
+  access-key: ${AMAZON_S3_ACCESS_KEY:local-access-key}
+  secret-key: ${AMAZON_S3_SECRET_KEY:local-secret-key}
+  region: ${AMAZON_S3_REGION:sa-east-1}
 
 jwt-token:
-  expiration-date: 86400000
+  expiration-seconds: ${JWT_TOKEN_EXPIRATION_SECONDS:900}
   prefix: Bearer
   authorities: authorities
   header: Authorization
-  secret: yX5bRDXt1ZyllqLWmQHYgxiEwbke7W8C
+  secret: ${JWT_TOKEN_SECRET:change-this-jwt-secret-in-production}
+  device-id-claim: device_id
+  device-fingerprint-claim: device_fingerprint
+  device-version-claim: device_version
+
+security:
+  password:
+    pepper: ${SECURITY_PASSWORD_PEPPER:change-me}
+    salt-length: 16
+    hash-length: 32
+    parallelism: 1
+    memory-kb: 65536
+    iterations: 3
+  request:
+    device-id-header: X-Device-Id
+    idempotency-key-header: Idempotency-Key
+    fingerprint-secret: ${SECURITY_REQUEST_FINGERPRINT_SECRET:change-me-too}
+  refresh-token:
+    expiration-seconds: 604800
+    random-bytes-length: 32
+  threat-protection:
+    failed-login-blacklist-threshold: 10
+    suspicious-request-threshold: 2
+    blacklist-seconds: 3600
+    immediate-blacklist-on-device-mismatch: true
+  idempotency:
+    ttl-seconds: 120
+
+observability:
+  request-tracing:
+    trace-id-header: X-Trace-Id
+    correlation-id-header: X-Correlation-Id
+    accept-incoming-trace-id: true
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+  info:
+    build:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} level=%-5level traceId=%X{traceId} correlationId=%X{correlationId} logger=%logger{36} thread=%thread %kvp message=\"%msg\"%n%wEx"
+    file: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} level=%-5level traceId=%X{traceId} correlationId=%X{correlationId} logger=%logger{36} thread=%thread %kvp message=\"%msg\"%n%wEx"
 
 spring:
   messages:
-    basename: "messages"
+    basename: "messages,messages/messages"
     fallback-to-system-locale: false
 
 AbstractUserDetailsAuthenticationProvider:
-  badCredentials: Contraseña incorrecta.
+  badCredentials: Contrasena incorrecta.

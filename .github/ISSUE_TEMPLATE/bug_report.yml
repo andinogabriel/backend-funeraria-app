@@ -1,0 +1,46 @@
+name: Bug report
+description: Report a defect in the backend service.
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe the bug and the affected business flow.
+      placeholder: Affected endpoint, use case or operational flow.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Share the minimal steps needed to reproduce the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: Explain what should have happened.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Explain what actually happened, including status codes or traces when available.
+    validations:
+      required: true
+  - type: textarea
+    id: observability
+    attributes:
+      label: Logs and trace context
+      description: Include traceId, correlationId, event names or relevant log excerpts without secrets.
+      placeholder: traceId=... correlationId=... event=...
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Mention environment, profile and any relevant configuration details.

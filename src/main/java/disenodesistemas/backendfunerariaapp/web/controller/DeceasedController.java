@@ -1,0 +1,63 @@
+package disenodesistemas.backendfunerariaapp.web.controller;
+
+import disenodesistemas.backendfunerariaapp.web.dto.request.DeceasedRequestDto;
+import disenodesistemas.backendfunerariaapp.web.dto.response.DeceasedResponseDto;
+import disenodesistemas.backendfunerariaapp.application.service.DeceasedService;
+import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
+import java.util.List;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("api/v1/deceased")
+public class DeceasedController {
+
+  private final DeceasedService deceasedService;
+
+  @GetMapping
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  public ResponseEntity<List<DeceasedResponseDto>> findAll() {
+    return ResponseEntity.ok(deceasedService.findAll());
+  }
+
+  @GetMapping("/{dni}")
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  public ResponseEntity<DeceasedResponseDto> findByDni(@PathVariable final Integer dni) {
+    return ResponseEntity.ok(deceasedService.findById(dni));
+  }
+
+  @PostMapping
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  public ResponseEntity<DeceasedResponseDto> create(
+      @Valid @RequestBody final DeceasedRequestDto deceasedRequest) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(deceasedService.create(deceasedRequest));
+  }
+
+  @PutMapping(path = "/{dni}")
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  public ResponseEntity<DeceasedResponseDto> update(
+      @PathVariable final Integer dni,
+      @Valid @RequestBody final DeceasedRequestDto deceasedRequest) {
+    return ResponseEntity.ok(deceasedService.update(dni, deceasedRequest));
+  }
+
+  @DeleteMapping("/{dni}")
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  public ResponseEntity<OperationStatusModel> delete(@PathVariable final Integer dni) {
+    deceasedService.delete(dni);
+    return ResponseEntity.ok(
+        OperationStatusModel.builder().name("DELETE DECEASED").result("SUCCESSFUL").build());
+  }
+}

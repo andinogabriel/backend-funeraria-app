@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <springProperty
+      scope="context"
+      name="CONSOLE_PATTERN"
+      source="logging.pattern.console"
+      defaultValue="%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} level=%-5level traceId=%X{traceId} correlationId=%X{correlationId} logger=%logger{36} thread=%thread %kvp message=&quot;%msg&quot;%n%wEx"/>
+
+  <appender name="PLAIN_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+      <pattern>${CONSOLE_PATTERN}</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <customFields>{"service":"backend-funeraria-app"}</customFields>
+      <includeMdc>true</includeMdc>
+      <includeContext>false</includeContext>
+    </encoder>
+  </appender>
+
+  <springProfile name="json-logs">
+    <root level="INFO">
+      <appender-ref ref="JSON_CONSOLE"/>
+    </root>
+  </springProfile>
+
+  <springProfile name="!json-logs">
+    <root level="INFO">
+      <appender-ref ref="PLAIN_CONSOLE"/>
+    </root>
+  </springProfile>
+</configuration>

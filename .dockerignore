@@ -1,0 +1,9 @@
+.git
+.idea
+target
+*.iml
+*.log
+.env
+.env.*
+src.zip
+OpenApiYamlCheck.class
