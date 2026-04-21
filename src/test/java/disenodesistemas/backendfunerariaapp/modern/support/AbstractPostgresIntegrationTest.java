@@ -2,6 +2,7 @@ package disenodesistemas.backendfunerariaapp.modern.support;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.FileStoragePort;
 import org.flywaydb.core.Flyway;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -13,6 +14,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * Provides a shared PostgreSQL Testcontainers setup for integration tests that need the real
  * database engine together with Flyway migrations and Spring Boot wiring.
  */
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @Testcontainers(disabledWithoutDocker = true)
 public abstract class AbstractPostgresIntegrationTest {
 
