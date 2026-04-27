@@ -14,6 +14,9 @@ RUN sed -i 's/\r$//' mvnw \
 FROM eclipse-temurin:25-jre
 WORKDIR /app
 
+LABEL org.opencontainers.image.source="https://github.com/andinogabriel/backend-funeraria-app" \
+      org.opencontainers.image.title="backend-funeraria-app"
+
 RUN addgroup --system spring \
     && adduser --system --ingroup spring spring
 
