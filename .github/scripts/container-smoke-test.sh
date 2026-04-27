@@ -3,9 +3,11 @@ set -Eeuo pipefail
 
 image_tag="${IMAGE_TAG:?IMAGE_TAG is required}"
 postgres_image="${POSTGRES_IMAGE:-postgres:17-alpine}"
+flyway_image="${FLYWAY_IMAGE:-flyway/flyway:11.14.1-alpine}"
 postgres_db="${POSTGRES_DB:-funerariadb}"
 postgres_user="${POSTGRES_USER:-postgres}"
 postgres_password="${POSTGRES_PASSWORD:-postgres}"
+migration_dir="${MIGRATION_DIR:-$PWD/src/main/resources/db/migration}"
 suffix="${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-1}-$$"
 
 network="backend-funeraria-smoke-${suffix}"
@@ -31,6 +33,11 @@ cleanup() {
 
 trap cleanup EXIT
 
+if [ ! -d "$migration_dir" ]; then
+  echo "Migration directory not found: $migration_dir" >&2
+  exit 1
+fi
+
 docker network create "$network" >/dev/null
 
 docker run --detach \
@@ -53,6 +60,18 @@ for attempt in {1..30}; do
 
   sleep 2
 done
+
+docker run --rm \
+  --network "$network" \
+  --volume "${migration_dir}:/flyway/sql:ro" \
+  "$flyway_image" \
+  -url="jdbc:postgresql://${postgres_container}:5432/${postgres_db}" \
+  -user="$postgres_user" \
+  -password="$postgres_password" \
+  -connectRetries=10 \
+  -locations="filesystem:/flyway/sql" \
+  -validateMigrationNaming=true \
+  migrate
 
 docker run --detach \
   --name "$app_container" \

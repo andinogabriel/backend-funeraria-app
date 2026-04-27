@@ -539,8 +539,8 @@ Release tags:
 - manual runs from `master` can publish an optional custom tag and optionally `latest`
 
 The runtime image defines a Docker `HEALTHCHECK` against `/actuator/health/liveness`. CI and
-container releases both start the built image with PostgreSQL and wait for that healthcheck before
-considering the image usable.
+container releases both start PostgreSQL, apply the Flyway migrations, start the built image and
+wait for that healthcheck before considering the image usable.
 
 Recommended repository settings for the default branch:
 
