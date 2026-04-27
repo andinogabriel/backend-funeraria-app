@@ -85,6 +85,7 @@ docker run --detach \
   --env SECURITY_PASSWORD_PEPPER=ci-smoke-pepper \
   --env SECURITY_REQUEST_FINGERPRINT_SECRET=ci-smoke-fingerprint-secret \
   --env MANAGEMENT_HEALTH_MAIL_ENABLED=false \
+  --env APP_STORAGE_PROVIDER=local \
   --env APP_STORAGE_LOCAL_ROOT_PATH=/tmp/backend-funeraria-storage \
   --env APP_STORAGE_LOCAL_PUBLIC_BASE_URL=http://localhost:8081/files/ \
   --env APP_BOOTSTRAP_ADMIN_ENABLED=false \
