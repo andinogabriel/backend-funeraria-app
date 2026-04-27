@@ -9,6 +9,7 @@ on:
       - "feature/**"
       - "codex/**"
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -36,6 +37,32 @@ jobs:
 
       - name: Run Maven verify
         run: mvn -q verify
+
+      - name: Summarize verify results
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Verify"
+            echo ""
+            echo "- Java: Temurin 25"
+            echo "- Command: \`mvn -q verify\`"
+            if [ -d target/site/jacoco ]; then
+              echo "- JaCoCo report: available"
+            else
+              echo "- JaCoCo report: not generated"
+            fi
+            if [ -d target/surefire-reports ]; then
+              echo "- Surefire reports: available"
+            else
+              echo "- Surefire reports: not generated"
+            fi
+            if [ -f target/checkstyle-result.xml ]; then
+              echo "- Checkstyle report: available"
+            else
+              echo "- Checkstyle report: not generated"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload JaCoCo report
         if: always()
@@ -71,5 +98,37 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build Docker image
-        run: docker build --tag backend-funeraria-app:ci .
+        id: docker-build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          tags: backend-funeraria-app:ci
+          push: false
+          load: false
+          provenance: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Summarize Docker build
+        if: always()
+        shell: bash
+        env:
+          IMAGE_DIGEST: ${{ steps.docker-build.outputs.digest }}
+        run: |
+          {
+            echo "## Docker Build"
+            echo ""
+            echo "- Dockerfile: \`Dockerfile\`"
+            echo "- Tag: \`backend-funeraria-app:ci\`"
+            echo "- Buildx cache: \`type=gha\`"
+            if [ -n "$IMAGE_DIGEST" ]; then
+              echo "- Image digest: \`$IMAGE_DIGEST\`"
+            else
+              echo "- Image digest: not exported"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
