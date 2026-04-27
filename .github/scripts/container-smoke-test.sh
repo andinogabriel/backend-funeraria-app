@@ -89,7 +89,10 @@ docker run --detach \
   --env APP_STORAGE_LOCAL_ROOT_PATH=/tmp/backend-funeraria-storage \
   --env APP_STORAGE_LOCAL_PUBLIC_BASE_URL=http://localhost:8081/files/ \
   --env APP_BOOTSTRAP_ADMIN_ENABLED=false \
-  "$image_tag" >/dev/null
+  "$image_tag" \
+  --app.storage.provider=local \
+  --app.storage.local.root-path=/tmp/backend-funeraria-storage \
+  --app.storage.local.public-base-url=http://localhost:8081/files/ >/dev/null
 
 for attempt in {1..60}; do
   container_state="$(docker inspect --format='{{.State.Status}}' "$app_container")"
