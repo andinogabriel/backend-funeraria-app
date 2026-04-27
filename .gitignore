@@ -50,7 +50,7 @@ src/main/resources/application-local.yaml
 
 ### Local storage ###
 .data/
-storage/
+/storage/
 
 ### Local tooling ###
 .m2/
