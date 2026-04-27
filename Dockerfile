@@ -17,12 +17,19 @@ WORKDIR /app
 LABEL org.opencontainers.image.source="https://github.com/andinogabriel/backend-funeraria-app" \
       org.opencontainers.image.title="backend-funeraria-app"
 
-RUN addgroup --system spring \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && addgroup --system spring \
     && adduser --system --ingroup spring spring
 
 COPY --from=build /workspace/target/backend-funeraria-app-0.0.1-SNAPSHOT.jar app.jar
 
 EXPOSE 8081
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
+    CMD curl --fail --silent --show-error http://127.0.0.1:8081/actuator/health/liveness || exit 1
+
 USER spring:spring
 
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

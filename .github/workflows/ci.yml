@@ -109,10 +109,16 @@ jobs:
           file: ./Dockerfile
           tags: backend-funeraria-app:ci
           push: false
-          load: false
+          load: true
           provenance: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Run container smoke test
+        shell: bash
+        env:
+          IMAGE_TAG: backend-funeraria-app:ci
+        run: bash .github/scripts/container-smoke-test.sh
 
       - name: Summarize Docker build
         if: always()
@@ -126,6 +132,7 @@ jobs:
             echo "- Dockerfile: \`Dockerfile\`"
             echo "- Tag: \`backend-funeraria-app:ci\`"
             echo "- Buildx cache: \`type=gha\`"
+            echo "- Smoke test: Docker healthcheck against the built image"
             if [ -n "$IMAGE_DIGEST" ]; then
               echo "- Image digest: \`$IMAGE_DIGEST\`"
             else
