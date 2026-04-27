@@ -1,0 +1,186 @@
+name: Container Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Optional extra image tag, for example 1.2.3 or staging"
+        required: false
+        type: string
+      publish_latest:
+        description: "Also publish the latest tag"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: container-release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: write
+  packages: write
+  security-events: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  publish:
+    name: Publish GHCR Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate release ref
+        shell: bash
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] \
+            && { [ "$GITHUB_REF_TYPE" != "branch" ] || [ "$GITHUB_REF_NAME" != "master" ]; }; then
+            echo "Manual container releases must run from the master branch." >&2
+            exit 1
+          fi
+
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            git fetch --no-tags origin master
+            if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/master; then
+              echo "Release tags must point to commits reachable from master." >&2
+              exit 1
+            fi
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Prepare image metadata
+        id: image
+        shell: bash
+        env:
+          INPUT_IMAGE_TAG: ${{ github.event.inputs.image_tag }}
+          INPUT_PUBLISH_LATEST: ${{ github.event.inputs.publish_latest }}
+        run: |
+          image_ref="$(echo "${REGISTRY}/${IMAGE_NAME}" | tr '[:upper:]' '[:lower:]')"
+          short_sha="${GITHUB_SHA::12}"
+          sha_tag="${image_ref}:sha-${short_sha}"
+          primary_tag="$sha_tag"
+          tags_file="$(mktemp)"
+
+          printf "%s\n" "$sha_tag" >> "$tags_file"
+
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            primary_tag="${image_ref}:${GITHUB_REF_NAME}"
+            printf "%s\n" "$primary_tag" "${image_ref}:latest" >> "$tags_file"
+          fi
+
+          if [ -n "$INPUT_IMAGE_TAG" ]; then
+            primary_tag="${image_ref}:${INPUT_IMAGE_TAG}"
+            printf "%s\n" "$primary_tag" >> "$tags_file"
+          fi
+
+          if [ "$INPUT_PUBLISH_LATEST" = "true" ]; then
+            printf "%s\n" "${image_ref}:latest" >> "$tags_file"
+          fi
+
+          {
+            echo "image_ref=$image_ref"
+            echo "primary_tag=$primary_tag"
+            echo "tags<<EOF"
+            sort -u "$tags_file"
+            echo "EOF"
+            echo "labels<<EOF"
+            echo "org.opencontainers.image.title=backend-funeraria-app"
+            echo "org.opencontainers.image.description=Backend API for funeral home operations"
+            echo "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}"
+            echo "org.opencontainers.image.revision=${GITHUB_SHA}"
+            echo "org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          load: true
+          push: false
+          tags: ${{ steps.image.outputs.tags }}
+          labels: ${{ steps.image.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Generate image SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ steps.image.outputs.primary_tag }}
+          artifact-name: backend-funeraria-app-sbom.spdx.json
+          output-file: backend-funeraria-app-sbom.spdx.json
+          format: spdx-json
+          upload-artifact: true
+          upload-release-assets: false
+
+      - name: Run Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: ${{ steps.image.outputs.primary_tag }}
+          format: sarif
+          output: trivy-results.sarif
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Upload Trivy SARIF
+        if: always() && hashFiles('trivy-results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-results.sarif
+
+      - name: Upload Trivy SARIF artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-results
+          path: trivy-results.sarif
+          if-no-files-found: ignore
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Docker image
+        shell: bash
+        run: docker image push --all-tags "${{ steps.image.outputs.image_ref }}"
+
+      - name: Summarize release
+        if: always()
+        shell: bash
+        env:
+          IMAGE_REF: ${{ steps.image.outputs.image_ref }}
+          PRIMARY_TAG: ${{ steps.image.outputs.primary_tag }}
+          TAGS: ${{ steps.image.outputs.tags }}
+        run: |
+          {
+            echo "## Container Release"
+            echo ""
+            echo "- Image: \`$IMAGE_REF\`"
+            echo "- Primary tag: \`$PRIMARY_TAG\`"
+            echo "- SBOM artifact: \`backend-funeraria-app-sbom.spdx.json\`"
+            echo "- Trivy SARIF: \`trivy-results.sarif\`"
+            echo ""
+            echo "### Published Tags"
+            echo "\`\`\`"
+            echo "$TAGS"
+            echo "\`\`\`"
+          } >> "$GITHUB_STEP_SUMMARY"

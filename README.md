@@ -511,6 +511,10 @@ workflows:
   - pull-request diff inspection for risky dependency changes
 - `CodeQL`
   - static security analysis for the Java codebase on PRs, protected branches and a weekly schedule
+- `Container Release`
+  - manual or tag-based Docker image publication to GitHub Container Registry
+  - image SBOM generation through Syft
+  - Trivy image vulnerability scanning before publishing
 - Dependabot
   - weekly dependency updates for Maven and GitHub Actions
 
@@ -519,7 +523,18 @@ Workflow files:
 - [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 - [`.github/workflows/dependency-review.yml`](.github/workflows/dependency-review.yml)
 - [`.github/workflows/codeql.yml`](.github/workflows/codeql.yml)
+- [`.github/workflows/container-release.yml`](.github/workflows/container-release.yml)
 - [`.github/dependabot.yml`](.github/dependabot.yml)
+
+Container images are published to:
+
+- `ghcr.io/andinogabriel/backend-funeraria-app`
+
+Release tags:
+
+- `sha-<commit>` is always published
+- `v*` Git tags publish the matching version tag and `latest`
+- manual runs from `master` can publish an optional custom tag and optionally `latest`
 
 Recommended repository settings for the default branch:
 
