@@ -22,7 +22,7 @@ concurrency:
 
 permissions:
   actions: read
-  contents: write
+  contents: read
   packages: write
   security-events: write
 
@@ -118,6 +118,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Run container smoke test
+        shell: bash
+        env:
+          IMAGE_TAG: ${{ steps.image.outputs.primary_tag }}
+        run: bash .github/scripts/container-smoke-test.sh
+
       - name: Generate image SBOM
         uses: anchore/sbom-action@v0
         with:
@@ -176,6 +182,7 @@ jobs:
             echo ""
             echo "- Image: \`$IMAGE_REF\`"
             echo "- Primary tag: \`$PRIMARY_TAG\`"
+            echo "- Smoke test: Docker healthcheck passed before publishing"
             echo "- SBOM artifact: \`backend-funeraria-app-sbom.spdx.json\`"
             echo "- Trivy SARIF: \`trivy-results.sarif\`"
             echo ""

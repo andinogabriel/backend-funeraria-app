@@ -507,12 +507,14 @@ workflows:
   - OpenAPI contract validation
   - Checkstyle, JaCoCo and Surefire artifact upload
   - Docker image build validation with Buildx cache
+  - container smoke test using the Docker healthcheck
 - `Dependency Review`
   - pull-request diff inspection for risky dependency changes
 - `CodeQL`
   - static security analysis for the Java codebase on PRs, protected branches and a weekly schedule
 - `Container Release`
   - manual or tag-based Docker image publication to GitHub Container Registry
+  - container smoke test before publishing
   - image SBOM generation through Syft
   - Trivy image vulnerability scanning before publishing
 - Dependabot
@@ -535,6 +537,10 @@ Release tags:
 - `sha-<commit>` is always published
 - `v*` Git tags publish the matching version tag and `latest`
 - manual runs from `master` can publish an optional custom tag and optionally `latest`
+
+The runtime image defines a Docker `HEALTHCHECK` against `/actuator/health/liveness`. CI and
+container releases both start PostgreSQL, apply the Flyway migrations, start the built image and
+wait for that healthcheck before considering the image usable.
 
 Recommended repository settings for the default branch:
 
