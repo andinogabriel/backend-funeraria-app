@@ -4,7 +4,7 @@ import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUs
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
 import disenodesistemas.backendfunerariaapp.exception.AppException;
 import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
-import disenodesistemas.backendfunerariaapp.persistence.repository.UserRepository;
+import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;

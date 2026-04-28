@@ -3,7 +3,7 @@ package disenodesistemas.backendfunerariaapp.infrastructure.persistence;
 import disenodesistemas.backendfunerariaapp.application.port.out.RolePersistencePort;
 import disenodesistemas.backendfunerariaapp.domain.entity.RoleEntity;
 import disenodesistemas.backendfunerariaapp.domain.enums.Role;
-import disenodesistemas.backendfunerariaapp.persistence.repository.RoleRepository;
+import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.RoleRepository;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

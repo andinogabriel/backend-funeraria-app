@@ -4,7 +4,7 @@ import disenodesistemas.backendfunerariaapp.application.port.out.ConfirmationTok
 import disenodesistemas.backendfunerariaapp.domain.entity.ConfirmationTokenEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
 import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
-import disenodesistemas.backendfunerariaapp.persistence.repository.ConfirmationTokenRepository;
+import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.ConfirmationTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.stereotype.Service;

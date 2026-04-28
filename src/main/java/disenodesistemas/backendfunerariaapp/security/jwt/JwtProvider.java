@@ -1,6 +1,6 @@
 package disenodesistemas.backendfunerariaapp.security.jwt;
 
-import disenodesistemas.backendfunerariaapp.cache.LoggedOutJwtTokenCache;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.jwt.LoggedOutJwtTokenCache;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserDevice;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
 import disenodesistemas.backendfunerariaapp.event.OnUserLogoutSuccessEvent;

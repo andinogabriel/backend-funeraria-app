@@ -1,4 +1,4 @@
-package disenodesistemas.backendfunerariaapp.security;
+package disenodesistemas.backendfunerariaapp.infrastructure.security;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.MessageResolverPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.DeviceFingerprintPort;
@@ -107,7 +107,6 @@ public class SecurityConfig {
                 "/api/v1/users/login",
                 "/api/v1/users/refresh",
                 "/api/v1/users/forgot-password",
-                "/api/v1/users/reset-password",
                 "/api/v1/addresses"
             ).permitAll()
             .requestMatchers(

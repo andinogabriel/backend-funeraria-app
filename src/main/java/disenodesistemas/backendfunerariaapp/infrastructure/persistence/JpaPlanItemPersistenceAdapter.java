@@ -2,7 +2,7 @@ package disenodesistemas.backendfunerariaapp.infrastructure.persistence;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.PlanItemPersistencePort;
 import disenodesistemas.backendfunerariaapp.domain.entity.ItemPlanEntity;
-import disenodesistemas.backendfunerariaapp.persistence.repository.ItemsPlanRepository;
+import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.ItemsPlanRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

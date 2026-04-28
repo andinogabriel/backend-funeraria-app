@@ -2,7 +2,7 @@ package disenodesistemas.backendfunerariaapp.infrastructure.persistence;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.GenderPersistencePort;
 import disenodesistemas.backendfunerariaapp.domain.entity.GenderEntity;
-import disenodesistemas.backendfunerariaapp.persistence.repository.GenderRepository;
+import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.GenderRepository;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

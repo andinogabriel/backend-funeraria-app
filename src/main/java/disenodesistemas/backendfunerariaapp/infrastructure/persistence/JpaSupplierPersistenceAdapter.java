@@ -2,7 +2,7 @@ package disenodesistemas.backendfunerariaapp.infrastructure.persistence;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.SupplierPersistencePort;
 import disenodesistemas.backendfunerariaapp.domain.entity.SupplierEntity;
-import disenodesistemas.backendfunerariaapp.persistence.repository.SupplierRepository;
+import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.SupplierRepository;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

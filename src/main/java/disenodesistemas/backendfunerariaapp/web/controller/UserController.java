@@ -86,8 +86,8 @@ public class UserController {
   }
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-  @PostMapping(path = "/reset-password")
-  public ResponseEntity<Map<String, String>> resetUserPassword(
+  @PostMapping(path = "/change-password")
+  public ResponseEntity<Map<String, String>> changeUserPassword(
       @Valid @RequestBody final PasswordResetDto passwordResetDto) {
     return ResponseEntity.ok(userService.changeOldPassword(passwordResetDto));
   }

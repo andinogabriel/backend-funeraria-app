@@ -1,4 +1,4 @@
-package disenodesistemas.backendfunerariaapp.persistence.repository;
+package disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository;
 
 import disenodesistemas.backendfunerariaapp.domain.entity.RelationshipEntity;
 import java.util.List;

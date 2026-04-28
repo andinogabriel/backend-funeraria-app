@@ -2,9 +2,6 @@ name: Dependency Review
 
 on:
   pull_request:
-    paths:
-      - "pom.xml"
-      - ".github/workflows/**"
   workflow_dispatch:
 
 permissions:

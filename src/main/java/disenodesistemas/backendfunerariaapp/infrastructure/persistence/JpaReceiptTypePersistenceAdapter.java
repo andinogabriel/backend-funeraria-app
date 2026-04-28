@@ -2,7 +2,7 @@ package disenodesistemas.backendfunerariaapp.infrastructure.persistence;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.ReceiptTypePersistencePort;
 import disenodesistemas.backendfunerariaapp.domain.entity.ReceiptTypeEntity;
-import disenodesistemas.backendfunerariaapp.persistence.repository.ReceiptTypeRepository;
+import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.ReceiptTypeRepository;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

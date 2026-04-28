@@ -2,7 +2,7 @@ package disenodesistemas.backendfunerariaapp.infrastructure.persistence;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.AffiliatePersistencePort;
 import disenodesistemas.backendfunerariaapp.domain.entity.AffiliateEntity;
-import disenodesistemas.backendfunerariaapp.persistence.repository.AffiliateRepository;
+import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.AffiliateRepository;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package disenodesistemas.backendfunerariaapp.persistence.repository;
+package disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository;
 
 import disenodesistemas.backendfunerariaapp.domain.entity.RefreshToken;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -7,7 +7,7 @@ import disenodesistemas.backendfunerariaapp.domain.entity.RoleEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
 import disenodesistemas.backendfunerariaapp.domain.enums.Role;
 import disenodesistemas.backendfunerariaapp.modern.support.AbstractPostgresIntegrationTest;
-import disenodesistemas.backendfunerariaapp.persistence.repository.RoleRepository;
+import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.RoleRepository;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;

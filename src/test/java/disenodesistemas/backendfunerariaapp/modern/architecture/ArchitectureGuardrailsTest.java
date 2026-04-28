@@ -25,11 +25,7 @@ class ArchitectureGuardrailsTest {
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(
-              "..application..",
-              "..infrastructure..",
-              "..web..",
-              "..mapping..",
-              "..persistence.repository..")
+              "..application..", "..infrastructure..", "..web..", "..mapping..")
           .because("the domain must stay isolated from use cases, HTTP and adapter implementations");
 
   @ArchTest
@@ -40,7 +36,7 @@ class ArchitectureGuardrailsTest {
               "..application.usecase..", "..application.service..", "..application.support..")
           .should()
           .dependOnClassesThat()
-          .resideInAnyPackage("..infrastructure..", "..persistence.repository..", "..web.controller..")
+          .resideInAnyPackage("..infrastructure..", "..web.controller..")
           .because(
               "application orchestration should depend on ports and DTOs, not repositories or adapter implementations");
 
@@ -51,8 +47,22 @@ class ArchitectureGuardrailsTest {
           .resideInAPackage("..web.controller..")
           .should()
           .dependOnClassesThat()
-          .resideInAnyPackage("..persistence.repository..", "..infrastructure.persistence..")
+          .resideInAnyPackage("..infrastructure.persistence..")
           .because("controllers should delegate through the application layer instead of talking to data access directly");
+
+  @ArchTest
+  static final ArchRule jpa_repositories_must_live_in_infrastructure =
+      classes()
+          .that()
+          .areAssignableTo(org.springframework.data.repository.Repository.class)
+          .and()
+          .areInterfaces()
+          .should()
+          .resideInAPackage("..infrastructure.persistence.repository..")
+          .because(
+              "JPA repositories are an infrastructure detail and must not live anywhere else "
+                  + "(prevents regressions where new repositories are added under a top-level "
+                  + "persistence/repository package by mistake)");
 
   @ArchTest
   static final ArchRule application_and_web_must_not_touch_entity_manager_directly =
@@ -90,6 +100,6 @@ class ArchitectureGuardrailsTest {
           .resideInAPackage("..mapping..")
           .should()
           .dependOnClassesThat()
-          .resideInAnyPackage("..persistence.repository..", "..infrastructure..", "..web.controller..")
+          .resideInAnyPackage("..infrastructure..", "..web.controller..")
           .because("mappers should stay focused on transformations and not acquire technical responsibilities");
 }
