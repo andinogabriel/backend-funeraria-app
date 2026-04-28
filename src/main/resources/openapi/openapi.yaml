@@ -226,7 +226,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
 
-  /api/v1/users/reset-password:
+  /api/v1/users/change-password:
     post:
       tags: [Users]
       summary: Cambiar password del usuario autenticado
