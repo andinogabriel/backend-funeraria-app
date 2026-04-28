@@ -55,13 +55,19 @@ public class UserEntity implements Serializable {
   @Column(nullable = false)
   private Boolean active;
 
-  @ManyToMany(fetch = FetchType.EAGER)
+  // Roles are LAZY because EAGER on @ManyToMany silently triggers extra joins and N+1 risks
+  // on every user lookup. Read paths that need roles (login, loadUserByUsername, role mutation)
+  // are already executed inside @Transactional, and UserRepository.findByEmail uses an
+  // @EntityGraph to fetch roles in a single query so the auth flow stays N+1-free.
+  @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(
       name = "user_role",
       joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
       inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
   private Set<RoleEntity> roles;
 
+  // Aggregate-owned children: cascade ALL is appropriate because removing the user must
+  // also drop their personal contact data and pending tokens.
   @OneToMany(cascade = CascadeType.ALL, mappedBy = "userNumber", orphanRemoval = true)
   private List<MobileNumberEntity> mobileNumbers;
 
@@ -71,14 +77,23 @@ public class UserEntity implements Serializable {
   @OneToMany(cascade = CascadeType.ALL, mappedBy = "user", orphanRemoval = true)
   private List<AffiliateEntity> affiliates;
 
-  @OneToMany(cascade = CascadeType.ALL, mappedBy = "deceasedUser", orphanRemoval = true)
-  private List<DeceasedEntity> deceasedList;
-
-  @OneToMany(cascade = CascadeType.ALL, mappedBy = "incomeUser", orphanRemoval = true)
-  private List<IncomeEntity> incomes;
-
   @OneToMany(cascade = CascadeType.ALL, mappedBy = "user", orphanRemoval = true)
   private List<ConfirmationTokenEntity> confirmationTokens;
+
+  // Transactional history (deceased registrations and recorded incomes) is NOT cascaded on
+  // remove and orphanRemoval is disabled. These records must outlive the user that registered
+  // them for accounting and audit reasons; deleting a user must never sweep away the
+  // funeral home's financial or operational history. Persistence and merge are still
+  // cascaded so adding an income via the user aggregate keeps working.
+  @OneToMany(
+      cascade = {CascadeType.PERSIST, CascadeType.MERGE},
+      mappedBy = "deceasedUser")
+  private List<DeceasedEntity> deceasedList;
+
+  @OneToMany(
+      cascade = {CascadeType.PERSIST, CascadeType.MERGE},
+      mappedBy = "incomeUser")
+  private List<IncomeEntity> incomes;
 
   public UserEntity(
       final String email,
