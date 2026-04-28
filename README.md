@@ -404,6 +404,8 @@ Default development credentials created automatically in Docker profile:
 - Flyway migrations under `src/main/resources/db/migration` create the schema and load reference data
 - the Docker profile also bootstraps a development admin user if it does not exist yet
 - storage is local in Docker, so no AWS setup is required to start developing
+- `.env.example` documents the runtime variables expected by Docker Compose; keep it in sync when
+  adding configuration knobs
 
 ### Useful Docker commands
 
@@ -445,6 +447,7 @@ Set environment variables or rely on the defaults from `application.properties`:
 - `JWT_TOKEN_SECRET`
 - `SECURITY_PASSWORD_PEPPER`
 - `SECURITY_REQUEST_FINGERPRINT_SECRET`
+- `APP_STORAGE_PROVIDER`
 
 ### Start the app
 
@@ -541,6 +544,9 @@ Release tags:
 The runtime image defines a Docker `HEALTHCHECK` against `/actuator/health/liveness`. CI and
 container releases both start PostgreSQL, apply the Flyway migrations, start the built image and
 wait for that healthcheck before considering the image usable.
+
+CI also runs a source ignore guard before Maven. This protects runtime-critical source folders
+from broad `.gitignore` patterns, such as accidentally ignoring every nested `storage` package.
 
 Recommended repository settings for the default branch:
 

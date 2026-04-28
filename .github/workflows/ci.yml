@@ -35,6 +35,10 @@ jobs:
           java-version: "25"
           cache: maven
 
+      - name: Guard source ignore patterns
+        shell: bash
+        run: bash .github/scripts/source-ignore-guard.sh
+
       - name: Run Maven verify
         run: mvn -q verify
 
