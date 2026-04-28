@@ -8,7 +8,7 @@ import disenodesistemas.backendfunerariaapp.domain.entity.UserDevice;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
 import disenodesistemas.backendfunerariaapp.exception.AppException;
 import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
-import disenodesistemas.backendfunerariaapp.persistence.repository.UserDeviceRepository;
+import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.UserDeviceRepository;
 import disenodesistemas.backendfunerariaapp.web.dto.DeviceInfo;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

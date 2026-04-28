@@ -2,7 +2,7 @@ package disenodesistemas.backendfunerariaapp.infrastructure.persistence;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.BrandPersistencePort;
 import disenodesistemas.backendfunerariaapp.domain.entity.BrandEntity;
-import disenodesistemas.backendfunerariaapp.persistence.repository.BrandRepository;
+import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.BrandRepository;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

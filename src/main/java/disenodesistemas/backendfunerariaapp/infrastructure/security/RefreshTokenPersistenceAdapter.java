@@ -7,7 +7,7 @@ import disenodesistemas.backendfunerariaapp.domain.entity.RefreshToken;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserDevice;
 import disenodesistemas.backendfunerariaapp.exception.AppException;
 import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
-import disenodesistemas.backendfunerariaapp.persistence.repository.RefreshTokenRepository;
+import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.RefreshTokenRepository;
 import disenodesistemas.backendfunerariaapp.security.refresh.RefreshTokenSecurityProperties;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

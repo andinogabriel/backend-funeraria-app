@@ -2,7 +2,7 @@ package disenodesistemas.backendfunerariaapp.infrastructure.persistence;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.IncomePersistencePort;
 import disenodesistemas.backendfunerariaapp.domain.entity.IncomeEntity;
-import disenodesistemas.backendfunerariaapp.persistence.repository.IncomeRepository;
+import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.IncomeRepository;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
