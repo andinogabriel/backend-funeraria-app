@@ -75,6 +75,7 @@ logging:
 spring:
   messages:
     basename: "messages,messages/messages"
+    encoding: UTF-8
     fallback-to-system-locale: false
 
 AbstractUserDetailsAuthenticationProvider:
