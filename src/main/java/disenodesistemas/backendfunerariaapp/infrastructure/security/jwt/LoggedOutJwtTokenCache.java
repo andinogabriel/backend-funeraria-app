@@ -1,4 +1,4 @@
-package disenodesistemas.backendfunerariaapp.cache;
+package disenodesistemas.backendfunerariaapp.infrastructure.security.jwt;
 
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;

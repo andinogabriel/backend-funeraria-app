@@ -1,6 +1,6 @@
 package disenodesistemas.backendfunerariaapp.event.listener;
 
-import disenodesistemas.backendfunerariaapp.cache.LoggedOutJwtTokenCache;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.jwt.LoggedOutJwtTokenCache;
 import disenodesistemas.backendfunerariaapp.event.OnUserLogoutSuccessEvent;
 import disenodesistemas.backendfunerariaapp.web.dto.DeviceInfo;
 import lombok.RequiredArgsConstructor;
