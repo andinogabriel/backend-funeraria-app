@@ -1,4 +1,4 @@
-package disenodesistemas.backendfunerariaapp.security;
+package disenodesistemas.backendfunerariaapp.infrastructure.security;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.MessageResolverPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.DeviceFingerprintPort;
