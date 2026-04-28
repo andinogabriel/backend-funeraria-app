@@ -119,16 +119,12 @@
       <artifactId>flyway-database-postgresql</artifactId>
     </dependency>
 
-    <!-- Database drivers -->
+    <!-- Database driver: PostgreSQL is the only supported runtime per ADR-0001
+         and ADR-0003. The previous MySQL connector dependency was unused and
+         only added jar weight + JDBC URL ambiguity, so it has been removed. -->
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <scope>runtime</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.mysql</groupId>
-      <artifactId>mysql-connector-j</artifactId>
       <scope>runtime</scope>
     </dependency>
 

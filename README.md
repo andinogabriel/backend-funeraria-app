@@ -138,6 +138,25 @@ Important headers:
 - `Idempotency-Key: <unique-key>` for login and refresh
 - `X-Correlation-Id: <client-correlation-id>` optional
 
+### Runtime Secrets Validation
+
+`RuntimeSecretsValidator` runs during the Spring lifecycle and inspects the three runtime
+secrets used by authentication: `jwt-token.secret`, `security.password.pepper` and
+`security.request.fingerprint-secret`.
+
+- In Spring profiles `prod` or `production`, any blank value, the documented development
+  placeholder, or a value shorter than 16 characters aborts the boot with a structured error
+  log so misconfigured deployments fail fast instead of serving traffic with predictable
+  secrets.
+- In every other profile (including the default profile, `dev`, `test` and `docker`), the
+  same findings are surfaced as a structured warning under the event
+  `security.secrets.weak`. The application keeps running so local development remains
+  frictionless, but contributors still see the signal in their logs.
+
+The placeholder catalogue lives in the validator and mirrors the defaults declared in
+`application.yaml`. Whenever a default changes, the corresponding constant in
+`RuntimeSecretsValidator` must be updated together with the property file.
+
 ## Observability
 
 The service includes a production-oriented observability baseline:

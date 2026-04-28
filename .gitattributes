@@ -1,4 +1,45 @@
-.github/scripts/*.sh text eol=lf
-.github/workflows/*.yml text eol=lf
+# Normalize line endings across platforms.
+# Ensures Linux/macOS contributors and Windows contributors produce the same
+# committed bytes for tracked text files, eliminating spurious CRLF/LF diffs.
+* text=auto eol=lf
+
+# Explicit text overrides for files that must always use LF (POSIX scripts,
+# Docker, Maven and Linux-side configuration). These rules also apply when
+# the platform default would otherwise normalize to CRLF.
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.properties text eol=lf
+*.java text eol=lf
+*.xml text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.html text eol=lf
+*.sql text eol=lf
+.gitattributes text eol=lf
+.gitignore text eol=lf
+.editorconfig text eol=lf
 Dockerfile text eol=lf
 mvnw text eol=lf
+.mvn/jvm.config text eol=lf
+.github/scripts/*.sh text eol=lf
+.github/workflows/*.yml text eol=lf
+
+# Windows-only scripts must keep CRLF so cmd.exe does not misparse them.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+mvnw.cmd text eol=crlf
+
+# Treat known binaries as binary so git never tries to normalize them.
+*.jar binary
+*.class binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.woff binary
+*.woff2 binary
