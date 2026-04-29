@@ -1,26 +1,24 @@
 package disenodesistemas.backendfunerariaapp.application.usecase.user;
 
+import disenodesistemas.backendfunerariaapp.application.port.out.JwtTokenPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.RefreshTokenPort;
 import disenodesistemas.backendfunerariaapp.domain.entity.RefreshToken;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserDevice;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
-import disenodesistemas.backendfunerariaapp.security.jwt.JwtProperties;
-import disenodesistemas.backendfunerariaapp.security.jwt.JwtProvider;
 import disenodesistemas.backendfunerariaapp.web.dto.JwtDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /**
  * Owns the token lifecycle for authenticated device-bound sessions. It delegates JWT creation to
- * the provider, persists opaque refresh tokens through the refresh port and keeps both artifacts
+ * the JWT port and persists opaque refresh tokens through the refresh port, keeping both artifacts
  * synchronized when a session is created, rotated or explicitly closed.
  */
 @Service
 @RequiredArgsConstructor
 public class UserSessionTokenService {
 
-  private final JwtProvider jwtProvider;
-  private final JwtProperties jwtProperties;
+  private final JwtTokenPort jwtTokenPort;
   private final RefreshTokenPort refreshTokenPort;
 
   /**
@@ -43,7 +41,7 @@ public class UserSessionTokenService {
     return buildResponse(
         userEntity,
         userDevice,
-        jwtProvider.generateAccessToken(userEntity, userDevice),
+        jwtTokenPort.generateAccessToken(userEntity, userDevice),
         refreshTokenPort.issueForDevice(userDevice));
   }
 
@@ -59,7 +57,7 @@ public class UserSessionTokenService {
     return buildResponse(
         userEntity,
         userDevice,
-        jwtProvider.generateAccessToken(userEntity, userDevice),
+        jwtTokenPort.generateAccessToken(userEntity, userDevice),
         refreshTokenPort.rotate(refreshToken));
   }
 
@@ -87,7 +85,7 @@ public class UserSessionTokenService {
     return JwtDto.builder()
         .authorization(authorizationValue(accessToken))
         .refreshToken(refreshToken)
-        .expiryDuration(jwtProvider.getExpiryDuration())
+        .expiryDuration(jwtTokenPort.expiryDurationMillis())
         .authorities(userEntity.getRoles().stream().map(role -> role.getName().name()).toList())
         .build();
   }
@@ -98,7 +96,7 @@ public class UserSessionTokenService {
    * the property already contains a trailing space or not.
    */
   private String authorizationValue(final String accessToken) {
-    final String prefix = jwtProperties.prefix();
+    final String prefix = jwtTokenPort.authorizationPrefix();
     final String normalizedPrefix = prefix.endsWith(" ") ? prefix : prefix + ' ';
     return normalizedPrefix + accessToken;
   }

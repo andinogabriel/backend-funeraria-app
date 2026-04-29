@@ -2,7 +2,7 @@ package disenodesistemas.backendfunerariaapp.infrastructure.idempotency;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.AuthIdempotencyPort;
 import disenodesistemas.backendfunerariaapp.exception.ConflictException;
-import disenodesistemas.backendfunerariaapp.security.idempotency.AuthIdempotencyProperties;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.config.AuthIdempotencyProperties;
 import disenodesistemas.backendfunerariaapp.web.dto.JwtDto;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;

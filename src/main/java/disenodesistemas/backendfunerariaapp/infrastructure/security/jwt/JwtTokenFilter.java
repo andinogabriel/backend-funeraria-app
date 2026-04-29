@@ -1,4 +1,4 @@
-package disenodesistemas.backendfunerariaapp.security.jwt;
+package disenodesistemas.backendfunerariaapp.infrastructure.security.jwt;
 
 import disenodesistemas.backendfunerariaapp.application.model.RequestMetadata;
 import disenodesistemas.backendfunerariaapp.application.port.out.DeviceFingerprintPort;
@@ -8,7 +8,8 @@ import disenodesistemas.backendfunerariaapp.application.port.out.UserDevicePort;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserDevice;
 import disenodesistemas.backendfunerariaapp.exception.AppException;
 import disenodesistemas.backendfunerariaapp.exception.InvalidTokenRequestException;
-import disenodesistemas.backendfunerariaapp.security.request.SecurityRequestProperties;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.config.JwtProperties;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.config.SecurityRequestProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;

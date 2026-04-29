@@ -1,4 +1,4 @@
-package disenodesistemas.backendfunerariaapp.security.request;
+package disenodesistemas.backendfunerariaapp.infrastructure.security.config;
 
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.boot.context.properties.ConfigurationProperties;

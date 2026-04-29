@@ -335,9 +335,6 @@
                 <include>disenodesistemas/backendfunerariaapp/infrastructure/persistence/**/*.class</include>
                 <include>disenodesistemas/backendfunerariaapp/infrastructure/idempotency/**/*.class</include>
                 <include>disenodesistemas/backendfunerariaapp/infrastructure/security/**/*.class</include>
-                <include>disenodesistemas/backendfunerariaapp/security/jwt/**/*.class</include>
-                <include>disenodesistemas/backendfunerariaapp/security/ratelimit/**/*.class</include>
-                <include>disenodesistemas/backendfunerariaapp/security/password/PepperedPasswordEncoder.class</include>
               </includes>
             </configuration>
           </execution>
@@ -355,9 +352,6 @@
                 <include>disenodesistemas/backendfunerariaapp/infrastructure/persistence/**/*.class</include>
                 <include>disenodesistemas/backendfunerariaapp/infrastructure/idempotency/**/*.class</include>
                 <include>disenodesistemas/backendfunerariaapp/infrastructure/security/**/*.class</include>
-                <include>disenodesistemas/backendfunerariaapp/security/jwt/**/*.class</include>
-                <include>disenodesistemas/backendfunerariaapp/security/ratelimit/**/*.class</include>
-                <include>disenodesistemas/backendfunerariaapp/security/password/PepperedPasswordEncoder.class</include>
               </includes>
               <rules>
                 <rule>

@@ -1,5 +1,7 @@
-package disenodesistemas.backendfunerariaapp.security.ratelimit;
+package disenodesistemas.backendfunerariaapp.infrastructure.security.ratelimit;
 
+import disenodesistemas.backendfunerariaapp.application.port.out.LoginRateLimitPort;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.config.LoginRateLimitProperties;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -16,7 +18,7 @@ import org.springframework.stereotype.Component;
  * while still allowing the counters to recover automatically after the configured time window.
  */
 @Component
-public class LoginRateLimiter {
+public class LoginRateLimiter implements LoginRateLimitPort {
 
   private record Key(String email, String ip) {}
 
@@ -103,6 +105,7 @@ public class LoginRateLimiter {
    * caller is currently locked, the method throws an exception containing the remaining backoff
    * duration so the API can communicate when another attempt may be retried.
    */
+  @Override
   public void assertAllowed(final String email, final String ip) {
     final Instant now = clock.instant();
     final Key key = new Key(normalize(email), normalize(ip));
@@ -128,6 +131,7 @@ public class LoginRateLimiter {
    * history for the email and IP combination so legitimate users are not kept under an old
    * backoff once they prove ownership of correct credentials.
    */
+  @Override
   public void onSuccess(final String email, final String ip) {
     states.remove(new Key(normalize(email), normalize(ip)));
   }
@@ -137,6 +141,7 @@ public class LoginRateLimiter {
    * the current state window and, when needed, extends the exponential lock that future attempts
    * will observe through {@link #assertAllowed(String, String)}.
    */
+  @Override
   public void onFailure(final String email, final String ip) {
     final Instant now = clock.instant();
     final Key key = new Key(normalize(email), normalize(ip));

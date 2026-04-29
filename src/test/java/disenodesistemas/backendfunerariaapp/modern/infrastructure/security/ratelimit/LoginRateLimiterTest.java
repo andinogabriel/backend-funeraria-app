@@ -5,9 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import disenodesistemas.backendfunerariaapp.modern.support.TestValues;
-import disenodesistemas.backendfunerariaapp.security.ratelimit.LoginRateLimitProperties;
-import disenodesistemas.backendfunerariaapp.security.ratelimit.LoginRateLimiter;
-import disenodesistemas.backendfunerariaapp.security.ratelimit.TooManyLoginAttemptsException;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.config.LoginRateLimitProperties;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.ratelimit.LoginRateLimiter;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.ratelimit.TooManyLoginAttemptsException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;

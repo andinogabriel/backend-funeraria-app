@@ -1,4 +1,4 @@
-package disenodesistemas.backendfunerariaapp.security.jwt;
+package disenodesistemas.backendfunerariaapp.infrastructure.security.jwt;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.MessageResolverPort;
 import jakarta.servlet.ServletException;

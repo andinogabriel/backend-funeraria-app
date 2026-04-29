@@ -3,7 +3,7 @@ package disenodesistemas.backendfunerariaapp.infrastructure.security;
 import disenodesistemas.backendfunerariaapp.application.model.RequestMetadata;
 import disenodesistemas.backendfunerariaapp.application.port.out.SecurityThreatProtectionPort;
 import disenodesistemas.backendfunerariaapp.exception.AppException;
-import disenodesistemas.backendfunerariaapp.security.threat.ThreatProtectionProperties;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.config.ThreatProtectionProperties;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;

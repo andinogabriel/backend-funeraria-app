@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import disenodesistemas.backendfunerariaapp.config.RequestTracingProperties;
 import disenodesistemas.backendfunerariaapp.infrastructure.logging.RequestTraceContext;
 import disenodesistemas.backendfunerariaapp.infrastructure.logging.RequestTracingFilter;
-import disenodesistemas.backendfunerariaapp.security.request.SecurityRequestProperties;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.config.SecurityRequestProperties;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

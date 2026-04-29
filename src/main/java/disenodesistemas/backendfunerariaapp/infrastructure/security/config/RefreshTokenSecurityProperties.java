@@ -1,4 +1,4 @@
-package disenodesistemas.backendfunerariaapp.security.refresh;
+package disenodesistemas.backendfunerariaapp.infrastructure.security.config;
 
 import jakarta.validation.constraints.Min;
 import org.springframework.boot.context.properties.ConfigurationProperties;

@@ -7,7 +7,7 @@ import disenodesistemas.backendfunerariaapp.application.port.out.MessageResolver
 import disenodesistemas.backendfunerariaapp.exception.AppException;
 import disenodesistemas.backendfunerariaapp.exception.AppExceptionsHandler;
 import disenodesistemas.backendfunerariaapp.infrastructure.logging.RequestTraceContext;
-import disenodesistemas.backendfunerariaapp.security.ratelimit.TooManyLoginAttemptsException;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.ratelimit.TooManyLoginAttemptsException;
 import jakarta.validation.Valid;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

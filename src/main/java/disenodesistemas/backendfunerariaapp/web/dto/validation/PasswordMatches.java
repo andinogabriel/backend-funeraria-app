@@ -1,4 +1,4 @@
-package disenodesistemas.backendfunerariaapp.security;
+package disenodesistemas.backendfunerariaapp.web.dto.validation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;

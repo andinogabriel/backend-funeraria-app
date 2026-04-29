@@ -1,4 +1,4 @@
-package disenodesistemas.backendfunerariaapp.security.password;
+package disenodesistemas.backendfunerariaapp.infrastructure.security;
 
 import java.util.Objects;
 import org.springframework.security.crypto.password.PasswordEncoder;
