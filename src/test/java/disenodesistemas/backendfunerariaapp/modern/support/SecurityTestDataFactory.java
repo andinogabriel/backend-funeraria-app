@@ -4,8 +4,8 @@ import disenodesistemas.backendfunerariaapp.application.model.RequestMetadata;
 import disenodesistemas.backendfunerariaapp.domain.entity.RefreshToken;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserDevice;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
-import disenodesistemas.backendfunerariaapp.security.jwt.JwtProperties;
-import disenodesistemas.backendfunerariaapp.security.request.SecurityRequestProperties;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.config.JwtProperties;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.config.SecurityRequestProperties;
 import disenodesistemas.backendfunerariaapp.web.dto.DeviceInfo;
 import java.time.Instant;
 

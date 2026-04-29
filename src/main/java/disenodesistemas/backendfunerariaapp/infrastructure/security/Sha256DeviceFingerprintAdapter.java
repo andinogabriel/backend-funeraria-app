@@ -1,7 +1,7 @@
 package disenodesistemas.backendfunerariaapp.infrastructure.security;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.DeviceFingerprintPort;
-import disenodesistemas.backendfunerariaapp.security.request.SecurityRequestProperties;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.config.SecurityRequestProperties;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

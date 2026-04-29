@@ -1,4 +1,4 @@
-package disenodesistemas.backendfunerariaapp.security.password;
+package disenodesistemas.backendfunerariaapp.infrastructure.security.config;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

@@ -3,10 +3,10 @@ package disenodesistemas.backendfunerariaapp.modern.application.usecase.user;
 import static org.mockito.Mockito.verify;
 
 import disenodesistemas.backendfunerariaapp.application.model.RequestMetadata;
+import disenodesistemas.backendfunerariaapp.application.port.out.LoginRateLimitPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.SecurityThreatProtectionPort;
 import disenodesistemas.backendfunerariaapp.application.usecase.user.UserSessionSecurityService;
 import disenodesistemas.backendfunerariaapp.modern.support.SecurityTestDataFactory;
-import disenodesistemas.backendfunerariaapp.security.ratelimit.LoginRateLimiter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,7 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class UserSessionSecurityServiceTest {
 
   @Mock private SecurityThreatProtectionPort securityThreatProtectionPort;
-  @Mock private LoginRateLimiter loginRateLimiter;
+  @Mock private LoginRateLimitPort loginRateLimiter;
 
   @InjectMocks private UserSessionSecurityService userSessionSecurityService;
 

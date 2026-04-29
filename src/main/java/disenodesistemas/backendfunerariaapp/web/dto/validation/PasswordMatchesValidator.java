@@ -1,4 +1,4 @@
-package disenodesistemas.backendfunerariaapp.security;
+package disenodesistemas.backendfunerariaapp.web.dto.validation;
 
 import disenodesistemas.backendfunerariaapp.web.dto.request.UserRegisterDto;
 

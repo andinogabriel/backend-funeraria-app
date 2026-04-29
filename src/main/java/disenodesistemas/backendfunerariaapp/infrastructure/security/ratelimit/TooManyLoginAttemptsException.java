@@ -1,4 +1,4 @@
-package disenodesistemas.backendfunerariaapp.security.ratelimit;
+package disenodesistemas.backendfunerariaapp.infrastructure.security.ratelimit;
 
 import lombok.Getter;
 

@@ -1,10 +1,11 @@
-package disenodesistemas.backendfunerariaapp.security.jwt;
+package disenodesistemas.backendfunerariaapp.infrastructure.security.jwt;
 
-import disenodesistemas.backendfunerariaapp.infrastructure.security.jwt.LoggedOutJwtTokenCache;
+import disenodesistemas.backendfunerariaapp.application.port.out.JwtTokenPort;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserDevice;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
 import disenodesistemas.backendfunerariaapp.event.OnUserLogoutSuccessEvent;
 import disenodesistemas.backendfunerariaapp.exception.InvalidTokenRequestException;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.config.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -27,7 +28,7 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-public class JwtProvider {
+public class JwtProvider implements JwtTokenPort {
 
   private final JwtProperties jwtProperties;
   private final LoggedOutJwtTokenCache loggedOutJwtTokenCache;
@@ -49,6 +50,7 @@ public class JwtProvider {
    * authenticated session. Those claims allow downstream filters to confirm not only signature
    * integrity but also whether the token still belongs to the active persisted device session.
    */
+  @Override
   public String generateAccessToken(final UserEntity user, final UserDevice userDevice) {
     final String authoritiesGranted =
         user.getRoles().stream()
@@ -115,8 +117,19 @@ public class JwtProvider {
    * keeps response-building code independent from configuration math and ensures a single source of
    * truth for token duration communicated by the API.
    */
-  public long getExpiryDuration() {
+  @Override
+  public long expiryDurationMillis() {
     return jwtProperties.expirationSeconds() * 1000L;
+  }
+
+  /**
+   * Returns the configured authorization-header prefix (for example {@code "Bearer"}). Exposing it
+   * through the port lets application code build the {@code Authorization} value without knowing
+   * about the JWT properties record that backs the configuration.
+   */
+  @Override
+  public String authorizationPrefix() {
+    return jwtProperties.prefix();
   }
 
   /**

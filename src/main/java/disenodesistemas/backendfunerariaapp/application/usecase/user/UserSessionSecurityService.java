@@ -1,8 +1,8 @@
 package disenodesistemas.backendfunerariaapp.application.usecase.user;
 
 import disenodesistemas.backendfunerariaapp.application.model.RequestMetadata;
+import disenodesistemas.backendfunerariaapp.application.port.out.LoginRateLimitPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.SecurityThreatProtectionPort;
-import disenodesistemas.backendfunerariaapp.security.ratelimit.LoginRateLimiter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 public class UserSessionSecurityService {
 
   private final SecurityThreatProtectionPort securityThreatProtectionPort;
-  private final LoginRateLimiter loginRateLimiter;
+  private final LoginRateLimitPort loginRateLimiter;
 
   /**
    * Applies all security checks that must succeed before a login attempt can continue. It combines

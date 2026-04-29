@@ -2,7 +2,7 @@ package disenodesistemas.backendfunerariaapp.infrastructure.web;
 
 import disenodesistemas.backendfunerariaapp.application.model.RequestMetadata;
 import disenodesistemas.backendfunerariaapp.application.port.out.RequestMetadataPort;
-import disenodesistemas.backendfunerariaapp.security.request.SecurityRequestProperties;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.config.SecurityRequestProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;

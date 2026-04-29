@@ -5,14 +5,13 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import disenodesistemas.backendfunerariaapp.application.port.out.JwtTokenPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.RefreshTokenPort;
 import disenodesistemas.backendfunerariaapp.application.usecase.user.UserSessionTokenService;
 import disenodesistemas.backendfunerariaapp.domain.entity.RefreshToken;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserDevice;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
 import disenodesistemas.backendfunerariaapp.modern.support.SecurityTestDataFactory;
-import disenodesistemas.backendfunerariaapp.security.jwt.JwtProperties;
-import disenodesistemas.backendfunerariaapp.security.jwt.JwtProvider;
 import disenodesistemas.backendfunerariaapp.web.dto.JwtDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,9 +24,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @DisplayName("UserSessionTokenService")
 class UserSessionTokenServiceTest {
 
-  @Mock private JwtProvider jwtProvider;
+  @Mock private JwtTokenPort jwtTokenPort;
   @Mock private RefreshTokenPort refreshTokenPort;
-  @Mock private JwtProperties jwtProperties;
 
   @InjectMocks private UserSessionTokenService userSessionTokenService;
 
@@ -38,10 +36,10 @@ class UserSessionTokenServiceTest {
     final UserEntity userEntity = SecurityTestDataFactory.userEntity();
     final UserDevice userDevice = SecurityTestDataFactory.userDevice(userEntity);
 
-    when(jwtProvider.generateAccessToken(userEntity, userDevice)).thenReturn("access-token");
+    when(jwtTokenPort.generateAccessToken(userEntity, userDevice)).thenReturn("access-token");
     when(refreshTokenPort.issueForDevice(userDevice)).thenReturn("refresh-token");
-    when(jwtProvider.getExpiryDuration()).thenReturn(900_000L);
-    when(jwtProperties.prefix()).thenReturn("Bearer");
+    when(jwtTokenPort.expiryDurationMillis()).thenReturn(900_000L);
+    when(jwtTokenPort.authorizationPrefix()).thenReturn("Bearer");
 
     final JwtDto response = userSessionTokenService.issueLoginTokens(userEntity, userDevice);
 

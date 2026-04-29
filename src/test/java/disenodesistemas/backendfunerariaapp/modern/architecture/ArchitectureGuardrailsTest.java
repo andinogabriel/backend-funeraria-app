@@ -102,4 +102,14 @@ class ArchitectureGuardrailsTest {
           .dependOnClassesThat()
           .resideInAnyPackage("..infrastructure..", "..web.controller..")
           .because("mappers should stay focused on transformations and not acquire technical responsibilities");
+
+  @ArchTest
+  static final ArchRule legacy_top_level_security_package_must_stay_empty =
+      noClasses()
+          .should()
+          .resideInAPackage("disenodesistemas.backendfunerariaapp.security..")
+          .because(
+              "security adapters and properties live under 'infrastructure.security' and Bean "
+                  + "Validation annotations under 'web.dto.validation'; the legacy top-level "
+                  + "'security' package was consolidated and must not return");
 }

@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
 import disenodesistemas.backendfunerariaapp.event.OnUserLogoutSuccessEvent;
-import disenodesistemas.backendfunerariaapp.security.jwt.JwtProvider;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.jwt.JwtProvider;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.expiringmap.ExpiringMap;
 import org.springframework.beans.factory.annotation.Autowired;

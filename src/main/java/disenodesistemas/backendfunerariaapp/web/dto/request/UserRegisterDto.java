@@ -1,6 +1,6 @@
 package disenodesistemas.backendfunerariaapp.web.dto.request;
 
-import disenodesistemas.backendfunerariaapp.security.PasswordMatches;
+import disenodesistemas.backendfunerariaapp.web.dto.validation.PasswordMatches;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

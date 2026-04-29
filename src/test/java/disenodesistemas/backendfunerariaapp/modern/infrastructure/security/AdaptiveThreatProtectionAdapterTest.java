@@ -7,7 +7,7 @@ import disenodesistemas.backendfunerariaapp.exception.AppException;
 import disenodesistemas.backendfunerariaapp.infrastructure.security.AdaptiveThreatProtectionAdapter;
 import disenodesistemas.backendfunerariaapp.modern.support.SecurityTestDataFactory;
 import disenodesistemas.backendfunerariaapp.modern.support.TestValues;
-import disenodesistemas.backendfunerariaapp.security.threat.ThreatProtectionProperties;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.config.ThreatProtectionProperties;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

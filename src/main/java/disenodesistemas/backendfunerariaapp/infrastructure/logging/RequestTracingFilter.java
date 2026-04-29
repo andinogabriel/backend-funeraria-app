@@ -1,7 +1,7 @@
 package disenodesistemas.backendfunerariaapp.infrastructure.logging;
 
 import disenodesistemas.backendfunerariaapp.config.RequestTracingProperties;
-import disenodesistemas.backendfunerariaapp.security.request.SecurityRequestProperties;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.config.SecurityRequestProperties;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

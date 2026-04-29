@@ -5,9 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import disenodesistemas.backendfunerariaapp.infrastructure.security.RuntimeSecretsValidator;
-import disenodesistemas.backendfunerariaapp.security.jwt.JwtProperties;
-import disenodesistemas.backendfunerariaapp.security.password.PasswordSecurityProperties;
-import disenodesistemas.backendfunerariaapp.security.request.SecurityRequestProperties;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.config.JwtProperties;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.config.PasswordSecurityProperties;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.config.SecurityRequestProperties;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.env.MockEnvironment;

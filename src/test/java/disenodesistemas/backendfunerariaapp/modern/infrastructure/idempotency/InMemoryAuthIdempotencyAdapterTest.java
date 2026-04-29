@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import disenodesistemas.backendfunerariaapp.exception.ConflictException;
 import disenodesistemas.backendfunerariaapp.infrastructure.idempotency.InMemoryAuthIdempotencyAdapter;
-import disenodesistemas.backendfunerariaapp.security.idempotency.AuthIdempotencyProperties;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.config.AuthIdempotencyProperties;
 import disenodesistemas.backendfunerariaapp.web.dto.JwtDto;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;

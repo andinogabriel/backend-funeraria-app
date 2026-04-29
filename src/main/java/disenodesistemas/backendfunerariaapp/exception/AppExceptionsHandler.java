@@ -2,7 +2,7 @@ package disenodesistemas.backendfunerariaapp.exception;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.MessageResolverPort;
 import disenodesistemas.backendfunerariaapp.infrastructure.logging.RequestTraceContext;
-import disenodesistemas.backendfunerariaapp.security.ratelimit.TooManyLoginAttemptsException;
+import disenodesistemas.backendfunerariaapp.infrastructure.security.ratelimit.TooManyLoginAttemptsException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
