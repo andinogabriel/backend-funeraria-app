@@ -32,13 +32,21 @@ class ArchitectureGuardrailsTest {
   static final ArchRule application_business_code_must_not_depend_on_repositories_or_adapters =
       noClasses()
           .that()
-          .resideInAnyPackage(
-              "..application.usecase..", "..application.service..", "..application.support..")
+          .resideInAnyPackage("..application.usecase..", "..application.support..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage("..infrastructure..", "..web.controller..")
           .because(
               "application orchestration should depend on ports and DTOs, not repositories or adapter implementations");
+
+  @ArchTest
+  static final ArchRule legacy_application_service_facade_must_stay_empty =
+      noClasses()
+          .should()
+          .resideInAPackage("..application.service..")
+          .because(
+              "the 'application.service' pass-through facade was removed; controllers depend on "
+                  + "command and query use cases directly, and this package must not return");
 
   @ArchTest
   static final ArchRule web_controllers_must_not_access_repositories_or_persistence_adapters =

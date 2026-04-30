@@ -1,11 +1,12 @@
 package disenodesistemas.backendfunerariaapp.web.controller;
 
+import disenodesistemas.backendfunerariaapp.application.usecase.brand.BrandCommandUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.brand.BrandQueryUseCase;
+import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.web.dto.request.BrandRequestDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.BrandResponseDto;
-import disenodesistemas.backendfunerariaapp.application.service.BrandService;
-import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
-import java.util.List;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,36 +25,38 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class BrandController {
 
-  private final BrandService brandService;
+  private final BrandCommandUseCase brandCommandUseCase;
+  private final BrandQueryUseCase brandQueryUseCase;
 
   @GetMapping
   public ResponseEntity<List<BrandResponseDto>> findAll() {
-    return ResponseEntity.ok(brandService.findAll());
+    return ResponseEntity.ok(brandQueryUseCase.findAll());
   }
 
   @GetMapping(path = "/{id}")
   public ResponseEntity<BrandResponseDto> findById(@PathVariable final Long id) {
-    return ResponseEntity.ok(brandService.findById(id));
+    return ResponseEntity.ok(brandQueryUseCase.findById(id));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @PostMapping
   public ResponseEntity<BrandResponseDto> create(
       @RequestBody @Valid final BrandRequestDto brandRequestDto) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(brandService.create(brandRequestDto));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(brandCommandUseCase.create(brandRequestDto));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @PutMapping(path = "/{id}")
   public ResponseEntity<BrandResponseDto> update(
       @PathVariable final Long id, @RequestBody @Valid final BrandRequestDto brandRequestDto) {
-    return ResponseEntity.ok(brandService.update(id, brandRequestDto));
+    return ResponseEntity.ok(brandCommandUseCase.update(id, brandRequestDto));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping(path = "/{id}")
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final Long id) {
-    brandService.delete(id);
+    brandCommandUseCase.delete(id);
     return ResponseEntity.ok(
         OperationStatusModel.builder().name("DELETE BRAND").result("SUCCESSFUL").build());
   }

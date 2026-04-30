@@ -1,5 +1,12 @@
 package disenodesistemas.backendfunerariaapp.web.controller;
 
+import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
+import disenodesistemas.backendfunerariaapp.application.usecase.user.UserAccountUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.user.UserProfileUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.user.UserQueryUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.user.UserRoleUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.user.UserSessionUseCase;
+import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.web.dto.JwtDto;
 import disenodesistemas.backendfunerariaapp.web.dto.UserDto;
 import disenodesistemas.backendfunerariaapp.web.dto.UserModelAssembler;
@@ -15,13 +22,10 @@ import disenodesistemas.backendfunerariaapp.web.dto.response.AddressResponseDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.MobileNumberResponseDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.UserAddressAndPhoneDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.UserResponseDto;
-import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
-import disenodesistemas.backendfunerariaapp.application.service.UserService;
-import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
@@ -41,7 +45,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class UserController {
 
-  private final UserService userService;
+  private final UserAccountUseCase userAccountUseCase;
+  private final UserSessionUseCase userSessionUseCase;
+  private final UserProfileUseCase userProfileUseCase;
+  private final UserRoleUseCase userRoleUseCase;
+  private final UserQueryUseCase userQueryUseCase;
   private final UserModelAssembler userModelAssembler;
   private final AuthenticatedUserPort authenticatedUserPort;
 
@@ -53,69 +61,70 @@ public class UserController {
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping
   public ResponseEntity<List<UserResponseDto>> findAll() {
-    return ResponseEntity.ok(userService.findAll());
+    return ResponseEntity.ok(userQueryUseCase.findAll());
   }
 
   @PostMapping
   public ResponseEntity<UserResponseDto> createUser(
       @RequestBody @Valid final UserRegisterDto userRegisterDto) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(userRegisterDto));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(userAccountUseCase.createUser(userRegisterDto));
   }
 
   @PostMapping(path = "/login")
   public ResponseEntity<JwtDto> login(@Valid @RequestBody final UserLoginDto userLoginDto) {
-    return ResponseEntity.ok(userService.login(userLoginDto));
+    return ResponseEntity.ok(userSessionUseCase.login(userLoginDto));
   }
 
   @GetMapping(path = "/activation")
   public String confirmation(@RequestParam("token") final String token) {
-    return userService.confirmationUser(token);
+    return userAccountUseCase.confirmationUser(token);
   }
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   @PutMapping("/logout")
   public ResponseEntity<OperationStatusModel> logoutUser(
       @Valid @RequestBody final LogOutRequestDto logOutRequest) {
-    return ResponseEntity.ok(userService.logoutUser(logOutRequest));
+    return ResponseEntity.ok(userSessionUseCase.logoutUser(logOutRequest));
   }
 
   @PostMapping("/refresh")
   public ResponseEntity<JwtDto> refreshJwtToken(
       @Valid @RequestBody final TokenRefreshRequestDto tokenRefreshRequest) {
-    return ResponseEntity.ok(userService.refreshJwtToken(tokenRefreshRequest));
+    return ResponseEntity.ok(userSessionUseCase.refreshJwtToken(tokenRefreshRequest));
   }
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   @PostMapping(path = "/change-password")
   public ResponseEntity<Map<String, String>> changeUserPassword(
       @Valid @RequestBody final PasswordResetDto passwordResetDto) {
-    return ResponseEntity.ok(userService.changeOldPassword(passwordResetDto));
+    return ResponseEntity.ok(userProfileUseCase.changeOldPassword(passwordResetDto));
   }
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   @GetMapping(path = "/addresses-and-phones")
   public ResponseEntity<UserAddressAndPhoneDto> getUserAddressesAndMobileNumbers() {
-    return ResponseEntity.ok(userService.getUserAddressesAndMobileNumbers());
+    return ResponseEntity.ok(userProfileUseCase.getUserAddressesAndMobileNumbers());
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @PostMapping(path = "/rol/{email}")
   public ResponseEntity<Set<RolRequestDto>> updateUserRol(
       @PathVariable final String email, @Valid @RequestBody final RolRequestDto rolRequestDto) {
-    return ResponseEntity.ok(userService.updateUserRol(email, rolRequestDto));
+    return ResponseEntity.ok(userRoleUseCase.updateUserRol(email, rolRequestDto));
   }
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   @PostMapping(path = "/address")
   public ResponseEntity<List<AddressResponseDto>> addUserAddresses(
       @RequestBody final List<@Valid AddressRequestDto> addressesRequest) {
-    return ResponseEntity.ok(userService.addAddressesUser(addressesRequest));
+    return ResponseEntity.ok(userProfileUseCase.addAddressesUser(addressesRequest));
   }
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   @PostMapping(path = "/mobile-numbers")
   public ResponseEntity<List<MobileNumberResponseDto>> addUserMobileNumbers(
       @RequestBody final List<@Valid MobileNumberRequestDto> mobileNumbersRequest) {
-    return ResponseEntity.ok(userService.addMobileNumbersUser(mobileNumbersRequest));
+    return ResponseEntity.ok(userProfileUseCase.addMobileNumbersUser(mobileNumbersRequest));
   }
 }

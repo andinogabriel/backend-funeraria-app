@@ -1,13 +1,14 @@
 package disenodesistemas.backendfunerariaapp.web.controller;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
-import disenodesistemas.backendfunerariaapp.application.service.IncomeService;
+import disenodesistemas.backendfunerariaapp.application.usecase.income.IncomeCommandUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.income.IncomeQueryUseCase;
 import disenodesistemas.backendfunerariaapp.mapping.UserMapper;
 import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.web.dto.request.IncomeRequestDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.IncomeResponseDto;
-import java.util.List;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -28,20 +29,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class IncomeController {
 
-  private final IncomeService incomeService;
+  private final IncomeCommandUseCase incomeCommandUseCase;
+  private final IncomeQueryUseCase incomeQueryUseCase;
   private final AuthenticatedUserPort authenticatedUserPort;
   private final UserMapper userMapper;
 
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping
   public ResponseEntity<List<IncomeResponseDto>> findAll() {
-    return ResponseEntity.ok(incomeService.findAll());
+    return ResponseEntity.ok(incomeQueryUseCase.findAll());
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping(path = "/{receiptNumber}")
   public ResponseEntity<IncomeResponseDto> findById(@PathVariable final Long receiptNumber) {
-    return ResponseEntity.ok(incomeService.findByReceiptNumber(receiptNumber));
+    return ResponseEntity.ok(incomeQueryUseCase.findByReceiptNumber(receiptNumber));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
@@ -53,7 +55,7 @@ public class IncomeController {
       @RequestParam(value = "limit", defaultValue = "5") final int limit,
       @RequestParam(value = "sortBy", defaultValue = "incomeDate") final String sortBy,
       @RequestParam(value = "sortDir", defaultValue = "desc") final String sortDir) {
-    return incomeService.getIncomesPaginated(isDeleted, page, limit, sortBy, sortDir);
+    return incomeQueryUseCase.getIncomesPaginated(isDeleted, page, limit, sortBy, sortDir);
   }
 
   @PreAuthorize("hasRole('ADMIN')")
@@ -61,7 +63,7 @@ public class IncomeController {
   public ResponseEntity<IncomeResponseDto> create(
       @RequestBody @Valid final IncomeRequestDto incomeRequest) {
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(incomeService.create(withAuthenticatedUser(incomeRequest)));
+        .body(incomeCommandUseCase.create(withAuthenticatedUser(incomeRequest)));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
@@ -69,13 +71,14 @@ public class IncomeController {
   public ResponseEntity<IncomeResponseDto> update(
       @PathVariable final Long receiptNumber,
       @Valid @RequestBody final IncomeRequestDto incomeRequest) {
-    return ResponseEntity.ok(incomeService.update(receiptNumber, withAuthenticatedUser(incomeRequest)));
+    return ResponseEntity.ok(
+        incomeCommandUseCase.update(receiptNumber, withAuthenticatedUser(incomeRequest)));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping(path = "/{receiptNumber}")
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final Long receiptNumber) {
-    incomeService.delete(receiptNumber);
+    incomeCommandUseCase.delete(receiptNumber);
     return ResponseEntity.ok(
         OperationStatusModel.builder().name("DELETE INCOME").result("SUCCESSFUL").build());
   }
@@ -86,4 +89,3 @@ public class IncomeController {
         .build();
   }
 }
-
