@@ -1,11 +1,12 @@
 package disenodesistemas.backendfunerariaapp.web.controller;
 
+import disenodesistemas.backendfunerariaapp.application.usecase.supplier.SupplierCommandUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.supplier.SupplierQueryUseCase;
+import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.web.dto.request.SupplierRequestDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.SupplierResponseDto;
-import disenodesistemas.backendfunerariaapp.application.service.SupplierService;
-import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
-import java.util.List;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,31 +25,32 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class SupplierController {
 
-  private final SupplierService supplierService;
+  private final SupplierCommandUseCase supplierCommandUseCase;
+  private final SupplierQueryUseCase supplierQueryUseCase;
 
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping
   public ResponseEntity<List<SupplierResponseDto>> findAll() {
-    return ResponseEntity.ok(supplierService.findAll());
+    return ResponseEntity.ok(supplierQueryUseCase.findAll());
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @PostMapping
   public ResponseEntity<SupplierResponseDto> create(
       @RequestBody @Valid final SupplierRequestDto supplier) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(supplierService.create(supplier));
+    return ResponseEntity.status(HttpStatus.CREATED).body(supplierCommandUseCase.create(supplier));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping(path = "/{nif}")
   public ResponseEntity<SupplierResponseDto> findById(@PathVariable final String nif) {
-    return ResponseEntity.ok(supplierService.findById(nif));
+    return ResponseEntity.ok(supplierQueryUseCase.findById(nif));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping(path = "/{nif}")
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final String nif) {
-    supplierService.delete(nif);
+    supplierCommandUseCase.delete(nif);
     return ResponseEntity.ok(
         OperationStatusModel.builder().name("DELETE SUPPLIER").result("SUCCESSFUL").build());
   }
@@ -58,6 +60,6 @@ public class SupplierController {
   public ResponseEntity<SupplierResponseDto> update(
       @PathVariable final String nif,
       @RequestBody @Valid final SupplierRequestDto supplierRequestDto) {
-    return ResponseEntity.ok(supplierService.update(nif, supplierRequestDto));
+    return ResponseEntity.ok(supplierCommandUseCase.update(nif, supplierRequestDto));
   }
 }

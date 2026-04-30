@@ -1,11 +1,12 @@
 package disenodesistemas.backendfunerariaapp.web.controller;
 
+import disenodesistemas.backendfunerariaapp.application.usecase.category.CategoryCommandUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.category.CategoryQueryUseCase;
+import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.web.dto.request.CategoryRequestDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.CategoryResponseDto;
-import disenodesistemas.backendfunerariaapp.application.service.CategoryService;
-import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
-import java.util.List;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,16 +25,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class CategoryController {
 
-  private final CategoryService categoryService;
+  private final CategoryCommandUseCase categoryCommandUseCase;
+  private final CategoryQueryUseCase categoryQueryUseCase;
 
   @GetMapping
   public ResponseEntity<List<CategoryResponseDto>> findAll() {
-    return ResponseEntity.ok(categoryService.findAll());
+    return ResponseEntity.ok(categoryQueryUseCase.findAll());
   }
 
   @GetMapping(path = "/{id}")
   public ResponseEntity<CategoryResponseDto> findById(@PathVariable final Long id) {
-    return ResponseEntity.ok(categoryService.findById(id));
+    return ResponseEntity.ok(categoryQueryUseCase.findById(id));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
@@ -41,7 +43,7 @@ public class CategoryController {
   public ResponseEntity<CategoryResponseDto> create(
       @RequestBody @Valid final CategoryRequestDto categoryRequestDto) {
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(categoryService.create(categoryRequestDto));
+        .body(categoryCommandUseCase.create(categoryRequestDto));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
@@ -49,13 +51,13 @@ public class CategoryController {
   public ResponseEntity<CategoryResponseDto> update(
       @PathVariable final Long id,
       @RequestBody @Valid final CategoryRequestDto categoryRequestDto) {
-    return ResponseEntity.ok(categoryService.update(id, categoryRequestDto));
+    return ResponseEntity.ok(categoryCommandUseCase.update(id, categoryRequestDto));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping("/{id}")
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final Long id) {
-    categoryService.delete(id);
+    categoryCommandUseCase.delete(id);
     return ResponseEntity.ok(
         OperationStatusModel.builder().name("DELETE CATEGORY").result("SUCCESSFUL").build());
   }

@@ -1,7 +1,7 @@
 package disenodesistemas.backendfunerariaapp.web.controller;
 
+import disenodesistemas.backendfunerariaapp.application.usecase.role.RoleQueryUseCase;
 import disenodesistemas.backendfunerariaapp.web.dto.RolesDto;
-import disenodesistemas.backendfunerariaapp.application.service.RoleService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,11 +14,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/roles")
 @RequiredArgsConstructor
 public class RoleController {
-  private final RoleService roleService;
+
+  private final RoleQueryUseCase roleQueryUseCase;
 
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping
   public ResponseEntity<List<RolesDto>> findAll() {
-    return ResponseEntity.ok(roleService.findAll());
+    return ResponseEntity.ok(roleQueryUseCase.findAll());
   }
 }

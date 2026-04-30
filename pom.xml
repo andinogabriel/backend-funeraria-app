@@ -331,7 +331,6 @@
               <includes>
                 <include>disenodesistemas/backendfunerariaapp/application/usecase/**/*.class</include>
                 <include>disenodesistemas/backendfunerariaapp/application/support/impl/**/*.class</include>
-                <include>disenodesistemas/backendfunerariaapp/application/service/impl/**/*.class</include>
                 <include>disenodesistemas/backendfunerariaapp/infrastructure/persistence/**/*.class</include>
                 <include>disenodesistemas/backendfunerariaapp/infrastructure/idempotency/**/*.class</include>
                 <include>disenodesistemas/backendfunerariaapp/infrastructure/security/**/*.class</include>
@@ -348,7 +347,6 @@
               <includes>
                 <include>disenodesistemas/backendfunerariaapp/application/usecase/**/*.class</include>
                 <include>disenodesistemas/backendfunerariaapp/application/support/impl/**/*.class</include>
-                <include>disenodesistemas/backendfunerariaapp/application/service/impl/**/*.class</include>
                 <include>disenodesistemas/backendfunerariaapp/infrastructure/persistence/**/*.class</include>
                 <include>disenodesistemas/backendfunerariaapp/infrastructure/idempotency/**/*.class</include>
                 <include>disenodesistemas/backendfunerariaapp/infrastructure/security/**/*.class</include>

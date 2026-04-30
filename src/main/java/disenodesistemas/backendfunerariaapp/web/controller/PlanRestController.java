@@ -1,11 +1,12 @@
 package disenodesistemas.backendfunerariaapp.web.controller;
 
+import disenodesistemas.backendfunerariaapp.application.usecase.plan.PlanCommandUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.plan.PlanQueryUseCase;
+import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.web.dto.request.PlanRequestDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.PlanResponseDto;
-import disenodesistemas.backendfunerariaapp.application.service.PlanService;
-import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
-import java.util.List;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,24 +25,26 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class PlanRestController {
 
-  private final PlanService planService;
+  private final PlanCommandUseCase planCommandUseCase;
+  private final PlanQueryUseCase planQueryUseCase;
 
   @GetMapping
   public ResponseEntity<List<PlanResponseDto>> findAll() {
-    return ResponseEntity.ok(planService.findAll());
+    return ResponseEntity.ok(planQueryUseCase.findAll());
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @PostMapping
   public ResponseEntity<PlanResponseDto> create(
       @Valid @RequestBody final PlanRequestDto planRequestDto) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(planService.create(planRequestDto));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(planCommandUseCase.create(planRequestDto));
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping({"/{id}"})
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final Long id) {
-    planService.delete(id);
+    planCommandUseCase.delete(id);
     return ResponseEntity.ok(
         OperationStatusModel.builder().name("DELETE PLAN").result("SUCCESSFUL").build());
   }
@@ -50,6 +53,6 @@ public class PlanRestController {
   @PutMapping({"/{id}"})
   public ResponseEntity<PlanResponseDto> update(
       @PathVariable final Long id, @Valid @RequestBody final PlanRequestDto planRequestDto) {
-    return ResponseEntity.ok(planService.update(id, planRequestDto));
+    return ResponseEntity.ok(planCommandUseCase.update(id, planRequestDto));
   }
 }

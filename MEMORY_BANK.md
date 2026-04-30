@@ -23,8 +23,7 @@ tightly coupled to HTTP, persistence or external services.
   - request and response DTOs
   - transport-level validation and multipart handling
 - `application`
-  - thin service facades
-  - command/query use cases
+  - command/query use cases (single orchestration layer; controllers depend on use cases directly)
   - outbound ports in `application.port.out`
   - reusable orchestration helpers in `application.support`
 - `domain`

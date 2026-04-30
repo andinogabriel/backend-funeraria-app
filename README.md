@@ -44,8 +44,7 @@ monolith remains maintainable as it grows.
   - request and response DTOs
   - transport-only concerns
 - `application`
-  - thin service facades
-  - `usecase` classes for business orchestration
+  - `usecase` classes for business orchestration, split into command and query
   - `port.out` contracts for persistence, storage, security and infrastructure concerns
   - `support` services for reusable application logic
 - `domain`
@@ -107,7 +106,7 @@ infrastructure provides adapters for technical concerns.
 ```mermaid
 flowchart LR
     Client["Client / Frontend"] --> Web["web<br/>Controllers + DTOs"]
-    Web --> App["application<br/>Service facades + Use cases"]
+    Web --> App["application<br/>Command + Query use cases"]
     App --> Domain["domain<br/>Entities + domain behavior"]
     App --> Ports["application.port.out<br/>Storage / Security / Persistence contracts"]
     App --> Mapping["mapping<br/>Aggregate mappers"]

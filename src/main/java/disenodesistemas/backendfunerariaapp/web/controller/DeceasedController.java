@@ -1,11 +1,12 @@
 package disenodesistemas.backendfunerariaapp.web.controller;
 
+import disenodesistemas.backendfunerariaapp.application.usecase.deceased.DeceasedCommandUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.deceased.DeceasedQueryUseCase;
+import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.web.dto.request.DeceasedRequestDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.DeceasedResponseDto;
-import disenodesistemas.backendfunerariaapp.application.service.DeceasedService;
-import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
-import java.util.List;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,25 +25,27 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("api/v1/deceased")
 public class DeceasedController {
 
-  private final DeceasedService deceasedService;
+  private final DeceasedCommandUseCase deceasedCommandUseCase;
+  private final DeceasedQueryUseCase deceasedQueryUseCase;
 
   @GetMapping
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   public ResponseEntity<List<DeceasedResponseDto>> findAll() {
-    return ResponseEntity.ok(deceasedService.findAll());
+    return ResponseEntity.ok(deceasedQueryUseCase.findAll());
   }
 
   @GetMapping("/{dni}")
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   public ResponseEntity<DeceasedResponseDto> findByDni(@PathVariable final Integer dni) {
-    return ResponseEntity.ok(deceasedService.findById(dni));
+    return ResponseEntity.ok(deceasedQueryUseCase.findById(dni));
   }
 
   @PostMapping
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   public ResponseEntity<DeceasedResponseDto> create(
       @Valid @RequestBody final DeceasedRequestDto deceasedRequest) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(deceasedService.create(deceasedRequest));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(deceasedCommandUseCase.create(deceasedRequest));
   }
 
   @PutMapping(path = "/{dni}")
@@ -50,13 +53,13 @@ public class DeceasedController {
   public ResponseEntity<DeceasedResponseDto> update(
       @PathVariable final Integer dni,
       @Valid @RequestBody final DeceasedRequestDto deceasedRequest) {
-    return ResponseEntity.ok(deceasedService.update(dni, deceasedRequest));
+    return ResponseEntity.ok(deceasedCommandUseCase.update(dni, deceasedRequest));
   }
 
   @DeleteMapping("/{dni}")
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final Integer dni) {
-    deceasedService.delete(dni);
+    deceasedCommandUseCase.delete(dni);
     return ResponseEntity.ok(
         OperationStatusModel.builder().name("DELETE DECEASED").result("SUCCESSFUL").build());
   }

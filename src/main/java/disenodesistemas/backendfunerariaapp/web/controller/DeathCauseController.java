@@ -1,11 +1,12 @@
 package disenodesistemas.backendfunerariaapp.web.controller;
 
+import disenodesistemas.backendfunerariaapp.application.usecase.deathcause.DeathCauseCommandUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.deathcause.DeathCauseQueryUseCase;
+import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.web.dto.request.DeathCauseDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.DeathCauseResponseDto;
-import disenodesistemas.backendfunerariaapp.application.service.DeathCauseService;
-import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
-import java.util.List;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,38 +25,40 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("api/v1/death-causes")
 public class DeathCauseController {
 
-  private final DeathCauseService deathCauseService;
+  private final DeathCauseCommandUseCase deathCauseCommandUseCase;
+  private final DeathCauseQueryUseCase deathCauseQueryUseCase;
 
   @GetMapping
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   public ResponseEntity<List<DeathCauseResponseDto>> findAll() {
-    return ResponseEntity.ok(deathCauseService.findAll());
+    return ResponseEntity.ok(deathCauseQueryUseCase.findAll());
   }
 
   @GetMapping("/{id}")
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   public ResponseEntity<DeathCauseResponseDto> findById(@PathVariable final Long id) {
-    return ResponseEntity.ok(deathCauseService.findById(id));
+    return ResponseEntity.ok(deathCauseQueryUseCase.findById(id));
   }
 
   @PostMapping
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   public ResponseEntity<DeathCauseResponseDto> create(
       @Valid @RequestBody final DeathCauseDto deathCauseDto) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(deathCauseService.create(deathCauseDto));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(deathCauseCommandUseCase.create(deathCauseDto));
   }
 
   @PutMapping(path = "/{id}")
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   public ResponseEntity<DeathCauseResponseDto> update(
       @PathVariable final Long id, @Valid @RequestBody final DeathCauseDto deathCauseDto) {
-    return ResponseEntity.ok(deathCauseService.update(id, deathCauseDto));
+    return ResponseEntity.ok(deathCauseCommandUseCase.update(id, deathCauseDto));
   }
 
   @DeleteMapping("/{id}")
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final Long id) {
-    deathCauseService.delete(id);
+    deathCauseCommandUseCase.delete(id);
     return ResponseEntity.ok(
         OperationStatusModel.builder().name("DELETE DEATH CAUSE").result("SUCCESSFUL").build());
   }
