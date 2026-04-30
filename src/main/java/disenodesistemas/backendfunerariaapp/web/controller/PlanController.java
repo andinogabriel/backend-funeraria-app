@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("api/v1/plans")
 @RequiredArgsConstructor
-public class PlanRestController {
+public class PlanController {
 
   private final PlanCommandUseCase planCommandUseCase;
   private final PlanQueryUseCase planQueryUseCase;
