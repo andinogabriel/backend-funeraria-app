@@ -1,12 +1,14 @@
 package disenodesistemas.backendfunerariaapp.application.usecase.gender;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.GenderPersistencePort;
+import disenodesistemas.backendfunerariaapp.config.CacheConfig;
 import disenodesistemas.backendfunerariaapp.domain.entity.GenderEntity;
 import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
 import disenodesistemas.backendfunerariaapp.mapping.GenderMapper;
 import disenodesistemas.backendfunerariaapp.web.dto.response.GenderResponseDto;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,7 @@ public class GenderQueryUseCase {
   private final GenderPersistencePort genderPersistencePort;
   private final GenderMapper genderMapper;
 
+  @Cacheable(CacheConfig.GENDER_CACHE)
   @Transactional(readOnly = true)
   public List<GenderResponseDto> getGenders() {
     return genderPersistencePort.findAllByOrderByName().stream().map(genderMapper::toDto).toList();
