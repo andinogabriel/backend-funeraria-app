@@ -1,12 +1,14 @@
 package disenodesistemas.backendfunerariaapp.application.usecase.deathcause;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.DeathCausePersistencePort;
+import disenodesistemas.backendfunerariaapp.config.CacheConfig;
 import disenodesistemas.backendfunerariaapp.domain.entity.DeathCauseEntity;
 import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
 import disenodesistemas.backendfunerariaapp.mapping.DeathCauseMapper;
 import disenodesistemas.backendfunerariaapp.web.dto.response.DeathCauseResponseDto;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,7 @@ public class DeathCauseQueryUseCase {
   private final DeathCausePersistencePort deathCausePersistencePort;
   private final DeathCauseMapper deathCauseMapper;
 
+  @Cacheable(CacheConfig.DEATH_CAUSE_CACHE)
   @Transactional(readOnly = true)
   public List<DeathCauseResponseDto> findAll() {
     return deathCausePersistencePort.findAllByOrderByNameAsc().stream()
@@ -24,6 +27,7 @@ public class DeathCauseQueryUseCase {
         .toList();
   }
 
+  @Cacheable(value = CacheConfig.DEATH_CAUSE_CACHE, key = "'byId:' + #id")
   @Transactional(readOnly = true)
   public DeathCauseResponseDto findById(final Long id) {
     return deathCauseMapper.toDto(findEntityById(id));

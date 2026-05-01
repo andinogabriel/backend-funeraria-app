@@ -1,12 +1,14 @@
 package disenodesistemas.backendfunerariaapp.application.usecase.province;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.ProvincePersistencePort;
+import disenodesistemas.backendfunerariaapp.config.CacheConfig;
 import disenodesistemas.backendfunerariaapp.domain.entity.ProvinceEntity;
 import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
 import disenodesistemas.backendfunerariaapp.mapping.ProvinceMapper;
 import disenodesistemas.backendfunerariaapp.web.dto.response.ProvinceResponseDto;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,7 @@ public class ProvinceQueryUseCase {
   private final ProvincePersistencePort provincePersistencePort;
   private final ProvinceMapper provinceMapper;
 
+  @Cacheable(CacheConfig.PROVINCE_CACHE)
   @Transactional(readOnly = true)
   public List<ProvinceResponseDto> getAllProvinces() {
     return provincePersistencePort.findAllByOrderByName().stream().map(provinceMapper::toDto).toList();

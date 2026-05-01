@@ -585,6 +585,7 @@ Current ADRs cover:
 - Flyway + Testcontainers
 - observability and build-time quality gates
 - local Prometheus, Grafana and Alertmanager before OpenTelemetry
+- Caffeine in-process caching for catalog lookups
 
 Repository collaboration defaults also live in:
 

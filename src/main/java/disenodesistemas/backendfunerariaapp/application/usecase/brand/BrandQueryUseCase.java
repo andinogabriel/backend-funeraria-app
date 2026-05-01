@@ -1,12 +1,14 @@
 package disenodesistemas.backendfunerariaapp.application.usecase.brand;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.BrandPersistencePort;
+import disenodesistemas.backendfunerariaapp.config.CacheConfig;
 import disenodesistemas.backendfunerariaapp.domain.entity.BrandEntity;
 import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
 import disenodesistemas.backendfunerariaapp.mapping.BrandMapper;
 import disenodesistemas.backendfunerariaapp.web.dto.response.BrandResponseDto;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,7 @@ public class BrandQueryUseCase {
   private final BrandPersistencePort brandPersistencePort;
   private final BrandMapper brandMapper;
 
+  @Cacheable(CacheConfig.BRAND_CACHE)
   @Transactional(readOnly = true)
   public List<BrandResponseDto> findAll() {
     return brandPersistencePort.findAllByOrderByName().stream().map(brandMapper::toDto).toList();
@@ -29,6 +32,7 @@ public class BrandQueryUseCase {
         .orElseThrow(() -> new NotFoundException("brand.error.not.found"));
   }
 
+  @Cacheable(value = CacheConfig.BRAND_CACHE, key = "'byId:' + #id")
   @Transactional(readOnly = true)
   public BrandResponseDto findById(final Long id) {
     return brandMapper.toDto(getBrandById(id));
