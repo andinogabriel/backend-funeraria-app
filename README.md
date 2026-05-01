@@ -586,6 +586,7 @@ Current ADRs cover:
 - observability and build-time quality gates
 - local Prometheus, Grafana and Alertmanager before OpenTelemetry
 - Caffeine in-process caching for catalog lookups
+- distributed tracing via Micrometer Tracing bridged to the OpenTelemetry SDK
 
 Repository collaboration defaults also live in:
 

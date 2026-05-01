@@ -66,6 +66,26 @@ management:
     distribution:
       percentiles-histogram:
         http.server.requests: true
+  tracing:
+    # Micrometer Tracing is bridged to the OpenTelemetry SDK by 'micrometer-tracing-bridge-otel'.
+    # Spring auto-instruments HTTP server requests, RestClient, JDBC and the application's
+    # observation API; spans are correlated with the existing 'traceId'/'spanId' MDC keys used by
+    # the request log pattern. Sampling default is 1.0 so every request is captured during
+    # development; tighten via env var (for example MANAGEMENT_TRACING_SAMPLING_PROBABILITY=0.1)
+    # in production to keep collector ingest within budget.
+    enabled: true
+    sampling:
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
+  otlp:
+    tracing:
+      # When 'endpoint' is unset (default), the OTLP exporter is auto-configured but receives no
+      # endpoint so spans stay in-process and traceId still flows into MDC and response headers
+      # without any external dependency. Set MANAGEMENT_OTLP_TRACING_ENDPOINT (for example
+      # http://otel-collector:4318/v1/traces) to ship spans to a collector. The collector wiring
+      # lives in the docker-compose 'observability' profile and is shipped in a follow-up PR
+      # alongside Tempo and the tracing dashboards.
+      endpoint: ${MANAGEMENT_OTLP_TRACING_ENDPOINT:}
+      transport: http
 
 logging:
   pattern:

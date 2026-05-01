@@ -199,6 +199,20 @@
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-registry-prometheus</artifactId>
     </dependency>
+
+    <!-- Distributed tracing: Micrometer Tracing wired to the OpenTelemetry SDK so HTTP, JDBC and
+         Spring observability spans are created in OTel format. The OTLP exporter is configured by
+         'management.otlp.tracing.endpoint'; when no endpoint is set the SDK still produces spans
+         and populates MDC keys ('traceId', 'spanId') without shipping anything externally. ADR-0007
+         documents the decision; the local OTel Collector + Tempo wiring lives in a follow-up PR. -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-tracing-bridge-otel</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-exporter-otlp</artifactId>
+    </dependency>
     <dependency>
       <groupId>net.logstash.logback</groupId>
       <artifactId>logstash-logback-encoder</artifactId>
