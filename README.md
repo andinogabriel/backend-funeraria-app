@@ -225,8 +225,29 @@ Baseline alert rules:
 - high JVM heap pressure
 - high Hikari connection pool pressure
 
-Alertmanager is intentionally local-first for now. It groups and surfaces active alerts in the UI,
-but it does not send email, Slack or PagerDuty notifications yet.
+Alertmanager routes every firing alert (with a `RESOLVED` companion email when it clears) to a
+single email receiver over Gmail SMTP. Credentials and the recipient address are injected as
+environment variables and substituted into `alertmanager.yml` at startup, so no secret is
+committed to the repository.
+
+To switch from the dummy defaults to a real Gmail account:
+
+1. Enable 2FA on the sending Gmail account and generate a Google App Password
+   (https://support.google.com/accounts/answer/185833).
+2. Set in `.env` (or your shell):
+
+   ```bash
+   ALERTMANAGER_SMTP_USER=<your-gmail-account>
+   ALERTMANAGER_SMTP_PASSWORD=<the-app-password>
+   ALERTMANAGER_SMTP_FROM=<your-gmail-account>
+   ALERTMANAGER_EMAIL_TO=<recipient-address>
+   ```
+
+3. Restart the observability profile: `docker compose --profile observability up --build`.
+
+Until those values are real, the alertmanager service still starts and the UI works, but SMTP
+sends fail at auth or connection level and the messages are dropped. ADR-0008 documents the
+decision and the trade-offs in detail.
 
 ## Security Flows
 
@@ -604,6 +625,7 @@ Current ADRs cover:
 - local Prometheus, Grafana and Alertmanager before OpenTelemetry
 - Caffeine in-process caching for catalog lookups
 - distributed tracing via Micrometer Tracing bridged to the OpenTelemetry SDK
+- Alertmanager email delivery via Gmail SMTP, configured through env vars
 
 Repository collaboration defaults also live in:
 
