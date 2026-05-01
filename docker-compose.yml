@@ -39,6 +39,12 @@ services:
       APP_BOOTSTRAP_ADMIN_PASSWORD: ${APP_BOOTSTRAP_ADMIN_PASSWORD:-Admin123!}
       APP_BOOTSTRAP_ADMIN_FIRST_NAME: ${APP_BOOTSTRAP_ADMIN_FIRST_NAME:-Admin}
       APP_BOOTSTRAP_ADMIN_LAST_NAME: ${APP_BOOTSTRAP_ADMIN_LAST_NAME:-Funeraria}
+      # Distributed tracing export. Empty by default so the app does not try to ship spans when
+      # the observability stack is not running. Set MANAGEMENT_OTLP_TRACING_ENDPOINT in the host
+      # shell or .env (typically http://otel-collector:4318/v1/traces) to enable export when
+      # running with `docker compose --profile observability up`.
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: ${MANAGEMENT_OTLP_TRACING_ENDPOINT:-}
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:-1.0}
     ports:
       - "${SERVER_PORT:-8081}:8081"
     volumes:
@@ -77,6 +83,37 @@ services:
       - ./config/observability/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - alertmanager_data:/alertmanager
 
+  # OpenTelemetry Collector receives OTLP traffic from the app and forwards spans to Tempo.
+  # Only runs with the 'observability' profile; when off, the app's OTLP exporter has no endpoint
+  # configured and stays in process-only mode without trying to reach this service.
+  otel-collector:
+    profiles:
+      - observability
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: backend-funeraria-otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    depends_on:
+      tempo:
+        condition: service_started
+    ports:
+      - "${OTEL_COLLECTOR_HTTP_PORT:-4318}:4318"
+      - "${OTEL_COLLECTOR_GRPC_PORT:-4317}:4317"
+    volumes:
+      - ./config/observability/otel-collector/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+
+  # Grafana Tempo stores traces locally on disk. Single-binary deployment, no cloud dependencies.
+  tempo:
+    profiles:
+      - observability
+    image: grafana/tempo:latest
+    container_name: backend-funeraria-tempo
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    ports:
+      - "${TEMPO_HTTP_PORT:-3200}:3200"
+    volumes:
+      - ./config/observability/tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo_data:/var/tempo
+
   grafana:
     profiles:
       - observability
@@ -84,6 +121,8 @@ services:
     container_name: backend-funeraria-grafana
     depends_on:
       prometheus:
+        condition: service_started
+      tempo:
         condition: service_started
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
@@ -101,4 +140,5 @@ volumes:
   app_storage:
   prometheus_data:
   alertmanager_data:
+  tempo_data:
   grafana_data:

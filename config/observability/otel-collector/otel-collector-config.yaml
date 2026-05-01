@@ -1,0 +1,39 @@
+# OpenTelemetry Collector configuration for the local observability stack.
+#
+# This collector accepts OTLP traffic from the application over both gRPC (4317) and HTTP (4318),
+# applies a small batch processor to keep network usage stable, and forwards spans to the local
+# Tempo instance over OTLP/gRPC. Only the tracing pipeline is wired here; metrics still go
+# directly from the application to Prometheus via /actuator/prometheus and logs stay local-first
+# through the JSON log encoder. The collector is intentionally lean so a contributor running the
+# observability profile only needs Docker + Compose.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # Batch spans before exporting so the collector stays efficient under load while still flushing
+  # frequently enough that traces show up in Tempo within a few seconds during development.
+  batch:
+    send_batch_size: 512
+    send_batch_max_size: 1024
+    timeout: 5s
+
+exporters:
+  # Tempo accepts OTLP natively over gRPC at port 4317 inside the compose network. TLS is
+  # disabled because everything runs on the local Docker bridge.
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/tempo]
