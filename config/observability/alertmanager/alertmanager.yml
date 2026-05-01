@@ -1,8 +1,27 @@
+# Alertmanager configuration for the local observability stack.
+#
+# Variables wrapped in ${...} are substituted at startup because the alertmanager service is
+# launched with `--config.expand-env=true`. The defaults shipped in '.env.example' point at
+# 'smtp.gmail.com:587' with dummy credentials so the service starts cleanly even before a real
+# Gmail App Password is provisioned; SMTP auth failures are expected in that case and surface as
+# warnings in the Alertmanager log.
+#
+# To switch from dummy to real Gmail delivery, set in '.env' (or your shell):
+#   ALERTMANAGER_SMTP_USER=<your-gmail-account>
+#   ALERTMANAGER_SMTP_PASSWORD=<your-Google-App-Password>     # 2FA + App Password required
+#   ALERTMANAGER_SMTP_FROM=<your-gmail-account>               # Gmail enforces From == auth user
+#   ALERTMANAGER_EMAIL_TO=<recipient-address>
+
 global:
   resolve_timeout: 5m
+  smtp_smarthost: '${ALERTMANAGER_SMTP_HOST}:${ALERTMANAGER_SMTP_PORT}'
+  smtp_from: '${ALERTMANAGER_SMTP_FROM}'
+  smtp_auth_username: '${ALERTMANAGER_SMTP_USER}'
+  smtp_auth_password: '${ALERTMANAGER_SMTP_PASSWORD}'
+  smtp_require_tls: true
 
 route:
-  receiver: local-observability
+  receiver: email-default
   group_by:
     - alertname
     - service
@@ -11,4 +30,9 @@ route:
   repeat_interval: 4h
 
 receivers:
-  - name: local-observability
+  - name: email-default
+    email_configs:
+      - to: '${ALERTMANAGER_EMAIL_TO}'
+        send_resolved: true
+        headers:
+          Subject: '[backend-funeraria][{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'

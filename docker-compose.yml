@@ -74,9 +74,20 @@ services:
       - observability
     image: prom/alertmanager:latest
     container_name: backend-funeraria-alertmanager
+    # --config.expand-env=true expands ${VAR} placeholders inside alertmanager.yml at startup so
+    # SMTP credentials and the recipient address can be supplied through environment variables
+    # instead of being committed in the YAML.
     command:
       - --config.file=/etc/alertmanager/alertmanager.yml
       - --storage.path=/alertmanager
+      - --config.expand-env=true
+    environment:
+      ALERTMANAGER_SMTP_HOST: ${ALERTMANAGER_SMTP_HOST:-smtp.gmail.com}
+      ALERTMANAGER_SMTP_PORT: ${ALERTMANAGER_SMTP_PORT:-587}
+      ALERTMANAGER_SMTP_USER: ${ALERTMANAGER_SMTP_USER:-alerts@example.com}
+      ALERTMANAGER_SMTP_PASSWORD: ${ALERTMANAGER_SMTP_PASSWORD:-}
+      ALERTMANAGER_SMTP_FROM: ${ALERTMANAGER_SMTP_FROM:-alerts@example.com}
+      ALERTMANAGER_EMAIL_TO: ${ALERTMANAGER_EMAIL_TO:-alerts@example.com}
     ports:
       - "${ALERTMANAGER_PORT:-9093}:9093"
     volumes:
