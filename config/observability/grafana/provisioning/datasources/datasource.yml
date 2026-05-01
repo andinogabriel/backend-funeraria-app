@@ -12,3 +12,31 @@ datasources:
       manageAlerts: true
       prometheusType: Prometheus
       timeInterval: 15s
+
+  # Tempo stores the OTLP traces produced by the application and forwarded by the OTel Collector.
+  # The 'tracesToLogsV2' block lets Grafana jump from a span to the logs that share its traceId
+  # (when a Loki/log datasource is wired in the future) and the 'serviceMap' option enables the
+  # service graph view inside Grafana's Explore tab. No additional configuration is required for
+  # the Search tab to work.
+  - name: Tempo
+    uid: tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    editable: false
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: prometheus
+        spanStartTimeShift: -5m
+        spanEndTimeShift: 5m
+        tags: ['service.name', 'service']
+        filterByTraceID: true
+        filterBySpanID: false
+      serviceMap:
+        datasourceUid: prometheus
+      nodeGraph:
+        enabled: true
+      search:
+        hide: false
+      lokiSearch:
+        datasourceUid: prometheus

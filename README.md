@@ -165,7 +165,10 @@ The service includes a production-oriented observability baseline:
 - Actuator endpoints
 - Prometheus metrics exposure
 - request tracing through `X-Trace-Id` and optional `X-Correlation-Id`
-- optional local Prometheus, Grafana and Alertmanager stack through Docker Compose
+- distributed tracing via Micrometer Tracing bridged to the OpenTelemetry SDK; spans ship over
+  OTLP/HTTP when `MANAGEMENT_OTLP_TRACING_ENDPOINT` is set
+- optional local Prometheus, Grafana, Alertmanager, OpenTelemetry Collector and Tempo stack
+  through Docker Compose
 
 Default public operational endpoints:
 
@@ -194,11 +197,25 @@ Useful local URLs when the profile is enabled:
 - Prometheus: `http://localhost:9090`
 - Alertmanager: `http://localhost:9093`
 - Grafana: `http://localhost:3000`
+- OTel Collector OTLP/HTTP: `http://localhost:4318`
+- OTel Collector OTLP/gRPC: `http://localhost:4317`
+- Tempo HTTP: `http://localhost:3200`
 
 Provisioned dashboards:
 
 - `Backend Funeraria Overview`
 - `Backend Funeraria Auth Overview`
+
+Provisioned datasources:
+
+- `Prometheus` (default)
+- `Tempo` — search traces by `traceId`, jump from a trace to logs and view the service map
+
+To ship spans from the application to the local stack, set
+`MANAGEMENT_OTLP_TRACING_ENDPOINT=http://otel-collector:4318/v1/traces` (in your shell or
+`.env`) before running the observability profile. Without that variable the application still
+produces spans in process and the `traceId` continues to flow into MDC and response headers,
+but nothing is exported.
 
 Baseline alert rules:
 
