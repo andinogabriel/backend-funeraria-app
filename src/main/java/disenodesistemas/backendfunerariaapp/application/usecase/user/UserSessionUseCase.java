@@ -115,10 +115,7 @@ public class UserSessionUseCase {
     applicationEventPublisher.publishEvent(logoutSuccessEvent);
     logLogoutCompleted(userEntity.getEmail(), updatedUserDevice);
 
-    return OperationStatusModel.builder()
-        .result(messageResolverPort.getMessage("user.logout.success"))
-        .name("SUCCESS")
-        .build();
+    return new OperationStatusModel("SUCCESS", messageResolverPort.getMessage("user.logout.success"));
   }
 
   /**

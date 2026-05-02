@@ -77,7 +77,7 @@ public class ItemController {
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final String code) {
     itemCommandUseCase.delete(code);
     return ResponseEntity.ok(
-        OperationStatusModel.builder().name("DELETE ITEM").result("SUCCESSFUL").build());
+        new OperationStatusModel("DELETE ITEM", "SUCCESSFUL"));
   }
 
   @PreAuthorize("hasRole('ADMIN')")

@@ -61,6 +61,6 @@ public class DeceasedController {
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final Integer dni) {
     deceasedCommandUseCase.delete(dni);
     return ResponseEntity.ok(
-        OperationStatusModel.builder().name("DELETE DECEASED").result("SUCCESSFUL").build());
+        new OperationStatusModel("DELETE DECEASED", "SUCCESSFUL"));
   }
 }

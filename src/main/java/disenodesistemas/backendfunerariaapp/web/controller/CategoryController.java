@@ -59,6 +59,6 @@ public class CategoryController {
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final Long id) {
     categoryCommandUseCase.delete(id);
     return ResponseEntity.ok(
-        OperationStatusModel.builder().name("DELETE CATEGORY").result("SUCCESSFUL").build());
+        new OperationStatusModel("DELETE CATEGORY", "SUCCESSFUL"));
   }
 }

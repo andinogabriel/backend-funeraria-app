@@ -60,6 +60,6 @@ public class DeathCauseController {
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final Long id) {
     deathCauseCommandUseCase.delete(id);
     return ResponseEntity.ok(
-        OperationStatusModel.builder().name("DELETE DEATH CAUSE").result("SUCCESSFUL").build());
+        new OperationStatusModel("DELETE DEATH CAUSE", "SUCCESSFUL"));
   }
 }

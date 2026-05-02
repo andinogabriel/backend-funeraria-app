@@ -60,7 +60,7 @@ public class FuneralController {
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final Long id) {
     funeralCommandUseCase.delete(id);
     return ResponseEntity.ok(
-        OperationStatusModel.builder().name("DELETE FUNERAL").result("SUCCESSFUL").build());
+        new OperationStatusModel("DELETE FUNERAL", "SUCCESSFUL"));
   }
 
   @PreAuthorize("hasRole('USER')")

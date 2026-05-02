@@ -69,7 +69,7 @@ public class AffiliateController {
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final Integer dni) {
     affiliateCommandUseCase.delete(dni);
     return ResponseEntity.ok(
-        OperationStatusModel.builder().name("DELETE AFFILIATE").result("SUCCESSFUL").build());
+        new OperationStatusModel("DELETE AFFILIATE", "SUCCESSFUL"));
   }
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
