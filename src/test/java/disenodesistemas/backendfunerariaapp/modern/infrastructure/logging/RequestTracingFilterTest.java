@@ -12,8 +12,10 @@ import io.micrometer.tracing.Span;
 import io.micrometer.tracing.TraceContext;
 import io.micrometer.tracing.Tracer;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -27,11 +29,19 @@ class RequestTracingFilterTest {
 
   private final Tracer tracer = mock(Tracer.class);
 
+  @SuppressWarnings("unchecked")
+  private final ObjectProvider<Tracer> tracerProvider = mock(ObjectProvider.class);
+
   private final RequestTracingFilter requestTracingFilter =
       new RequestTracingFilter(
           new RequestTracingProperties(TRACE_HEADER, CORRELATION_HEADER),
           new SecurityRequestProperties(DEVICE_HEADER, "Idempotency-Key", "fingerprint-secret"),
-          tracer);
+          tracerProvider);
+
+  @BeforeEach
+  void wireTracerProvider() {
+    when(tracerProvider.getIfAvailable()).thenReturn(tracer);
+  }
 
   @AfterEach
   void tearDown() {
@@ -69,6 +79,24 @@ class RequestTracingFilterTest {
   void givenNoActiveTracerSpanWhenTheFilterProcessesARequestThenItGeneratesAUuidBasedTraceIdentifierSoTheResponseStillCarriesOne()
       throws Exception {
     when(tracer.currentSpan()).thenReturn(null);
+
+    final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/plans");
+    final MockHttpServletResponse response = new MockHttpServletResponse();
+
+    requestTracingFilter.doFilter(request, response, new MockFilterChain());
+
+    final String traceId = response.getHeader(TRACE_HEADER);
+    assertThat(traceId).hasSize(32);
+    assertThat(request.getAttribute(RequestTraceContext.TRACE_ID_REQUEST_ATTRIBUTE))
+        .isEqualTo(traceId);
+  }
+
+  @Test
+  @DisplayName(
+      "Given a Spring context without a Tracer bean when the filter processes a request then it falls back to the UUID generator without throwing")
+  void givenASpringContextWithoutATracerBeanWhenTheFilterProcessesARequestThenItFallsBackToTheUuidGeneratorWithoutThrowing()
+      throws Exception {
+    when(tracerProvider.getIfAvailable()).thenReturn(null);
 
     final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/plans");
     final MockHttpServletResponse response = new MockHttpServletResponse();

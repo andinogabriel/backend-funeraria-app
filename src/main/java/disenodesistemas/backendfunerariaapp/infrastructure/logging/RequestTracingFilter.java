@@ -17,6 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.MDC;
 import org.slf4j.spi.LoggingEventBuilder;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerMapping;
@@ -51,7 +52,16 @@ public class RequestTracingFilter extends OncePerRequestFilter {
 
   private final RequestTracingProperties requestTracingProperties;
   private final SecurityRequestProperties securityRequestProperties;
-  private final Tracer tracer;
+
+  /**
+   * Wrapped through {@link ObjectProvider} so the filter bean still wires cleanly in non-web
+   * Spring contexts (for example {@code @SpringBootTest} integration tests with
+   * {@code spring.main.web-application-type=none}). In those contexts the tracing
+   * auto-configuration is not active and no {@link Tracer} bean exists; the filter still gets
+   * instantiated as a regular component but defers tracer resolution until the request thread
+   * actually needs a trace id, where the UUID fallback below kicks in.
+   */
+  private final ObjectProvider<Tracer> tracerProvider;
 
   /**
    * Initializes the trace and correlation identifiers for the current request before any
@@ -102,17 +112,21 @@ public class RequestTracingFilter extends OncePerRequestFilter {
    * Returns the trace identifier of the active OpenTelemetry span. Spring tracing's server
    * filter runs before this one and creates a span for every HTTP request, so the current span
    * is normally non-null and exposes the trace id Spring has already adopted from a W3C
-   * {@code traceparent} header or generated for new requests. The UUID fallback covers edge
-   * cases where the request bypasses the tracer entirely (for example a misconfigured filter
-   * ordering during local experiments) so structured logs and response headers always carry a
-   * usable trace identifier.
+   * {@code traceparent} header or generated for new requests. The UUID fallback covers two
+   * cases: requests that bypass the tracer entirely (for example a misconfigured filter
+   * ordering during local experiments) and Spring contexts that do not auto-configure a
+   * tracer bean at all (non-web {@code @SpringBootTest} integration tests). In both cases
+   * structured logs and response headers still carry a usable trace identifier.
    */
   private String resolveTraceId() {
-    final Span currentSpan = tracer.currentSpan();
-    if (currentSpan != null) {
-      final String traceId = currentSpan.context().traceId();
-      if (StringUtils.isNotBlank(traceId)) {
-        return traceId;
+    final Tracer tracer = tracerProvider.getIfAvailable();
+    if (tracer != null) {
+      final Span currentSpan = tracer.currentSpan();
+      if (currentSpan != null) {
+        final String traceId = currentSpan.context().traceId();
+        if (StringUtils.isNotBlank(traceId)) {
+          return traceId;
+        }
       }
     }
     return UUID.randomUUID().toString().replace("-", "");
