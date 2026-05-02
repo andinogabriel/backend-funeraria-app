@@ -96,6 +96,16 @@ spring:
     basename: "messages,messages/messages"
     encoding: UTF-8
     fallback-to-system-locale: false
+  threads:
+    virtual:
+      # Enables virtual threads end-to-end: Tomcat uses a virtual-thread executor for HTTP
+      # request handling and 'SimpleAsyncTaskExecutor' switches to virtual mode for '@Async'
+      # work. Safe under Java 25 + Spring Boot 4: JEP 491 is finalized so 'synchronized' no
+      # longer pins the carrier thread, and this codebase has no application-level
+      # 'ThreadLocal' state. ADR-0009 documents the decision and the audit done before flipping
+      # the switch. Override via 'SPRING_THREADS_VIRTUAL_ENABLED=false' if a regression is
+      # observed in production.
+      enabled: ${SPRING_THREADS_VIRTUAL_ENABLED:true}
 
 AbstractUserDetailsAuthenticationProvider:
   badCredentials: Contrasena incorrecta.

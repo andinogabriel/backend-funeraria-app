@@ -626,6 +626,8 @@ Current ADRs cover:
 - Caffeine in-process caching for catalog lookups
 - distributed tracing via Micrometer Tracing bridged to the OpenTelemetry SDK
 - Alertmanager email delivery via Gmail SMTP, configured through env vars
+- virtual threads end-to-end (Tomcat HTTP connector + `@Async`), reversible via the
+  `SPRING_THREADS_VIRTUAL_ENABLED` env var
 
 Repository collaboration defaults also live in:
 

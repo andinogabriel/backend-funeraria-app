@@ -200,6 +200,16 @@
       <artifactId>micrometer-registry-prometheus</artifactId>
     </dependency>
 
+    <!-- Virtual thread metrics (JDK 21+). Required so Spring Boot's
+         JvmMetricsAutoConfiguration.VirtualThreadMetricsConfiguration can register binders that
+         expose pinned-carrier and submit-failed counters under '/actuator/prometheus'. Once the
+         observability stack scrapes these, dashboards can detect carrier pinning regressions
+         introduced by future code changes. -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-java21</artifactId>
+    </dependency>
+
     <!-- Distributed tracing: Micrometer Tracing wired to the OpenTelemetry SDK so HTTP, JDBC and
          Spring observability spans are created in OTel format. The OTLP exporter is configured by
          'management.otlp.tracing.endpoint'; when no endpoint is set the SDK still produces spans
