@@ -40,7 +40,6 @@ observability:
   request-tracing:
     trace-id-header: X-Trace-Id
     correlation-id-header: X-Correlation-Id
-    accept-incoming-trace-id: true
 
 management:
   endpoints:

@@ -94,6 +94,14 @@ by removing the two dependencies, no operational surface added.
   the duplication once the collector is in place and the integration can be exercised
   end-to-end.
 
+  **Update (consolidation landed):** the filter now reads the trace identifier from
+  `Tracer.currentSpan()` instead of parsing W3C `traceparent` itself, no longer touches the
+  `traceId` MDC slot (Spring tracing's `MdcEventListener` owns it end-to-end), and the
+  `acceptIncomingTraceId` properties knob was removed. The filter retained ownership of the
+  optional client correlation identifier (header + request attribute + MDC slot dedicated to
+  the correlation id), the structured `request.started`/`request.completed` log events and the
+  trace response header surfaced back to API clients.
+
 ## Validation
 
 - `mvn verify` — full test suite passes with the new dependencies. Existing tests that exercise

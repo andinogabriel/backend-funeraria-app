@@ -2,46 +2,73 @@ package disenodesistemas.backendfunerariaapp.infrastructure.logging;
 
 import disenodesistemas.backendfunerariaapp.config.RequestTracingProperties;
 import disenodesistemas.backendfunerariaapp.infrastructure.security.config.SecurityRequestProperties;
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Locale;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Strings;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.MDC;
 import org.slf4j.spi.LoggingEventBuilder;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerMapping;
 
 /**
- * Initializes per-request tracing metadata and keeps it synchronized across MDC, servlet
- * attributes, response headers and structured logs. This filter is the entry point for request
- * observability, allowing operational tooling to correlate logs, errors and client responses.
+ * Initializes the per-request tracing metadata that complements the OpenTelemetry trace context
+ * managed by Spring tracing. The trace identifier itself is owned by the tracer — Spring's
+ * tracing server filter creates the span before this filter runs and is the single source of
+ * truth for the trace id, including W3C {@code traceparent} adoption. This filter takes that
+ * trace id and exposes it back to clients through the configured response header and request
+ * attribute, owns the optional client-supplied correlation identifier end-to-end (header,
+ * request attribute and MDC slot dedicated to the correlation id) and emits the structured
+ * {@code request.started} / {@code request.completed} log events that operators rely on for
+ * endpoint-level troubleshooting.
+ *
+ * <p>The {@code traceId} MDC slot is intentionally not touched here: Spring tracing's
+ * {@code MdcEventListener} populates it from the active span and clears it when the span ends,
+ * so the structured log pattern keeps rendering it correctly without this filter duplicating the
+ * lifecycle management.
  */
 @Component
 @Slf4j
 @RequiredArgsConstructor
 public class RequestTracingFilter extends OncePerRequestFilter {
 
-  private static final Pattern TRACE_ID_PATTERN = Pattern.compile("^[a-zA-Z0-9._\\-]{8,128}$");
-  private static final Pattern TRACEPARENT_PATTERN =
-      Pattern.compile("^[\\da-fA-F]{2}-([\\da-fA-F]{32})-([\\da-fA-F]{16})-[\\da-fA-F]{2}$");
+  /**
+   * Pattern accepted for the optional client correlation identifier. Bound to printable ASCII so
+   * it stays safe to surface in logs and response headers without additional escaping.
+   */
+  private static final Pattern CORRELATION_ID_PATTERN =
+      Pattern.compile("^[a-zA-Z0-9._\\-]{8,128}$");
 
   private final RequestTracingProperties requestTracingProperties;
   private final SecurityRequestProperties securityRequestProperties;
 
   /**
-   * Initializes the trace and correlation identifiers for the current request before any business
-   * code runs. It propagates those values through headers, request attributes and MDC, then emits
-   * start and completion logs that make end-to-end request troubleshooting possible.
+   * Wrapped through {@link ObjectProvider} so the filter bean still wires cleanly in non-web
+   * Spring contexts (for example {@code @SpringBootTest} integration tests with
+   * {@code spring.main.web-application-type=none}). In those contexts the tracing
+   * auto-configuration is not active and no {@link Tracer} bean exists; the filter still gets
+   * instantiated as a regular component but defers tracer resolution until the request thread
+   * actually needs a trace id, where the UUID fallback below kicks in.
+   */
+  private final ObjectProvider<Tracer> tracerProvider;
+
+  /**
+   * Initializes the trace and correlation identifiers for the current request before any
+   * business code runs. The trace id is read from the active OpenTelemetry span; the correlation
+   * id is resolved from the inbound header and propagated through the request attribute, the
+   * response header and a dedicated MDC slot so structured logs can include it across the whole
+   * request lifecycle.
    */
   @Override
   protected void doFilterInternal(
@@ -51,7 +78,7 @@ public class RequestTracingFilter extends OncePerRequestFilter {
       throws ServletException, IOException {
 
     final long startedAtNanos = System.nanoTime();
-    final String traceId = resolveTraceId(request);
+    final String traceId = resolveTraceId();
     final String correlationId = resolveCorrelationId(request);
 
     request.setAttribute(RequestTraceContext.TRACE_ID_REQUEST_ATTRIBUTE, traceId);
@@ -60,10 +87,6 @@ public class RequestTracingFilter extends OncePerRequestFilter {
     if (StringUtils.isNotBlank(correlationId)) {
       request.setAttribute(RequestTraceContext.CORRELATION_ID_REQUEST_ATTRIBUTE, correlationId);
       response.setHeader(requestTracingProperties.correlationIdHeader(), correlationId);
-    }
-
-    MDC.put(RequestTraceContext.TRACE_ID_MDC_KEY, traceId);
-    if (StringUtils.isNotBlank(correlationId)) {
       MDC.put(RequestTraceContext.CORRELATION_ID_MDC_KEY, correlationId);
     }
 
@@ -81,9 +104,45 @@ public class RequestTracingFilter extends OncePerRequestFilter {
           .log("request.failed.unhandled");
       throw ex;
     } finally {
-      MDC.remove(RequestTraceContext.TRACE_ID_MDC_KEY);
       MDC.remove(RequestTraceContext.CORRELATION_ID_MDC_KEY);
     }
+  }
+
+  /**
+   * Returns the trace identifier of the active OpenTelemetry span. Spring tracing's server
+   * filter runs before this one and creates a span for every HTTP request, so the current span
+   * is normally non-null and exposes the trace id Spring has already adopted from a W3C
+   * {@code traceparent} header or generated for new requests. The UUID fallback covers two
+   * cases: requests that bypass the tracer entirely (for example a misconfigured filter
+   * ordering during local experiments) and Spring contexts that do not auto-configure a
+   * tracer bean at all (non-web {@code @SpringBootTest} integration tests). In both cases
+   * structured logs and response headers still carry a usable trace identifier.
+   */
+  private String resolveTraceId() {
+    final Tracer tracer = tracerProvider.getIfAvailable();
+    if (tracer != null) {
+      final Span currentSpan = tracer.currentSpan();
+      if (currentSpan != null) {
+        final String traceId = currentSpan.context().traceId();
+        if (StringUtils.isNotBlank(traceId)) {
+          return traceId;
+        }
+      }
+    }
+    return UUID.randomUUID().toString().replace("-", "");
+  }
+
+  /**
+   * Resolves the optional correlation id from the inbound request only when it matches the
+   * accepted identifier pattern. Invalid or malformed values are ignored so they do not pollute
+   * logs, MDC or response headers with low-quality correlation data.
+   */
+  private String resolveCorrelationId(final HttpServletRequest request) {
+    final String correlationId =
+        StringUtils.trimToNull(request.getHeader(requestTracingProperties.correlationIdHeader()));
+    return CORRELATION_ID_PATTERN.matcher(StringUtils.defaultString(correlationId)).matches()
+        ? correlationId
+        : null;
   }
 
   /**
@@ -116,8 +175,8 @@ public class RequestTracingFilter extends OncePerRequestFilter {
 
   /**
    * Emits the request completion log once the downstream chain has finished. The log includes
-   * status, duration and the resolved Spring route pattern so latency and failures can be queried
-   * at endpoint level rather than only by raw servlet path.
+   * status, duration and the resolved Spring route pattern so latency and failures can be
+   * queried at endpoint level rather than only by raw servlet path.
    */
   private void logRequestCompleted(
       final HttpServletRequest request,
@@ -143,47 +202,6 @@ public class RequestTracingFilter extends OncePerRequestFilter {
   }
 
   /**
-   * Resolves the trace id that should represent the current request in logs and responses. The
-   * method prefers a valid W3C `traceparent`, then a trusted inbound trace header and finally
-   * generates a server-side fallback when the client did not provide a reusable identifier.
-   */
-  private String resolveTraceId(final HttpServletRequest request) {
-    final String traceparent = StringUtils.trimToNull(request.getHeader("traceparent"));
-    if (StringUtils.isNotBlank(traceparent)) {
-      final var matcher = TRACEPARENT_PATTERN.matcher(traceparent);
-      if (matcher.matches()) {
-        final String candidate = matcher.group(1).toLowerCase(Locale.ROOT);
-        if (!Strings.CS.equals(candidate, "00000000000000000000000000000000")) {
-          return candidate;
-        }
-      }
-    }
-
-    if (requestTracingProperties.acceptIncomingTraceId()) {
-      final String incomingTraceId =
-          StringUtils.trimToNull(request.getHeader(requestTracingProperties.traceIdHeader()));
-      if (TRACE_ID_PATTERN.matcher(StringUtils.defaultString(incomingTraceId)).matches()) {
-        return incomingTraceId;
-      }
-    }
-
-    return UUID.randomUUID().toString().replace("-", "");
-  }
-
-  /**
-   * Resolves the optional correlation id from the inbound request only when it matches the
-   * accepted identifier pattern. Invalid or malformed values are ignored so they do not pollute
-   * logs, MDC or response headers with low-quality correlation data.
-   */
-  private String resolveCorrelationId(final HttpServletRequest request) {
-    final String correlationId =
-        StringUtils.trimToNull(request.getHeader(requestTracingProperties.correlationIdHeader()));
-    return TRACE_ID_PATTERN.matcher(StringUtils.defaultString(correlationId)).matches()
-        ? correlationId
-        : null;
-  }
-
-  /**
    * Returns the resolved Spring MVC route pattern when handler mapping has already populated it.
    * Using the abstract route instead of only the raw URI makes log aggregation and metrics much
    * more useful for endpoint-level operational analysis.
@@ -196,8 +214,8 @@ public class RequestTracingFilter extends OncePerRequestFilter {
 
   /**
    * Adds a structured field to the current log builder only when the value is meaningful. This
-   * avoids cluttering request logs with empty keys while keeping the builder reusable across start
-   * and completion events that share optional metadata.
+   * avoids cluttering request logs with empty keys while keeping the builder reusable across
+   * start and completion events that share optional metadata.
    */
   private LoggingEventBuilder addIfPresent(
       final LoggingEventBuilder builder, final String key, final String value) {
