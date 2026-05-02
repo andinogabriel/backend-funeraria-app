@@ -6,6 +6,8 @@ import static org.mockito.Mockito.when;
 import disenodesistemas.backendfunerariaapp.application.port.out.MessageResolverPort;
 import disenodesistemas.backendfunerariaapp.exception.AppException;
 import disenodesistemas.backendfunerariaapp.exception.AppExceptionsHandler;
+import disenodesistemas.backendfunerariaapp.exception.ConflictException;
+import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
 import disenodesistemas.backendfunerariaapp.infrastructure.logging.RequestTraceContext;
 import disenodesistemas.backendfunerariaapp.infrastructure.security.ratelimit.TooManyLoginAttemptsException;
 import jakarta.validation.Valid;
@@ -104,6 +106,42 @@ class AppExceptionsHandlerTest {
     assertThat(problemDetail.getProperties())
         .containsEntry("code", "auth.login.rate.limit.exceeded")
         .containsEntry("retryAfterSeconds", 120L);
+  }
+
+  @Test
+  @DisplayName(
+      "Given a NotFoundException when it is handled then the problem detail returns 404 with the localized resource title")
+  void givenANotFoundExceptionWhenItIsHandledThenTheProblemDetailReturns404WithTheLocalizedResourceTitle() {
+    final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/brands/9");
+    when(messageResolverPort.getMessage("error.application.title")).thenReturn("Error de aplicacion");
+    when(messageResolverPort.getMessage("brand.error.not.found"))
+        .thenReturn("No existe la marca con el id especificado.");
+
+    final ProblemDetail problemDetail =
+        appExceptionsHandler.handleAppException(
+            new NotFoundException("brand.error.not.found"), request);
+
+    assertThat(problemDetail.getStatus()).isEqualTo(404);
+    assertThat(problemDetail.getProperties())
+        .containsEntry("code", "brand.error.not.found");
+  }
+
+  @Test
+  @DisplayName(
+      "Given a ConflictException when it is handled then the problem detail returns 409 with the localized resource title")
+  void givenAConflictExceptionWhenItIsHandledThenTheProblemDetailReturns409WithTheLocalizedResourceTitle() {
+    final MockHttpServletRequest request = new MockHttpServletRequest("DELETE", "/api/v1/brands/9");
+    when(messageResolverPort.getMessage("error.application.title")).thenReturn("Error de aplicacion");
+    when(messageResolverPort.getMessage("brand.error.invalid.delete"))
+        .thenReturn("La marca tiene items asociados y no puede ser eliminada.");
+
+    final ProblemDetail problemDetail =
+        appExceptionsHandler.handleAppException(
+            new ConflictException("brand.error.invalid.delete"), request);
+
+    assertThat(problemDetail.getStatus()).isEqualTo(409);
+    assertThat(problemDetail.getProperties())
+        .containsEntry("code", "brand.error.invalid.delete");
   }
 
   @SuppressWarnings("unused")

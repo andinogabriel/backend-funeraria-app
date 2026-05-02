@@ -21,16 +21,32 @@ public class AppExceptionsHandler {
 
   private final MessageResolverPort messageResolverPort;
 
+  /**
+   * Handles every exception in the {@link AppException} sealed family with one entry point. The
+   * pattern-matching switch routes each subtype to a dedicated structured log event so operators
+   * can dashboard 404s, 409s and the generic application errors independently, while sharing the
+   * same {@link ProblemDetail} construction so the public API contract stays uniform across
+   * subtypes. The {@code AppException} arm covers the raw base class, which is still
+   * instantiable on purpose for the many call sites that throw with a custom status; if a new
+   * subclass is added to {@code permits} the compiler reminds the maintainer to extend this
+   * switch with a matching arm.
+   */
   @ExceptionHandler(AppException.class)
   public ProblemDetail handleAppException(final AppException ex, final HttpServletRequest request) {
+    final String event = switch (ex) {
+      case NotFoundException ignored -> "exception.resource.not_found";
+      case ConflictException ignored -> "exception.resource.conflict";
+      case AppException ignored -> "exception.application";
+    };
+
     log.atWarn()
-        .addKeyValue("event", "exception.handled")
+        .addKeyValue("event", event)
         .addKeyValue("exceptionType", ex.getClass().getSimpleName())
         .addKeyValue("status", ex.getStatus().value())
         .addKeyValue("method", request.getMethod())
         .addKeyValue("path", request.getRequestURI())
         .addKeyValue("code", ex.getMessage())
-        .log("exception.handled");
+        .log(event);
     final ProblemDetail pd = ProblemDetail.forStatus(ex.getStatus());
     pd.setTitle(messageResolverPort.getMessage("error.application.title"));
     pd.setDetail(messageResolverPort.getMessage(ex.getMessage()));
