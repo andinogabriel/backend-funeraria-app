@@ -52,7 +52,7 @@ public class SupplierController {
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final String nif) {
     supplierCommandUseCase.delete(nif);
     return ResponseEntity.ok(
-        OperationStatusModel.builder().name("DELETE SUPPLIER").result("SUCCESSFUL").build());
+        new OperationStatusModel("DELETE SUPPLIER", "SUCCESSFUL"));
   }
 
   @PreAuthorize("hasRole('ADMIN')")

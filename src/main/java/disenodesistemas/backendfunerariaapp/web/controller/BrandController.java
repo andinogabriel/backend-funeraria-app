@@ -58,6 +58,6 @@ public class BrandController {
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final Long id) {
     brandCommandUseCase.delete(id);
     return ResponseEntity.ok(
-        OperationStatusModel.builder().name("DELETE BRAND").result("SUCCESSFUL").build());
+        new OperationStatusModel("DELETE BRAND", "SUCCESSFUL"));
   }
 }

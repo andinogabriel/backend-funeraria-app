@@ -46,7 +46,7 @@ public class PlanController {
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final Long id) {
     planCommandUseCase.delete(id);
     return ResponseEntity.ok(
-        OperationStatusModel.builder().name("DELETE PLAN").result("SUCCESSFUL").build());
+        new OperationStatusModel("DELETE PLAN", "SUCCESSFUL"));
   }
 
   @PreAuthorize("hasRole('ADMIN')")

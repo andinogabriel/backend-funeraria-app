@@ -218,7 +218,7 @@ class UserSessionUseCaseTest {
 
     final OperationStatusModel response = userSessionUseCase.logoutUser(logoutRequest);
 
-    assertThat(response.getResult()).isEqualTo("Sesion cerrada correctamente");
+    assertThat(response.result()).isEqualTo("Sesion cerrada correctamente");
     verify(userSessionTokenService).revokeIfPresent(userDevice);
     final ArgumentCaptor<OnUserLogoutSuccessEvent> eventCaptor =
         ArgumentCaptor.forClass(OnUserLogoutSuccessEvent.class);

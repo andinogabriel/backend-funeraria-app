@@ -80,7 +80,7 @@ public class IncomeController {
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final Long receiptNumber) {
     incomeCommandUseCase.delete(receiptNumber);
     return ResponseEntity.ok(
-        OperationStatusModel.builder().name("DELETE INCOME").result("SUCCESSFUL").build());
+        new OperationStatusModel("DELETE INCOME", "SUCCESSFUL"));
   }
 
   private IncomeRequestDto withAuthenticatedUser(final IncomeRequestDto incomeRequest) {
