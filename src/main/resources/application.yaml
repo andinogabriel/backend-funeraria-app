@@ -59,6 +59,13 @@ management:
       enabled: true
     os:
       enabled: true
+    # The git-commit-id-maven-plugin generates 'classpath:git.properties' at build time. The
+    # contributor exposes commit hash, branch, build timestamp and tags through
+    # '/actuator/info' so the responder during an incident can confirm exactly which version
+    # the running container ships without consulting the registry or build pipeline.
+    git:
+      enabled: true
+      mode: full
   metrics:
     tags:
       application: ${spring.application.name}

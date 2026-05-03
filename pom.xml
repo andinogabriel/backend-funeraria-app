@@ -35,6 +35,7 @@
     <logstash.logback.encoder.version>9.0</logstash.logback.encoder.version>
     <checkstyle.plugin.version>3.6.0</checkstyle.plugin.version>
     <jackson2.version>2.21.3</jackson2.version>
+    <git-commit-id-plugin.version>9.0.2</git-commit-id-plugin.version>
 
     <project.build.outputTimestamp>2026-01-21T00:00:00Z</project.build.outputTimestamp>
   </properties>
@@ -290,6 +291,43 @@
               <artifactId>lombok</artifactId>
             </exclude>
           </excludes>
+        </configuration>
+      </plugin>
+
+      <!-- Generates 'target/classes/git.properties' at build time so Spring Boot Actuator's
+           GitInfoContributor can expose the commit hash, branch and build timestamp through
+           '/actuator/info'. Operational value: during an incident the responder hits one URL
+           and knows exactly which commit is running. Build-fail is set to false so contributors
+           working from a tarball without a '.git' directory can still build. -->
+      <plugin>
+        <groupId>io.github.git-commit-id</groupId>
+        <artifactId>git-commit-id-maven-plugin</artifactId>
+        <version>${git-commit-id-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>get-the-git-infos</id>
+            <goals>
+              <goal>revision</goal>
+            </goals>
+            <phase>initialize</phase>
+          </execution>
+        </executions>
+        <configuration>
+          <generateGitPropertiesFile>true</generateGitPropertiesFile>
+          <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+          <failOnNoGitDirectory>false</failOnNoGitDirectory>
+          <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
+          <includeOnlyProperties>
+            <includeOnlyProperty>^git.branch$</includeOnlyProperty>
+            <includeOnlyProperty>^git.commit.id$</includeOnlyProperty>
+            <includeOnlyProperty>^git.commit.id.abbrev$</includeOnlyProperty>
+            <includeOnlyProperty>^git.commit.message.short$</includeOnlyProperty>
+            <includeOnlyProperty>^git.commit.time$</includeOnlyProperty>
+            <includeOnlyProperty>^git.build.time$</includeOnlyProperty>
+            <includeOnlyProperty>^git.tags$</includeOnlyProperty>
+            <includeOnlyProperty>^git.dirty$</includeOnlyProperty>
+          </includeOnlyProperties>
+          <commitIdGenerationMode>full</commitIdGenerationMode>
         </configuration>
       </plugin>
 
