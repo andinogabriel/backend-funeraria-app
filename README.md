@@ -175,7 +175,10 @@ Default public operational endpoints:
 - `GET /actuator/health`
 - `GET /actuator/health/liveness`
 - `GET /actuator/health/readiness`
-- `GET /actuator/info`
+- `GET /actuator/info` — exposes build info, Java/OS info and **git commit metadata**
+  (branch, commit id, message, timestamp, tags, dirty flag) via the
+  `git-commit-id-maven-plugin`. During an incident the responder hits one URL and confirms
+  exactly which commit the running container ships.
 - `GET /actuator/prometheus`
 
 If you want JSON logs locally:
