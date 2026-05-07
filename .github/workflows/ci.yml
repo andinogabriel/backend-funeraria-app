@@ -40,7 +40,10 @@ jobs:
         run: bash .github/scripts/source-ignore-guard.sh
 
       - name: Run Maven verify
-        run: mvn -q verify
+        # `-Pbdd` opts the Cucumber suite into Surefire; the runner has Docker available so
+        # the underlying Postgres Testcontainers fixture starts cleanly. Locally without
+        # Docker the default profile keeps `mvn verify` green by skipping the BDD layer.
+        run: mvn -q -Pbdd verify
 
       - name: Summarize verify results
         if: always()
@@ -50,7 +53,7 @@ jobs:
             echo "## Verify"
             echo ""
             echo "- Java: Temurin 25"
-            echo "- Command: \`mvn -q verify\`"
+            echo "- Command: \`mvn -q -Pbdd verify\`"
             if [ -d target/site/jacoco ]; then
               echo "- JaCoCo report: available"
             else
