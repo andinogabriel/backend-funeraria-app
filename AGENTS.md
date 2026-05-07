@@ -7,11 +7,18 @@ repository.
 
 Before proposing or writing code, read these files in order:
 
-1. [`README.md`](README.md)
-2. [`MEMORY_BANK.md`](MEMORY_BANK.md)
-3. [`src/main/resources/openapi/openapi.yaml`](src/main/resources/openapi/openapi.yaml)
-4. [`src/main/resources/openapi/README.md`](src/main/resources/openapi/README.md)
-5. [`docs/api-contract-governance.md`](docs/api-contract-governance.md)
+1. [`MEMORY_BANK.md`](MEMORY_BANK.md) — durable engineering context.
+2. [`docs/adr/README.md`](docs/adr/README.md) — index of the 12 architecture decision
+   records. Open the matching ADR before changing anything in the area it covers.
+3. [`docs/api-contract-governance.md`](docs/api-contract-governance.md) — API evolution
+   policy when touching `web/` or the OpenAPI contract.
+4. [`src/main/resources/openapi/openapi.yaml`](src/main/resources/openapi/openapi.yaml) +
+   [`src/main/resources/openapi/README.md`](src/main/resources/openapi/README.md) when the
+   change is contract-shaped.
+5. [`README.md`](README.md) — operational onboarding (run/build/observability stack).
+
+Claude Code sessions also have [`CLAUDE.md`](CLAUDE.md) at the repo root with paths,
+commands and the recurring gotchas distilled into one page.
 
 If your tooling does not auto-read repository instructions, explicitly load this file and
 `MEMORY_BANK.md` first.
