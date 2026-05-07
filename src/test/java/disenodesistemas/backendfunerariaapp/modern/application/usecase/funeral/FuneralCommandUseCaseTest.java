@@ -8,6 +8,8 @@ import static org.mockito.Mockito.when;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.FuneralPersistencePort;
 import disenodesistemas.backendfunerariaapp.application.usecase.funeral.FuneralCommandUseCase;
+import disenodesistemas.backendfunerariaapp.application.port.out.AuditEventPort;
+import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
 import disenodesistemas.backendfunerariaapp.application.usecase.funeral.FuneralDeceasedUseCase;
 import disenodesistemas.backendfunerariaapp.application.usecase.funeral.FuneralDraftFactory;
 import disenodesistemas.backendfunerariaapp.application.usecase.funeral.FuneralQueryUseCase;
@@ -15,8 +17,11 @@ import disenodesistemas.backendfunerariaapp.application.usecase.plan.PlanQueryUs
 import disenodesistemas.backendfunerariaapp.domain.entity.DeceasedEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.Funeral;
 import disenodesistemas.backendfunerariaapp.domain.entity.Plan;
+import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
+import disenodesistemas.backendfunerariaapp.domain.enums.AuditAction;
 import disenodesistemas.backendfunerariaapp.exception.ConflictException;
 import disenodesistemas.backendfunerariaapp.mapping.FuneralMapper;
+import disenodesistemas.backendfunerariaapp.modern.support.SecurityTestDataFactory;
 import disenodesistemas.backendfunerariaapp.web.dto.GenderDto;
 import disenodesistemas.backendfunerariaapp.web.dto.ReceiptTypeDto;
 import disenodesistemas.backendfunerariaapp.web.dto.RelationshipDto;
@@ -50,6 +55,8 @@ class FuneralCommandUseCaseTest {
   @Mock private FuneralDeceasedUseCase funeralDeceasedUseCase;
   @Mock private FuneralDraftFactory funeralDraftFactory;
   @Mock private FuneralQueryUseCase funeralQueryUseCase;
+  @Mock private AuthenticatedUserPort authenticatedUserPort;
+  @Mock private AuditEventPort auditEventPort;
 
   @InjectMocks private FuneralCommandUseCase funeralCommandUseCase;
 
@@ -88,18 +95,28 @@ class FuneralCommandUseCaseTest {
                 null),
             null);
 
+    final UserEntity actor = SecurityTestDataFactory.userEntity();
     when(funeralPersistencePort.existsByReceiptNumber("REC-123")).thenReturn(false);
     when(planQueryUseCase.findEntityById(1L)).thenReturn(plan);
     when(funeralDeceasedUseCase.registerDeceased(request.deceased())).thenReturn(deceased);
     when(funeralDraftFactory.create(request, plan, deceased)).thenReturn(funeral);
     when(funeralPersistencePort.save(funeral)).thenReturn(funeral);
     when(funeralMapper.toDto(funeral)).thenReturn(expectedResponse);
+    when(authenticatedUserPort.getAuthenticatedUser()).thenReturn(actor);
 
     final FuneralResponseDto response = funeralCommandUseCase.create(request);
 
     assertThat(response).isEqualTo(expectedResponse);
     verify(funeralDraftFactory).create(request, plan, deceased);
     verify(funeralPersistencePort).save(funeral);
+    verify(auditEventPort)
+        .record(
+            AuditAction.FUNERAL_CREATED,
+            actor.getEmail(),
+            actor.getId(),
+            "FUNERAL",
+            "1",
+            "{\"receiptNumber\":\"REC-123\",\"planId\":null}");
   }
 
   @Test
@@ -140,12 +157,22 @@ class FuneralCommandUseCaseTest {
       "Given a persisted funeral when the funeral is deleted then it removes the aggregate resolved by the query use case")
   void givenAPersistedFuneralWhenTheFuneralIsDeletedThenItRemovesTheAggregateResolvedByTheQueryUseCase() {
     final Funeral persistedFuneral = new Funeral();
+    final UserEntity actor = SecurityTestDataFactory.userEntity();
 
     when(funeralQueryUseCase.findEntityById(1L)).thenReturn(persistedFuneral);
+    when(authenticatedUserPort.getAuthenticatedUser()).thenReturn(actor);
 
     funeralCommandUseCase.delete(1L);
 
     verify(funeralPersistencePort).delete(persistedFuneral);
+    verify(auditEventPort)
+        .record(
+            AuditAction.FUNERAL_DELETED,
+            actor.getEmail(),
+            actor.getId(),
+            "FUNERAL",
+            "1",
+            null);
   }
 
   private FuneralRequestDto funeralRequestDto(final String receiptNumber) {

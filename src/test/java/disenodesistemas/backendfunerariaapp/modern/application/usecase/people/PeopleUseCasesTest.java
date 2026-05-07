@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.AffiliatePersistencePort;
+import disenodesistemas.backendfunerariaapp.application.port.out.AuditEventPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.DeceasedPersistencePort;
 import disenodesistemas.backendfunerariaapp.application.port.out.FuneralPersistencePort;
@@ -26,6 +27,7 @@ import disenodesistemas.backendfunerariaapp.domain.entity.DeceasedEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.Funeral;
 import disenodesistemas.backendfunerariaapp.domain.entity.RoleEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
+import disenodesistemas.backendfunerariaapp.domain.enums.AuditAction;
 import disenodesistemas.backendfunerariaapp.domain.enums.Role;
 import disenodesistemas.backendfunerariaapp.exception.ConflictException;
 import disenodesistemas.backendfunerariaapp.mapping.AffiliateMapper;
@@ -66,6 +68,7 @@ class PeopleUseCasesTest {
     final AffiliatePersistencePort affiliatePersistencePort = mock(AffiliatePersistencePort.class);
     final AffiliateMapper affiliateMapper = mock(AffiliateMapper.class);
     final AuthenticatedUserPort authenticatedUserPort = mock(AuthenticatedUserPort.class);
+    final AuditEventPort auditEventPort = mock(AuditEventPort.class);
     final AffiliateQueryUseCase affiliateQueryUseCase =
         new AffiliateQueryUseCase(affiliatePersistencePort, affiliateMapper, authenticatedUserPort);
     final AffiliateCommandUseCase affiliateCommandUseCase =
@@ -73,7 +76,8 @@ class PeopleUseCasesTest {
             affiliatePersistencePort,
             affiliateMapper,
             authenticatedUserPort,
-            affiliateQueryUseCase);
+            affiliateQueryUseCase,
+            auditEventPort);
     final AffiliateRequestDto request =
         AffiliateRequestDto.builder()
             .id(1L)
@@ -86,6 +90,7 @@ class PeopleUseCasesTest {
             .build();
     final UserEntity authenticatedUser = SecurityTestDataFactory.userEntity();
     final AffiliateEntity entity = new AffiliateEntity();
+    entity.setDni(30111222);
     final AffiliateResponseDto response =
         new AffiliateResponseDto(
             "Juan", "Perez", 30111222, LocalDate.of(1980, 1, 1), null, Boolean.FALSE, null, null, null, List.of(), List.of());
@@ -100,6 +105,14 @@ class PeopleUseCasesTest {
     assertThat(created).isEqualTo(response);
     assertThat(entity.getUser()).isEqualTo(authenticatedUser);
     assertThat(entity.getDeceased()).isFalse();
+    verify(auditEventPort)
+        .record(
+            AuditAction.AFFILIATE_CREATED,
+            authenticatedUser.getEmail(),
+            authenticatedUser.getId(),
+            "AFFILIATE",
+            "30111222",
+            null);
   }
 
   @Test
@@ -115,7 +128,8 @@ class PeopleUseCasesTest {
             affiliatePersistencePort,
             mock(AffiliateMapper.class),
             mock(AuthenticatedUserPort.class),
-            affiliateQueryUseCase);
+            affiliateQueryUseCase,
+            mock(AuditEventPort.class));
     final AffiliateEntity existing = AffiliateEntity.builder().dni(30111222).build();
     final AffiliateRequestDto request =
         AffiliateRequestDto.builder()
@@ -276,8 +290,15 @@ class PeopleUseCasesTest {
     final UserPersistencePort userPersistencePort = mock(UserPersistencePort.class);
     final RolePersistencePort rolePersistencePort = mock(RolePersistencePort.class);
     final RoleMapper roleMapper = mock(RoleMapper.class);
+    final AuthenticatedUserPort authenticatedUserPort = mock(AuthenticatedUserPort.class);
+    final AuditEventPort auditEventPort = mock(AuditEventPort.class);
     final UserRoleUseCase userRoleUseCase =
-        new UserRoleUseCase(userPersistencePort, rolePersistencePort, roleMapper);
+        new UserRoleUseCase(
+            userPersistencePort,
+            rolePersistencePort,
+            roleMapper,
+            authenticatedUserPort,
+            auditEventPort);
     final UserEntity user = SecurityTestDataFactory.userEntity();
     user.setRoles(new HashSet<>(user.getRoles()));
     user.getRoles().forEach(role -> role.setId(1L));
@@ -285,6 +306,7 @@ class PeopleUseCasesTest {
     adminRole.setId(2L);
     final RolRequestDto adminRequest = RolRequestDto.builder().id(2L).name(Role.ROLE_ADMIN).build();
     final RolRequestDto userRequest = RolRequestDto.builder().id(1L).name(Role.ROLE_USER).build();
+    final UserEntity admin = SecurityTestDataFactory.userEntity();
 
     when(userPersistencePort.findByEmail(TestValues.USER_EMAIL)).thenReturn(Optional.of(user));
     when(rolePersistencePort.findById(2L)).thenReturn(Optional.of(adminRole));
@@ -294,6 +316,7 @@ class PeopleUseCasesTest {
               final RoleEntity role = invocation.getArgument(0);
               return RolRequestDto.builder().id(role.getId()).name(role.getName()).build();
             });
+    when(authenticatedUserPort.getAuthenticatedUser()).thenReturn(admin);
 
     final Set<RolRequestDto> response =
         userRoleUseCase.updateUserRol(TestValues.USER_EMAIL, adminRequest);
@@ -302,6 +325,14 @@ class PeopleUseCasesTest {
     assertThat(response).contains(userRequest);
     assertThat(user.getRoles()).contains(adminRole);
     verify(userPersistencePort).save(user);
+    verify(auditEventPort)
+        .record(
+            AuditAction.USER_ROLE_GRANTED,
+            admin.getEmail(),
+            admin.getId(),
+            "USER",
+            String.valueOf(user.getId()),
+            "{\"role\":\"ROLE_ADMIN\"}");
   }
 
   @Test
@@ -312,7 +343,12 @@ class PeopleUseCasesTest {
     final RolePersistencePort rolePersistencePort = mock(RolePersistencePort.class);
     final RoleMapper roleMapper = mock(RoleMapper.class);
     final UserRoleUseCase userRoleUseCase =
-        new UserRoleUseCase(userPersistencePort, rolePersistencePort, roleMapper);
+        new UserRoleUseCase(
+            userPersistencePort,
+            rolePersistencePort,
+            roleMapper,
+            mock(AuthenticatedUserPort.class),
+            mock(AuditEventPort.class));
     final UserEntity user = SecurityTestDataFactory.userEntity();
     final RoleEntity userRole = user.getRoles().iterator().next();
     userRole.setId(1L);

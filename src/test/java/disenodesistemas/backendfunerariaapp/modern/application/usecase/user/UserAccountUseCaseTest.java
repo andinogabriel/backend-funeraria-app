@@ -44,6 +44,7 @@ class UserAccountUseCaseTest {
   @Mock private PasswordEncoder passwordEncoder;
   @Mock private ConfirmationTokenPort confirmationTokenPort;
   @Mock private MessageResolverPort messageResolverPort;
+  @Mock private disenodesistemas.backendfunerariaapp.application.port.out.AuditEventPort auditEventPort;
 
   @InjectMocks private UserAccountUseCase userAccountUseCase;
 
@@ -120,6 +121,14 @@ class UserAccountUseCaseTest {
     assertThat(response).isEqualTo("Cuenta activada correctamente");
     assertThat(userEntity.isEnabled()).isTrue();
     verify(userPersistencePort).save(userEntity);
+    verify(auditEventPort)
+        .record(
+            disenodesistemas.backendfunerariaapp.domain.enums.AuditAction.USER_ACTIVATED,
+            userEntity.getEmail(),
+            userEntity.getId(),
+            "USER",
+            String.valueOf(userEntity.getId()),
+            null);
   }
 
   @Test
