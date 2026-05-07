@@ -54,13 +54,32 @@ public class AuditLogStepDefinitions {
   }
 
   /**
-   * Resets the audit log and clears any leftover Spring Security context so scenarios start
-   * from a known state. Cucumber-Spring shares one Spring context across the run, so the
-   * background must explicitly clean what it relies on.
+   * Test-owned user emails the {@link Before} hook resets between scenarios. Listing them
+   * explicitly keeps the cleanup scope narrow (no risk of wiping seeded users from V2) and
+   * makes adding a new BDD-only persona an obvious one-line change.
+   */
+  private static final List<String> BDD_USER_EMAILS =
+      List.of("admin@bdd.local", "auditee@bdd.local");
+
+  /**
+   * Resets the audit log, strips the role set off every BDD-owned user, and clears the
+   * Spring Security context so scenarios start from a known state. Cucumber-Spring shares
+   * one Spring context across the run, so role assignments persist between scenarios
+   * unless we explicitly wipe them — without that reset, a second scenario granting the
+   * same role would always short-circuit on idempotency and produce zero audit events.
    */
   @Before
   public void resetAuditState() {
     auditEventRepository.deleteAll();
+    BDD_USER_EMAILS.forEach(
+        email ->
+            userPersistencePort
+                .findByEmail(email)
+                .ifPresent(
+                    user -> {
+                      user.getRoles().clear();
+                      userPersistencePort.save(user);
+                    }));
     SecurityContextHolder.clearContext();
   }
 
@@ -72,9 +91,16 @@ public class AuditLogStepDefinitions {
             new TestingAuthenticationToken(admin.getEmail(), null, "ROLE_ADMIN"));
   }
 
+  /**
+   * Ensures a non-admin user exists, deliberately without any role attached. The role
+   * grants exercised by the {@code When} steps must be observable as fresh additions,
+   * which would not be the case if the background pre-attached {@code ROLE_USER}: a
+   * subsequent grant of the same role would hit the idempotent skip in
+   * {@link UserRoleUseCase} and emit nothing.
+   */
   @Given("a regular user {string} exists in the system")
   public void aRegularUserExists(final String email) {
-    ensureUserWithRole(email, "BDD", "Auditee", AUDITEE_PASSWORD_HASH, Role.ROLE_USER);
+    ensureUser(email, "BDD", "Auditee", AUDITEE_PASSWORD_HASH);
   }
 
   @When("the admin grants the {string} role to {string}")
@@ -115,8 +141,31 @@ public class AuditLogStepDefinitions {
   }
 
   /**
-   * Creates the user when missing and ensures the supplied role is attached. Idempotent so
-   * scenarios that share a {@code Background} can run in any order without colliding.
+   * Creates the user when missing, with no roles attached. Used by {@code aRegularUserExists}
+   * so the role-grant {@code When} steps can be measured as net-new additions instead of
+   * being short-circuited by the idempotent skip when the role is already there.
+   */
+  private UserEntity ensureUser(
+      final String email,
+      final String firstName,
+      final String lastName,
+      final String passwordHash) {
+    return userPersistencePort
+        .findByEmail(email)
+        .orElseGet(
+            () -> {
+              final UserEntity created =
+                  new UserEntity(email, firstName, lastName, passwordHash);
+              created.activate();
+              created.setEnabled(true);
+              return userPersistencePort.save(created);
+            });
+  }
+
+  /**
+   * Creates the user when missing and ensures the supplied role is attached. Idempotent
+   * across scenarios so the admin background can re-run cleanly after the {@code @Before}
+   * reset stripped the role set.
    */
   private UserEntity ensureUserWithRole(
       final String email,
@@ -124,17 +173,7 @@ public class AuditLogStepDefinitions {
       final String lastName,
       final String passwordHash,
       final Role roleName) {
-    final UserEntity user =
-        userPersistencePort
-            .findByEmail(email)
-            .orElseGet(
-                () -> {
-                  final UserEntity created =
-                      new UserEntity(email, firstName, lastName, passwordHash);
-                  created.activate();
-                  created.setEnabled(true);
-                  return userPersistencePort.save(created);
-                });
+    final UserEntity user = ensureUser(email, firstName, lastName, passwordHash);
     final RoleEntity role =
         rolePersistencePort
             .findByName(roleName)
