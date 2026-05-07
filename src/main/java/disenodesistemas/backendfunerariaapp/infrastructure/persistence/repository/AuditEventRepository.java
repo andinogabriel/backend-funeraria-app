@@ -22,19 +22,23 @@ public interface AuditEventRepository extends JpaRepository<AuditEvent, Long> {
 
   /**
    * Returns audit events matching every non-null filter argument, ordered by capture time
-   * descending. The {@code coalesce}-style {@code (:param is null or column = :param)} predicates
-   * let the database short-circuit unused criteria and keep a single index-friendly plan,
-   * regardless of how many filters the caller provided.
+   * descending. Each parameter appears once inside a {@code coalesce(:param, column)} predicate
+   * so the column type drives Hibernate's bind-parameter inference (PostgreSQL otherwise rejects
+   * a {@code :param is null} branch when the bound value is {@code null} because the type cannot
+   * be inferred from the literal alone). The pattern is safe because every filtered column is
+   * {@code NOT NULL} in the schema: when {@code :param} is {@code null} the {@code coalesce}
+   * resolves to the column value and the comparison reduces to {@code col = col} (or
+   * {@code col >=/<= col}), which is always true and therefore leaves the row in the result set.
    */
   @Query(
       """
       select ae from AuditEvent ae
-      where (:actorEmail is null or ae.actorEmail = :actorEmail)
-        and (:action is null or ae.action = :action)
-        and (:targetType is null or ae.targetType = :targetType)
-        and (:targetId is null or ae.targetId = :targetId)
-        and (:from is null or ae.occurredAt >= :from)
-        and (:to is null or ae.occurredAt <= :to)
+      where ae.actorEmail = coalesce(:actorEmail, ae.actorEmail)
+        and ae.action = coalesce(:action, ae.action)
+        and ae.targetType = coalesce(:targetType, ae.targetType)
+        and ae.targetId = coalesce(:targetId, ae.targetId)
+        and ae.occurredAt >= coalesce(:from, ae.occurredAt)
+        and ae.occurredAt <= coalesce(:to, ae.occurredAt)
       order by ae.occurredAt desc, ae.id desc
       """)
   Page<AuditEvent> search(

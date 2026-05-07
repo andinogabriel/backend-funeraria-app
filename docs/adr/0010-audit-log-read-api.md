@@ -34,12 +34,20 @@ the existing repository.
 - **Page size is bounded**. `AuditEventQueryUseCase` clamps `size` to `[1, 100]` and falls back
   to a 25-row default. The cap matches the admin UI and prevents accidental large scans.
 - **Filter implementation**: a single `@Query` JPQL method on `AuditEventRepository` with
-  `(:param is null or column = :param)` predicates per filter. This was chosen over
+  `column = coalesce(:param, column)` predicates per filter (and the analogous
+  `column >=/<= coalesce(:param, column)` for the time window). This was chosen over
   `JpaSpecificationExecutor` because the filter set is fixed and small; specifications would
   add a `Criteria` builder layer for no win and would make the query plan harder to reason
-  about. The null-safe predicates compile to a stable plan that exercises the existing indexes
+  about. The `coalesce` form (rather than `:param is null or column = :param`) is needed
+  because PostgreSQL refuses an `is null` test on a bind parameter whose value is `null`
+  unless the type is explicit — embedding the parameter inside `coalesce` forces type
+  inference from the column. The pattern is safe because every filtered column is `NOT NULL`
+  in the schema (`actor_email`, `action`, `target_type`, `target_id`, `occurred_at`), so
+  `column = coalesce(null, column)` reduces to `column = column`, which is always true and
+  therefore neutral. The plan still exercises the existing indexes
   (`idx_audit_events_actor_occurred_at`, `idx_audit_events_target`,
-  `idx_audit_events_action_occurred_at`).
+  `idx_audit_events_action_occurred_at`) when the corresponding parameter is bound to a
+  concrete value.
 - **Port surface**: extended `AuditEventPort` with a `search(...)` method taking individual
   scalar parameters. Keeping the parameters loose (instead of a record) matches the convention
   established by `IncomePersistencePort.findAllByDeleted(...)` and avoids the port importing a
