@@ -14,9 +14,10 @@ tests/load/
 │   ├── env.js          # base URL, credentials, shared headers
 │   └── auth.js         # bootstrap-admin login helper
 ├── scenarios/
-│   ├── 01-login.js     # auth throughput (Argon2 + refresh token issuance)
-│   ├── 02-catalogs.js  # Caffeine-backed catalog reads (provinces, cities)
-│   └── 03-audit-search.js   # admin paginated read API (PR #36)
+│   ├── 01-login.js          # auth throughput (Argon2 + refresh token issuance)
+│   ├── 02-catalogs.js       # Caffeine-backed catalog reads (provinces, cities)
+│   ├── 03-audit-search.js   # admin paginated read API (PR #36)
+│   └── 04-funeral-write.js  # write-heavy: funeral creation end-to-end
 └── baseline/           # captured summaries from previous runs (see baseline/README.md)
 ```
 
@@ -75,6 +76,8 @@ regression in the auth or catalog hot paths:
 | `02-catalogs`        | `GET /provinces` p95                  | < 150 ms               |
 | `02-catalogs`        | `GET /cities` p95                     | < 200 ms               |
 | `03-audit-search`    | `GET /audit-events` p95               | < 300 ms               |
+| `04-funeral-write`   | `POST /funerals` p95                  | < 1200 ms              |
+| `04-funeral-write`   | `POST /funerals` error rate           | < 2%                   |
 
 Tune the numbers in the scenario file when the deployment target changes; do not relax a
 threshold to make a flaky run pass. If the regression is real, fix the root cause; if it
@@ -82,12 +85,18 @@ is environmental, document the reason in the same PR that adjusts the threshold.
 
 ## What is intentionally **not** covered
 
-- **Write-heavy `POST /api/v1/funerals`**. Creating a funeral requires foreign keys into
-  catalogs (`gender`, `relationship`, `death_cause`, `receipt_type`) that are not seeded
-  by the current Flyway migrations. Adding the seeder is tracked separately; once the
-  seed catalog is in place, a `04-funeral-write.js` scenario will mirror the admin
-  workflow that creates a funeral end-to-end.
 - **Concurrent multi-tenant scenarios**. The application is a single-tenant backoffice;
   there is no isolation surface to exercise.
 - **Long-running soak tests**. Out of scope for a regression baseline — the goal here is
   a deterministic 1–2 minute signal that catches a 2x slowdown, not endurance testing.
+
+## Notes on the funeral-write scenario
+
+`04-funeral-write.js` reuses the catalog FKs already populated by
+`V2__seed_reference_data.sql` (gender id 2 = Masculino, relationship id 1 = Padre,
+death_cause id 2 = Muerte clínica, receipt_type id 1 = Recibo de caja de ingreso). The
+plan is created once in `setup()` with an empty `itemsPlan` set and reused by every VU,
+so the per-iteration cost is dominated by the funeral-creation transaction itself
+(deceased registration + audit-event REQUIRES_NEW write). Each iteration uses a unique
+`receiptNumber` and DNI suffix to avoid the conflict-detection short-circuit in the
+write path.

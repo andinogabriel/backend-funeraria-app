@@ -37,6 +37,10 @@ Adopt k6 as the performance regression tool. Scripts live in `tests/load/`, stru
 - `scenarios/01-login.js` — auth throughput (Argon2 verification dominates).
 - `scenarios/02-catalogs.js` — Caffeine-backed catalog reads (`provinces`, `cities`).
 - `scenarios/03-audit-search.js` — admin paginated read API added in PR #36.
+- `scenarios/04-funeral-write.js` — end-to-end funeral creation, the only synchronous
+  write hot path. Reuses the catalog FKs seeded by `V2__seed_reference_data.sql` and
+  creates a single plan in `setup()` so the per-iteration cost isolates the funeral
+  transaction itself (deceased registration + audit `REQUIRES_NEW` write).
 
 Each scenario:
 
@@ -54,12 +58,12 @@ brings up `postgres + app`, waits for `/actuator/health`, runs every scenario, a
 uploads the JSON summaries as artifacts. Manual triggering keeps the tool useful without
 spending CI minutes on every push.
 
-A scenario for **write-heavy `POST /api/v1/funerals`** is intentionally deferred. Creating
-a funeral requires foreign keys into catalogs (`gender`, `relationship`, `death_cause`,
-`receipt_type`) that the current Flyway migrations do not seed. Adding that scenario
-without first seeding those catalogs would mean either skipping it (silent gap) or
-encoding ad-hoc setup into the script (drifts from the real flow). Tracked as a follow-up;
-once the catalog seeder ships, `04-funeral-write.js` will close the gap.
+The write-heavy scenario reuses catalog rows already populated by
+`V2__seed_reference_data.sql` (gender, relationship, death_cause, receipt_type) and
+creates a single plan once at setup so the per-iteration cost isolates the funeral
+transaction itself. The earlier draft of this ADR claimed that catalogs were not
+seeded and deferred the scenario for that reason; that was a misread of the existing
+migrations and is corrected here.
 
 ## Consequences
 
@@ -88,10 +92,12 @@ once the catalog seeder ships, `04-funeral-write.js` will close the gap.
   instead of investigating, the tool degrades into noise. The README calls this out and
   tells reviewers to refuse threshold relaxations that are not justified by an
   identified deployment change in the same PR.
-- Write-heavy coverage is missing until the catalog seeder ships, so an N+1 introduced
-  on the funeral creation path would not be caught by this baseline alone. The tracing
-  panels (ADR-0007) and the existing slow-query logs remain the safety net for that
-  category until `04-funeral-write.js` lands.
+- The funeral-write scenario uses an empty `itemsPlan` set on the plan it creates at
+  setup. Real plans typically carry several items, so the per-iteration cost is a
+  lower bound on the production cost of `POST /funerals` rather than a faithful
+  reproduction. This is acceptable for regression detection — a slowdown in the
+  surrounding transactional path will still surface — but the baseline numbers should
+  not be quoted as production SLOs.
 
 ## Validation
 
