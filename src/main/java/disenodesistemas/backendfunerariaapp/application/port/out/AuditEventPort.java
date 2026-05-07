@@ -1,13 +1,22 @@
 package disenodesistemas.backendfunerariaapp.application.port.out;
 
+import disenodesistemas.backendfunerariaapp.domain.entity.AuditEvent;
 import disenodesistemas.backendfunerariaapp.domain.enums.AuditAction;
+import java.time.Instant;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
- * Outbound port that records sensitive admin events into the audit log. Application use cases
- * call {@link #record} immediately after the business state transition has succeeded, so the
- * persisted entry reflects events that actually happened. The implementation is responsible for
- * stamping the capture timestamp and for resolving the active trace and correlation identifiers
- * from the request context, so callers only need to provide the business fields.
+ * Outbound port that records sensitive admin events into the audit log and exposes a paginated
+ * read side for the admin query API. Application use cases call {@link #record} immediately after
+ * the business state transition has succeeded, so the persisted entry reflects events that
+ * actually happened. The read side is intentionally narrow: a single filtered, paginated search
+ * is enough for the current compliance and forensic-review needs and avoids exposing the audit
+ * table as a generic query surface.
+ *
+ * <p>The implementation is responsible for stamping the capture timestamp and for resolving the
+ * active trace and correlation identifiers from the request context, so callers only need to
+ * provide the business fields.
  */
 public interface AuditEventPort {
 
@@ -31,4 +40,21 @@ public interface AuditEventPort {
       String targetType,
       String targetId,
       String payload);
+
+  /**
+   * Returns audit entries matching the supplied criteria, sorted by capture time descending so
+   * the most recent events come first. Every filter argument is optional and is applied as an
+   * exact match (or an inclusive bound for the {@code occurredAt} window); passing all
+   * {@code null} values yields the unfiltered audit trail. The supplied {@link Pageable} drives
+   * slicing only — sorting is enforced server-side to keep the API deterministic for compliance
+   * review.
+   */
+  Page<AuditEvent> search(
+      String actorEmail,
+      AuditAction action,
+      String targetType,
+      String targetId,
+      Instant from,
+      Instant to,
+      Pageable pageable);
 }
