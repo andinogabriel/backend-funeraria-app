@@ -1,9 +1,13 @@
 package disenodesistemas.backendfunerariaapp.application.usecase.funeral;
 
+import disenodesistemas.backendfunerariaapp.application.port.out.AuditEventPort;
+import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.FuneralPersistencePort;
 import disenodesistemas.backendfunerariaapp.application.usecase.plan.PlanQueryUseCase;
 import disenodesistemas.backendfunerariaapp.domain.entity.Funeral;
 import disenodesistemas.backendfunerariaapp.domain.entity.Plan;
+import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
+import disenodesistemas.backendfunerariaapp.domain.enums.AuditAction;
 import disenodesistemas.backendfunerariaapp.exception.ConflictException;
 import disenodesistemas.backendfunerariaapp.mapping.FuneralMapper;
 import disenodesistemas.backendfunerariaapp.web.dto.request.FuneralRequestDto;
@@ -20,12 +24,16 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class FuneralCommandUseCase {
 
+  private static final String AUDIT_TARGET_TYPE = "FUNERAL";
+
   private final FuneralPersistencePort funeralPersistencePort;
   private final FuneralMapper funeralMapper;
   private final PlanQueryUseCase planQueryUseCase;
   private final FuneralDeceasedUseCase funeralDeceasedUseCase;
   private final FuneralDraftFactory funeralDraftFactory;
   private final FuneralQueryUseCase funeralQueryUseCase;
+  private final AuthenticatedUserPort authenticatedUserPort;
+  private final AuditEventPort auditEventPort;
 
   @Transactional
   public FuneralResponseDto create(final FuneralRequestDto funeralRequest) {
@@ -41,6 +49,7 @@ public class FuneralCommandUseCase {
 
     final FuneralResponseDto createdFuneral = funeralMapper.toDto(funeralPersistencePort.save(funeral));
     logFuneralCompleted("funeral.create.completed", createdFuneral);
+    recordFuneralCreated(createdFuneral);
     return createdFuneral;
   }
 
@@ -61,6 +70,44 @@ public class FuneralCommandUseCase {
   public void delete(final Long id) {
     funeralPersistencePort.delete(funeralQueryUseCase.findEntityById(id));
     logFuneralDeleted(id);
+    recordFuneralDeleted(id);
+  }
+
+  /**
+   * Emits the audit entry for a successful funeral creation. Payload carries the receipt
+   * number and plan id so audit consumers can reconstruct the contract a funeral was sold
+   * under without joining back to the funeral table.
+   */
+  private void recordFuneralCreated(final FuneralResponseDto created) {
+    final UserEntity actor = authenticatedUserPort.getAuthenticatedUser();
+    final String payload =
+        "{\"receiptNumber\":"
+            + (created.receiptNumber() == null ? "null" : "\"" + created.receiptNumber() + "\"")
+            + ",\"planId\":"
+            + (created.plan() == null ? "null" : created.plan().id())
+            + "}";
+    auditEventPort.record(
+        AuditAction.FUNERAL_CREATED,
+        actor.getEmail(),
+        actor.getId(),
+        AUDIT_TARGET_TYPE,
+        String.valueOf(created.id()),
+        payload);
+  }
+
+  /**
+   * Emits the audit entry for a successful funeral deletion. The funeral id is captured at
+   * the call site because the entity is gone by the time the audit row is persisted.
+   */
+  private void recordFuneralDeleted(final Long funeralId) {
+    final UserEntity actor = authenticatedUserPort.getAuthenticatedUser();
+    auditEventPort.record(
+        AuditAction.FUNERAL_DELETED,
+        actor.getEmail(),
+        actor.getId(),
+        AUDIT_TARGET_TYPE,
+        String.valueOf(funeralId),
+        null);
   }
 
   private void validateReceiptNumber(final String receiptNumber) {
