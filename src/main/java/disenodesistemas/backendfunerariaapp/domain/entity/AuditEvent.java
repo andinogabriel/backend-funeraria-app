@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
  * {@code correlationId} and {@code payload} is required by the schema.
  */
 @Entity
-@Table(name = "audit_event")
+@Table(name = "audit_events")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AuditEvent {
