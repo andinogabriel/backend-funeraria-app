@@ -208,6 +208,11 @@ Provisioned dashboards:
 
 - `Backend Funeraria Overview`
 - `Backend Funeraria Auth Overview`
+- `Backend Funeraria Tracing` — HTTP latency quantiles (p50 / p95 / p99), throughput by
+  status, 5xx error ratio per route, top 10 slowest routes by p95, and a TraceQL panel that
+  lists recent error traces from Tempo. For ad-hoc trace lookup by `traceId`, use
+  `Grafana → Explore → Tempo → Search`; the trace id is on every response in the
+  `X-Trace-Id` header and in the structured log MDC.
 
 Provisioned datasources:
 
