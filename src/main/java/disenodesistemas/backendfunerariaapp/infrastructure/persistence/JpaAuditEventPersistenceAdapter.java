@@ -9,6 +9,8 @@ import java.time.Clock;
 import java.time.Instant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * JPA-backed {@link AuditEventPort} implementation. Every recorded event is persisted in its own
  * REQUIRES_NEW transaction so an audit failure cannot mask a successful business write, and a
- * business rollback after the audit insert does not erase the trail.
+ * business rollback after the audit insert does not erase the trail. The read side uses a
+ * read-only transaction so the search query never escalates locks against the append-only table.
  *
  * <p>The adapter resolves the trace and correlation identifiers from {@link
  * RequestTraceContext} (which reads the SLF4J MDC populated by Spring tracing and the
@@ -89,5 +92,23 @@ public class JpaAuditEventPersistenceAdapter implements AuditEventPort {
         .addKeyValue("targetType", targetType)
         .addKeyValue("targetId", targetId)
         .log("audit.event.recorded");
+  }
+
+  /**
+   * Delegates the filtered search to the repository. Sorting is fixed inside the JPQL query
+   * (most recent first) so the caller's {@link Pageable} only controls slicing.
+   */
+  @Override
+  @Transactional(readOnly = true)
+  public Page<AuditEvent> search(
+      final String actorEmail,
+      final AuditAction action,
+      final String targetType,
+      final String targetId,
+      final Instant from,
+      final Instant to,
+      final Pageable pageable) {
+    return auditEventRepository.search(
+        actorEmail, action, targetType, targetId, from, to, pageable);
   }
 }
