@@ -36,6 +36,7 @@
     <checkstyle.plugin.version>3.6.0</checkstyle.plugin.version>
     <jackson2.version>2.21.3</jackson2.version>
     <git-commit-id-plugin.version>10.0.0</git-commit-id-plugin.version>
+    <cucumber.version>7.20.1</cucumber.version>
 
     <project.build.outputTimestamp>2026-01-21T00:00:00Z</project.build.outputTimestamp>
   </properties>
@@ -65,6 +66,16 @@
         <groupId>com.fasterxml.jackson</groupId>
         <artifactId>jackson-bom</artifactId>
         <version>${jackson2.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- Aligns every cucumber-* artifact (java, spring, junit-platform-engine, ...) on the
+           same release so transitive resolution cannot pick mismatched core/runtime jars. -->
+      <dependency>
+        <groupId>io.cucumber</groupId>
+        <artifactId>cucumber-bom</artifactId>
+        <version>${cucumber.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -270,6 +281,30 @@
       <version>${testcontainers.version}</version>
       <scope>test</scope>
     </dependency>
+
+    <!-- Cucumber BDD bootstrap. cucumber-java owns the step-definition annotations,
+         cucumber-spring boots a Spring context per scenario, and the JUnit Platform engine
+         lets surefire discover features through the @Suite class without a custom runner. -->
+    <dependency>
+      <groupId>io.cucumber</groupId>
+      <artifactId>cucumber-java</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.cucumber</groupId>
+      <artifactId>cucumber-spring</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.cucumber</groupId>
+      <artifactId>cucumber-junit-platform-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-suite</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -374,6 +409,14 @@
           <includes>
             <include>**/modern/**/*Test.java</include>
           </includes>
+          <!-- Cucumber's JUnit Platform engine bootstraps the Spring context outside the
+               lifecycle that honors @Testcontainers(disabledWithoutDocker = true), so a
+               Docker-less local 'mvn verify' would fail on context load. Default-exclude
+               the BDD suite and re-enable it through the `bdd` profile, which CI activates
+               with `mvn -Pbdd verify` once the runner has a Docker daemon. -->
+          <excludes>
+            <exclude>**/modern/bdd/CucumberSuiteTest.java</exclude>
+          </excludes>
         </configuration>
       </plugin>
 
@@ -482,5 +525,25 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <!-- BDD profile: opts the Cucumber suite back into Surefire. CI runs
+         `mvn -Pbdd verify` so the BDD layer is exercised on every push, while the default
+         `mvn verify` keeps a Docker-less local build green. -->
+    <profile>
+      <id>bdd</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <excludes combine.self="override"/>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
 </project>
