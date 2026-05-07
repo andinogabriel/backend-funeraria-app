@@ -1,0 +1,79 @@
+# Manual k6 performance baseline. Triggered on demand (workflow_dispatch) so we don't
+# burn CI minutes on every push; the suite is ~2 minutes end-to-end including stack
+# bring-up. The job builds the application image with the same Dockerfile production
+# uses, runs every k6 scenario, fails the job on any threshold miss, and uploads the
+# JSON summaries as artifacts for offline diffing.
+
+name: Performance baseline
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch, tag or SHA to benchmark'
+        required: false
+        default: 'master'
+
+jobs:
+  k6:
+    name: k6 baseline
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Bring up application stack
+        run: docker compose up --build -d postgres app
+
+      - name: Wait for the application to become healthy
+        run: |
+          echo "Waiting for the app to expose /actuator/health..."
+          for i in {1..60}; do
+            if curl -fsS http://localhost:8081/actuator/health >/dev/null; then
+              echo "App is healthy"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "App did not become healthy in time" >&2
+          docker compose logs app
+          exit 1
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+            --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install -y k6
+
+      - name: Run k6 scenarios
+        run: |
+          mkdir -p tests/load/baseline/_run
+          for s in tests/load/scenarios/*.js; do
+            name=$(basename "$s" .js)
+            echo "::group::$name"
+            k6 run \
+              --summary-export "tests/load/baseline/_run/${name}.json" \
+              "$s"
+            echo "::endgroup::"
+          done
+
+      - name: Upload k6 summaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-baseline-summaries
+          path: tests/load/baseline/_run/*.json
+          retention-days: 30
+
+      - name: Tear down stack
+        if: always()
+        run: docker compose down --volumes --remove-orphans
