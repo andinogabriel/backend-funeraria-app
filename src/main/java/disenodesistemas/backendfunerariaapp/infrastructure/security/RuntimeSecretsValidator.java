@@ -43,8 +43,18 @@ public class RuntimeSecretsValidator {
   /** Profiles where boot must abort on any placeholder secret. */
   private static final Set<String> STRICT_PROFILES = Set.of("prod", "production");
 
-  /** Minimum acceptable secret length, regardless of placeholder check. */
+  /** Minimum acceptable secret length for the pepper and fingerprint secrets. */
   private static final int MIN_SECRET_LENGTH = 16;
+
+  /**
+   * Minimum acceptable length for the JWT signing secret. JJWT 0.13+ enforces RFC 7518 §3.2:
+   * HMAC-SHA keys must be at least 256 bits (32 bytes / 32 ASCII chars). Anything shorter
+   * makes {@code Keys.hmacShaKeyFor(...)} throw a {@code WeakKeyException} at the first
+   * sign/verify call — i.e. on the very first login request, after a clean boot. The validator
+   * surfaces the same constraint at startup time so the failure happens as part of the boot
+   * sequence rather than as a confusing 500 on the first inbound request.
+   */
+  private static final int MIN_JWT_SECRET_LENGTH = 32;
 
   /**
    * Known development placeholders for the secrets the validator inspects. These constants are
@@ -103,17 +113,24 @@ public class RuntimeSecretsValidator {
    */
   private List<String> collectFindings() {
     final List<String> findings = new ArrayList<>();
-    appendIfPlaceholder(findings, "jwt-token.secret", jwtProperties.secret(), JWT_PLACEHOLDER);
+    appendIfPlaceholder(
+        findings,
+        "jwt-token.secret",
+        jwtProperties.secret(),
+        JWT_PLACEHOLDER,
+        MIN_JWT_SECRET_LENGTH);
     appendIfPlaceholder(
         findings,
         "security.password.pepper",
         passwordSecurityProperties.pepper(),
-        PEPPER_PLACEHOLDER);
+        PEPPER_PLACEHOLDER,
+        MIN_SECRET_LENGTH);
     appendIfPlaceholder(
         findings,
         "security.request.fingerprint-secret",
         securityRequestProperties.fingerprintSecret(),
-        FINGERPRINT_PLACEHOLDER);
+        FINGERPRINT_PLACEHOLDER,
+        MIN_SECRET_LENGTH);
     return findings;
   }
 
@@ -126,7 +143,8 @@ public class RuntimeSecretsValidator {
       final List<String> findings,
       final String propertyName,
       final String actualValue,
-      final String placeholder) {
+      final String placeholder,
+      final int minLength) {
     if (StringUtils.isBlank(actualValue)) {
       findings.add(propertyName + " is blank");
       return;
@@ -135,11 +153,11 @@ public class RuntimeSecretsValidator {
       findings.add(propertyName + " is still set to the development placeholder");
       return;
     }
-    if (actualValue.length() < MIN_SECRET_LENGTH) {
+    if (actualValue.length() < minLength) {
       findings.add(
           propertyName
               + " is shorter than the minimum required length of "
-              + MIN_SECRET_LENGTH
+              + minLength
               + " characters");
     }
   }
