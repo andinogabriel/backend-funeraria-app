@@ -7,7 +7,15 @@ COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
 COPY src/ src/
 
-RUN sed -i 's/\r$//' mvnw \
+# Strip CRLF from every text file the build context might have brought in with Windows line
+# endings. The repository's .gitattributes already pins these files to LF, but a clone done
+# before that policy landed (or made on a machine with `core.autocrlf=true` and never
+# re-normalized) keeps CRLF in the working tree, which the JVM then reads as part of
+# argument values from .mvn/jvm.config and refuses to start. Doing the strip here makes the
+# image build deterministic regardless of how the host's Git is configured — works on
+# Linux, macOS and Windows (and CI) without any host-side intervention.
+RUN find .mvn -type f -exec sed -i 's/\r$//' {} + \
+    && sed -i 's/\r$//' mvnw \
     && chmod +x mvnw \
     && ./mvnw -q -DskipTests package
 
