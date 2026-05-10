@@ -141,6 +141,20 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-flyway</artifactId>
     </dependency>
+
+    <!-- Argon2PasswordEncoder (Spring Security) loads BouncyCastle reflectively at
+         encode/verify time. The Spring Boot BOM manages bcprov-jdk18on but pins it to
+         `scope=test`, so without an explicit declaration it never reaches the runtime
+         classpath and the bootstrap admin Runner crashes with NoClassDefFoundError on
+         org.bouncycastle.crypto.params.Argon2Parameters$Builder. The unit tests don't
+         catch this because they Mockito-mock PepperedPasswordEncoder. Declare runtime
+         scope so the version stays managed by the Boot BOM but the jar ships in the
+         executable artifact. -->
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-jdk18on</artifactId>
+      <scope>runtime</scope>
+    </dependency>
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
