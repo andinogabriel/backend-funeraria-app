@@ -196,6 +196,6 @@ class RuntimeSecretsValidatorTest {
 
   private static SecurityRequestProperties requestProperties(final String fingerprintSecret) {
     return new SecurityRequestProperties(
-        "X-Device-Id", "Idempotency-Key", fingerprintSecret);
+        "X-Device-Id", "Idempotency-Key", fingerprintSecret, true);
   }
 }

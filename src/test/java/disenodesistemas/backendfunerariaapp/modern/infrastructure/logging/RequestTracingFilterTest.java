@@ -35,7 +35,8 @@ class RequestTracingFilterTest {
   private final RequestTracingFilter requestTracingFilter =
       new RequestTracingFilter(
           new RequestTracingProperties(TRACE_HEADER, CORRELATION_HEADER),
-          new SecurityRequestProperties(DEVICE_HEADER, "Idempotency-Key", "fingerprint-secret"),
+          new SecurityRequestProperties(
+              DEVICE_HEADER, "Idempotency-Key", "fingerprint-secret", true),
           tracerProvider);
 
   @BeforeEach

@@ -27,15 +27,26 @@ public class Sha256DeviceFingerprintAdapter implements DeviceFingerprintPort {
    * Produces the fingerprint value stored in device sessions and embedded into access tokens. The
    * resulting hash is deterministic for the same device context and secret, allowing later request
    * validation to detect when a token is replayed from another environment.
+   *
+   * <p>The {@code User-Agent} contribution is gated by
+   * {@code security.request.include-user-agent-in-fingerprint}. The strict default ({@code true})
+   * is the production-grade behavior; the docker profile disables it so Chrome DevTools'
+   * responsive-mode toggle (which swaps the desktop UA for a mobile one) does not invalidate the
+   * token mid-session. When the toggle is off the placeholder {@code "any"} occupies the UA slot
+   * so the hash material keeps its shape — the secret still has to match to forge a fingerprint,
+   * which is what the check ultimately guards against.
    */
   @Override
   public String fingerprint(final String deviceId, final String userAgent) {
     final String normalizedDeviceId = StringUtils.defaultIfBlank(deviceId, "unknown");
-    final String normalizedUserAgent = StringUtils.defaultIfBlank(userAgent, "unknown").trim();
+    final String userAgentComponent =
+        securityRequestProperties.includeUserAgentInFingerprint()
+            ? StringUtils.defaultIfBlank(userAgent, "unknown").trim()
+            : "any";
     final String material =
         normalizedDeviceId
             + '|'
-            + normalizedUserAgent
+            + userAgentComponent
             + '|'
             + securityRequestProperties.fingerprintSecret();
     return HEX_FORMAT.formatHex(sha256(material));
