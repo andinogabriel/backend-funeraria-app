@@ -45,7 +45,8 @@ public final class SecurityTestDataFactory {
     return new SecurityRequestProperties(
         TestValues.DEVICE_ID_HEADER,
         TestValues.IDEMPOTENCY_HEADER,
-        TestValues.SECURITY_REQUEST_SECRET);
+        TestValues.SECURITY_REQUEST_SECRET,
+        true);
   }
 
   public static UserDevice userDevice(final UserEntity userEntity) {
