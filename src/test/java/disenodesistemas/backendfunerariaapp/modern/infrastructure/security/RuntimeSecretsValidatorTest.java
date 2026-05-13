@@ -15,8 +15,11 @@ import org.springframework.mock.env.MockEnvironment;
 @DisplayName("RuntimeSecretsValidator")
 class RuntimeSecretsValidatorTest {
 
+  // 64 ASCII chars / 512 bits — meets the HS512 minimum enforced by JJWT and reflected in
+  // RuntimeSecretsValidator#MIN_JWT_SECRET_LENGTH. Shorter values are tested explicitly in
+  // their own scenarios.
   private static final String VALID_JWT_SECRET =
-      "production-grade-jwt-secret-with-enough-entropy";
+      "production-grade-jwt-secret-with-at-least-five-hundred-twelve-bits";
   private static final String VALID_PEPPER = "production-grade-pepper-secret";
   private static final String VALID_FINGERPRINT_SECRET =
       "production-grade-fingerprint-secret";
@@ -162,7 +165,7 @@ class RuntimeSecretsValidatorTest {
             "production");
 
     assertThatCode(validator::validateOnStartup).doesNotThrowAnyException();
-    assertThat(VALID_JWT_SECRET.length()).isGreaterThanOrEqualTo(16);
+    assertThat(VALID_JWT_SECRET.length()).isGreaterThanOrEqualTo(64);
   }
 
   private static RuntimeSecretsValidator validator(
