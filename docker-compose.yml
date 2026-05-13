@@ -29,11 +29,12 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-funerariadb}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      # JJWT 0.13+ enforces RFC 7518 §3.2: HMAC-SHA keys must be >= 256 bits (32 ASCII chars).
-      # The previous default of `local-dev-jwt-secret-change-me` was 30 chars / 240 bits and
-      # crashed every login with WeakKeyException. Keep this default >= 32 chars or the boot
-      # tests + the first /users/login will fail again.
-      JWT_TOKEN_SECRET: ${JWT_TOKEN_SECRET:-local-dev-jwt-secret-change-me-now-please-32-bytes}
+      # JJWT 0.13+ enforces RFC 7518 §3.2: HMAC-SHA keys MUST be >= the hash output size.
+      # JwtProvider signs with HS512, so the minimum is 512 bits / 64 ASCII chars. Anything
+      # shorter triggers WeakKeyException on the very first /users/login call. The previous
+      # 51-char default looked safe but landed at 408 bits and crashed login regardless.
+      # Keep this >= 64 chars (the validator enforces it at boot time too).
+      JWT_TOKEN_SECRET: ${JWT_TOKEN_SECRET:-local-dev-jwt-secret-change-me-now-please-at-least-64-bytes-long-please}
       SECURITY_PASSWORD_PEPPER: ${SECURITY_PASSWORD_PEPPER:-local-dev-pepper}
       SECURITY_REQUEST_FINGERPRINT_SECRET: ${SECURITY_REQUEST_FINGERPRINT_SECRET:-local-dev-fingerprint-secret}
       APP_STORAGE_LOCAL_ROOT_PATH: /data/storage

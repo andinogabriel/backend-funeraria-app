@@ -47,14 +47,19 @@ public class RuntimeSecretsValidator {
   private static final int MIN_SECRET_LENGTH = 16;
 
   /**
-   * Minimum acceptable length for the JWT signing secret. JJWT 0.13+ enforces RFC 7518 §3.2:
-   * HMAC-SHA keys must be at least 256 bits (32 bytes / 32 ASCII chars). Anything shorter
-   * makes {@code Keys.hmacShaKeyFor(...)} throw a {@code WeakKeyException} at the first
-   * sign/verify call — i.e. on the very first login request, after a clean boot. The validator
+   * Minimum acceptable length for the JWT signing secret. JJWT 0.13+ enforces RFC 7518 §3.2
+   * strictly: the HMAC-SHA key MUST be at least the size of the hash output. JwtProvider signs
+   * with {@code Jwts.SIG.HS512}, so the minimum is 512 bits / 64 ASCII chars. Anything shorter
+   * makes {@code DefaultMacAlgorithm.validateKey(...)} throw a {@code WeakKeyException} at the
+   * first sign call — i.e. on the very first login request, after a clean boot. The validator
    * surfaces the same constraint at startup time so the failure happens as part of the boot
    * sequence rather than as a confusing 500 on the first inbound request.
+   *
+   * <p>If the signing algorithm is ever downgraded to HS256, lower this to 32; for HS384 use
+   * 48. The constant lives next to its usage on purpose so the link to the algorithm choice
+   * is visible from one place.
    */
-  private static final int MIN_JWT_SECRET_LENGTH = 32;
+  private static final int MIN_JWT_SECRET_LENGTH = 64;
 
   /**
    * Known development placeholders for the secrets the validator inspects. These constants are
