@@ -157,7 +157,9 @@ class RemainingUseCasesCoverageTest {
     final GenderEntity gender = new GenderEntity("Masculino");
     final PlanResponseDto planResponse = new PlanResponseDto(1L, "Plan Basico", null, null, null, null, java.util.Set.of());
     final ItemResponseDto itemResponse =
-        new ItemResponseDto("Urna", null, "ITEM-001", null, null, null, null, null, null, null, null);
+        new ItemResponseDto(
+            "Urna", null, "ITEM-001", null, null, null, null, null, null, null, null, null, null,
+            null, null);
     final GenderResponseDto genderResponse = new GenderResponseDto(1L, "Masculino");
 
     when(planPersistencePort.findAllByOrderByIdDesc()).thenReturn(List.of(plan));
