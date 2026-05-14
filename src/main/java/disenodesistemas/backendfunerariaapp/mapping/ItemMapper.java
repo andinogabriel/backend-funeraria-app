@@ -18,6 +18,10 @@ public interface ItemMapper {
   @Mapping(target = "stock", ignore = true)
   @Mapping(target = "itemsPlan", ignore = true)
   @Mapping(target = "incomeDetails", ignore = true)
+  @Mapping(target = "createdAt", ignore = true)
+  @Mapping(target = "createdBy", ignore = true)
+  @Mapping(target = "updatedAt", ignore = true)
+  @Mapping(target = "updatedBy", ignore = true)
   ItemEntity toEntity(ItemRequestDto dto);
 
   @Mapping(target = "id", ignore = true)
@@ -26,5 +30,9 @@ public interface ItemMapper {
   @Mapping(target = "stock", ignore = true)
   @Mapping(target = "itemsPlan", ignore = true)
   @Mapping(target = "incomeDetails", ignore = true)
+  @Mapping(target = "createdAt", ignore = true)
+  @Mapping(target = "createdBy", ignore = true)
+  @Mapping(target = "updatedAt", ignore = true)
+  @Mapping(target = "updatedBy", ignore = true)
   void updateEntity(ItemRequestDto dto, @MappingTarget ItemEntity entity);
 }

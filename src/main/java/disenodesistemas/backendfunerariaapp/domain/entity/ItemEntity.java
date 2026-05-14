@@ -6,10 +6,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.Hibernate;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -21,6 +27,7 @@ import jakarta.validation.constraints.Digits;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +35,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @Entity(name = "items")
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -80,6 +88,34 @@ public class ItemEntity implements Serializable {
       orphanRemoval = true,
       fetch = FetchType.LAZY)
   private List<IncomeDetailEntity> incomeDetails;
+
+  /**
+   * Timestamp when this row was first persisted. Populated automatically by Spring Data's
+   * {@link AuditingEntityListener}; never updated by application code.
+   */
+  @CreatedDate
+  @Column(name = "created_at", nullable = false, updatable = false)
+  private Instant createdAt;
+
+  /**
+   * Principal name (email) of the user that created this row. Sourced from the active Spring
+   * Security context through {@code SecurityContextAuditorAware}. Nullable on the column so
+   * pre-existing rows (created before this audit was rolled out) and rows created from contexts
+   * without an authenticated principal — e.g. data-fixture scripts — do not fail to save.
+   */
+  @CreatedBy
+  @Column(name = "created_by", updatable = false, length = 255)
+  private String createdBy;
+
+  /** Timestamp of the last update. Refreshed automatically on every save. */
+  @LastModifiedDate
+  @Column(name = "updated_at")
+  private Instant updatedAt;
+
+  /** Principal name (email) of the user that performed the most recent update. */
+  @LastModifiedBy
+  @Column(name = "updated_by", length = 255)
+  private String updatedBy;
 
   @Builder
   public ItemEntity(

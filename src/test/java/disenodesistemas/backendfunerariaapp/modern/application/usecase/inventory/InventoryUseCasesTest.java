@@ -91,6 +91,10 @@ class InventoryUseCasesTest {
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
             null);
 
     when(itemMapper.toEntity(request)).thenReturn(itemEntity);
@@ -147,6 +151,10 @@ class InventoryUseCasesTest {
             null,
             null,
             new BigDecimal("150.00"),
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,
@@ -221,9 +229,21 @@ class InventoryUseCasesTest {
     final ItemEntity itemEntity = new ItemEntity();
     final ItemResponseDto response =
         new ItemResponseDto(
-            "Urna", "Urna premium", "ITEM-001", null, 5, new BigDecimal("100.00"), null, null, null,
+            "Urna",
+            "Urna premium",
+            "ITEM-001",
+            null,
+            5,
+            new BigDecimal("100.00"),
+            null,
+            null,
+            null,
             new CategoryResponseDto(1L, "Urnas", "Productos funerarios"),
-            new BrandResponseDto(1L, "Acme", "https://acme.example"));
+            new BrandResponseDto(1L, "Acme", "https://acme.example"),
+            null,
+            null,
+            null,
+            null);
 
     when(categoryQueryUseCase.findCategoryEntityById(1L)).thenReturn(categoryEntity);
     when(itemPersistencePort.findByCategoryOrderByName(categoryEntity)).thenReturn(List.of(itemEntity));
