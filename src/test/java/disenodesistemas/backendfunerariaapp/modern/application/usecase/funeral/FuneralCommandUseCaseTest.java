@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.FuneralPersistencePort;
+import disenodesistemas.backendfunerariaapp.application.port.out.OutboxPort;
 import disenodesistemas.backendfunerariaapp.application.usecase.funeral.FuneralCommandUseCase;
 import disenodesistemas.backendfunerariaapp.application.port.out.AuditEventPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
@@ -57,6 +58,7 @@ class FuneralCommandUseCaseTest {
   @Mock private FuneralQueryUseCase funeralQueryUseCase;
   @Mock private AuthenticatedUserPort authenticatedUserPort;
   @Mock private AuditEventPort auditEventPort;
+  @Mock private OutboxPort outboxPort;
 
   @InjectMocks private FuneralCommandUseCase funeralCommandUseCase;
 

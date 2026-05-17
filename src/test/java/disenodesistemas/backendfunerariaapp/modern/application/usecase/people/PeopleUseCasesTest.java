@@ -13,6 +13,7 @@ import disenodesistemas.backendfunerariaapp.application.port.out.AuditEventPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.DeceasedPersistencePort;
 import disenodesistemas.backendfunerariaapp.application.port.out.FuneralPersistencePort;
+import disenodesistemas.backendfunerariaapp.application.port.out.OutboxPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.RolePersistencePort;
 import disenodesistemas.backendfunerariaapp.application.port.out.UserPersistencePort;
 import disenodesistemas.backendfunerariaapp.application.usecase.affiliate.AffiliateCommandUseCase;
@@ -71,13 +72,15 @@ class PeopleUseCasesTest {
     final AuditEventPort auditEventPort = mock(AuditEventPort.class);
     final AffiliateQueryUseCase affiliateQueryUseCase =
         new AffiliateQueryUseCase(affiliatePersistencePort, affiliateMapper, authenticatedUserPort);
+    final OutboxPort outboxPort = mock(OutboxPort.class);
     final AffiliateCommandUseCase affiliateCommandUseCase =
         new AffiliateCommandUseCase(
             affiliatePersistencePort,
             affiliateMapper,
             authenticatedUserPort,
             affiliateQueryUseCase,
-            auditEventPort);
+            auditEventPort,
+            outboxPort);
     final AffiliateRequestDto request =
         AffiliateRequestDto.builder()
             .id(1L)
@@ -129,7 +132,8 @@ class PeopleUseCasesTest {
             mock(AffiliateMapper.class),
             mock(AuthenticatedUserPort.class),
             affiliateQueryUseCase,
-            mock(AuditEventPort.class));
+            mock(AuditEventPort.class),
+            mock(OutboxPort.class));
     final AffiliateEntity existing = AffiliateEntity.builder().dni(30111222).build();
     final AffiliateRequestDto request =
         AffiliateRequestDto.builder()

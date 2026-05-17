@@ -18,6 +18,7 @@ every PR description.
 | [0010](0010-audit-log-read-api.md)              | Audit log read API                               | `AuditEventPort.search`, JPQL `coalesce(:p, col)` pattern, ADMIN gate |
 | [0011](0011-performance-baseline-with-k6.md)    | Performance baseline with k6                     | `tests/load/`, manual `Performance baseline` workflow           |
 | [0012](0012-cucumber-bdd-bootstrap.md)          | Cucumber BDD bootstrap                           | `src/test/resources/features/`, Maven `bdd` profile gating      |
+| [0013](0013-transactional-outbox.md)            | Transactional outbox for domain events           | `outbox_events` table, `OutboxPort`, `OutboxRelay`, Funeral + Affiliate events |
 
 ## When to add a new ADR
 
