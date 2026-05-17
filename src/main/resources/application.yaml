@@ -116,3 +116,13 @@ spring:
 
 AbstractUserDetailsAuthenticationProvider:
   badCredentials: Contrasena incorrecta.
+
+# Transactional outbox poller (ADR-0013). The defaults are tuned for the current single-
+# instance deploy: 5 s polling cadence, 10 s initial delay so a hot deploy that re-runs the
+# Flyway migration finishes before the first scan, 100 rows per batch so a sudden backlog
+# does not starve the connection pool. Override via APP_OUTBOX_* env vars per deployment.
+app:
+  outbox:
+    poll-interval-ms: ${APP_OUTBOX_POLL_INTERVAL_MS:5000}
+    initial-delay-ms: ${APP_OUTBOX_INITIAL_DELAY_MS:10000}
+    batch-size: ${APP_OUTBOX_BATCH_SIZE:100}

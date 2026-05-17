@@ -3,14 +3,19 @@ package disenodesistemas.backendfunerariaapp.application.usecase.funeral;
 import disenodesistemas.backendfunerariaapp.application.port.out.AuditEventPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.FuneralPersistencePort;
+import disenodesistemas.backendfunerariaapp.application.port.out.OutboxPort;
 import disenodesistemas.backendfunerariaapp.application.usecase.plan.PlanQueryUseCase;
 import disenodesistemas.backendfunerariaapp.domain.entity.Funeral;
 import disenodesistemas.backendfunerariaapp.domain.entity.Plan;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
 import disenodesistemas.backendfunerariaapp.domain.enums.AuditAction;
+import disenodesistemas.backendfunerariaapp.domain.event.FuneralCreated;
+import disenodesistemas.backendfunerariaapp.domain.event.FuneralDeleted;
+import disenodesistemas.backendfunerariaapp.domain.event.FuneralUpdated;
 import disenodesistemas.backendfunerariaapp.exception.ConflictException;
 import disenodesistemas.backendfunerariaapp.mapping.FuneralMapper;
 import disenodesistemas.backendfunerariaapp.web.dto.request.FuneralRequestDto;
+import disenodesistemas.backendfunerariaapp.web.dto.response.DeceasedResponseDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.FuneralResponseDto;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +39,7 @@ public class FuneralCommandUseCase {
   private final FuneralQueryUseCase funeralQueryUseCase;
   private final AuthenticatedUserPort authenticatedUserPort;
   private final AuditEventPort auditEventPort;
+  private final OutboxPort outboxPort;
 
   @Transactional
   public FuneralResponseDto create(final FuneralRequestDto funeralRequest) {
@@ -50,6 +56,7 @@ public class FuneralCommandUseCase {
     final FuneralResponseDto createdFuneral = funeralMapper.toDto(funeralPersistencePort.save(funeral));
     logFuneralCompleted("funeral.create.completed", createdFuneral);
     recordFuneralCreated(createdFuneral);
+    outboxPort.publish(toFuneralCreated(createdFuneral));
     return createdFuneral;
   }
 
@@ -63,6 +70,7 @@ public class FuneralCommandUseCase {
     funeralDraftFactory.update(funeralToUpdate, funeralRequest, funeralPlan);
     final FuneralResponseDto updatedFuneral = funeralMapper.toDto(funeralPersistencePort.save(funeralToUpdate));
     logFuneralCompleted("funeral.update.completed", updatedFuneral);
+    outboxPort.publish(toFuneralUpdated(updatedFuneral));
     return updatedFuneral;
   }
 
@@ -71,6 +79,39 @@ public class FuneralCommandUseCase {
     funeralPersistencePort.delete(funeralQueryUseCase.findEntityById(id));
     logFuneralDeleted(id);
     recordFuneralDeleted(id);
+    outboxPort.publish(new FuneralDeleted(id));
+  }
+
+  /**
+   * Builds a {@link FuneralCreated} event from the persisted response DTO. Captures receipt
+   * metadata + the deceased identity so downstream consumers can summarise the service
+   * without joining back to the funeral table. The nested aggregates are nullable on the wire
+   * but never on a successful create — defensive null-checks keep the helper robust against a
+   * future shape change in the response DTO.
+   */
+  private FuneralCreated toFuneralCreated(final FuneralResponseDto created) {
+    final DeceasedResponseDto deceased = created.deceased();
+    return new FuneralCreated(
+        created.id(),
+        created.receiptNumber(),
+        created.receiptSeries(),
+        created.totalAmount(),
+        created.plan() == null ? null : created.plan().id(),
+        deceased == null ? null : deceased.dni(),
+        deceased == null ? null : deceased.firstName() + " " + deceased.lastName());
+  }
+
+  /** Same shape as {@link #toFuneralCreated(FuneralResponseDto)}; kept separate for clarity. */
+  private FuneralUpdated toFuneralUpdated(final FuneralResponseDto updated) {
+    final DeceasedResponseDto deceased = updated.deceased();
+    return new FuneralUpdated(
+        updated.id(),
+        updated.receiptNumber(),
+        updated.receiptSeries(),
+        updated.totalAmount(),
+        updated.plan() == null ? null : updated.plan().id(),
+        deceased == null ? null : deceased.dni(),
+        deceased == null ? null : deceased.firstName() + " " + deceased.lastName());
   }
 
   /**
