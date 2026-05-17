@@ -41,6 +41,8 @@ tags:
     description: Gestion de proveedores.
   - name: Catalogs
     description: Catalogos de apoyo para formularios y reglas de negocio.
+  - name: Metrics
+    description: Indicadores agregados para el dashboard operativo.
 paths:
   /api/v1/users:
     get:
@@ -1653,6 +1655,34 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
 
+  /api/v1/metrics/dashboard:
+    get:
+      tags: [Metrics]
+      summary: Snapshot de KPIs para el dashboard
+      description: |
+        Devuelve los cuatro indicadores que la consola muestra en el bento del dashboard:
+        afiliados activos, planes activos, servicios registrados en el mes en curso y
+        eventos auditados en las ultimas 24 horas. Cada metrica incluye el valor actual,
+        el porcentaje de variacion respecto del periodo anterior (cuando es computable) y
+        una serie corta de buckets para el sparkline asociado.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Snapshot de indicadores.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardMetricsResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/plans:
     get:
       tags: [Plans]
@@ -3261,3 +3291,42 @@ components:
           $ref: '#/components/schemas/DeceasedResponseDto'
         plan:
           $ref: '#/components/schemas/PlanResponseDto'
+    KpiMetricDto:
+      type: object
+      description: |
+        Indicador individual que alimenta una tarjeta KPI del dashboard.
+        `value` es siempre el valor actual; `trendPercent` puede ser `null` cuando no hay
+        un periodo previo comparable (por ejemplo, planes no tiene marca de auditoria);
+        `sparkline` es una serie corta (8 entradas) ordenada de mas antigua a mas reciente.
+      properties:
+        value:
+          type: integer
+          format: int64
+          description: Valor actual de la metrica.
+        trendPercent:
+          type: number
+          format: double
+          nullable: true
+          description: |
+            Variacion porcentual respecto al periodo anterior, redondeada a un decimal.
+            `null` cuando el periodo anterior es cero o no es computable.
+        sparkline:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: Serie de 8 buckets para el sparkline; vacio si la metrica no la soporta.
+      required: [value, sparkline]
+    DashboardMetricsResponseDto:
+      type: object
+      description: Snapshot agregado de los KPIs renderizados en el dashboard operativo.
+      properties:
+        affiliatesActive:
+          $ref: '#/components/schemas/KpiMetricDto'
+        plansActive:
+          $ref: '#/components/schemas/KpiMetricDto'
+        funeralsThisMonth:
+          $ref: '#/components/schemas/KpiMetricDto'
+        auditedEvents24h:
+          $ref: '#/components/schemas/KpiMetricDto'
+      required: [affiliatesActive, plansActive, funeralsThisMonth, auditedEvents24h]
