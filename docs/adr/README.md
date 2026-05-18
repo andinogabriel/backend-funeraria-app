@@ -19,6 +19,7 @@ every PR description.
 | [0011](0011-performance-baseline-with-k6.md)    | Performance baseline with k6                     | `tests/load/`, manual `Performance baseline` workflow           |
 | [0012](0012-cucumber-bdd-bootstrap.md)          | Cucumber BDD bootstrap                           | `src/test/resources/features/`, Maven `bdd` profile gating      |
 | [0013](0013-transactional-outbox.md)            | Transactional outbox for domain events           | `outbox_events` table, `OutboxPort`, `OutboxRelay`, Funeral + Affiliate events |
+| [0014](0014-outbox-consumer-fanout.md)          | Outbox consumer fan-out + activity-log read model | `DomainEventConsumer`, `ActivityLogConsumer`, `activity_log` table, `/metrics/activity-feed` |
 
 ## When to add a new ADR
 
