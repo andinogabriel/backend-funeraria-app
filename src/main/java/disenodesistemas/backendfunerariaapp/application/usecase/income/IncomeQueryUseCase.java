@@ -5,6 +5,9 @@ import disenodesistemas.backendfunerariaapp.domain.entity.IncomeEntity;
 import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
 import disenodesistemas.backendfunerariaapp.mapping.IncomeMapper;
 import disenodesistemas.backendfunerariaapp.web.dto.response.IncomeResponseDto;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.Strings;
@@ -49,6 +52,37 @@ public class IncomeQueryUseCase {
       final int limit,
       final String sortBy,
       final String sortDir) {
+    return getIncomesPaginated(isDeleted, page, limit, sortBy, sortDir, null, null, null, null);
+  }
+
+  /**
+   * Filtered server-side paginated read. Every filter argument is optional:
+   *
+   * <ul>
+   *   <li>{@code q} — fuzzy match against supplier name / nif and the receipt number,
+   *       lowercased + substring. {@code null} or blank means "no filter".
+   *   <li>{@code supplierNif} — exact match on the linked supplier's NIF. {@code null}
+   *       means "any supplier (or no supplier)".
+   *   <li>{@code from} / {@code to} — inclusive bounds on {@code incomeDate}. {@code null}
+   *       leaves the bound open. {@code from} is expanded to the start of the day and
+   *       {@code to} to the end so the operator can think in calendar days.
+   * </ul>
+   *
+   * <p>The legacy {@code page > 0 ? page - 1 : page} mapping is preserved for backwards
+   * compatibility — clients that already send 0-indexed values keep working, and that one
+   * adjustment is not the right thing to clean up inside this PR.
+   */
+  @Transactional(readOnly = true)
+  public Page<IncomeResponseDto> getIncomesPaginated(
+      final boolean isDeleted,
+      int page,
+      final int limit,
+      final String sortBy,
+      final String sortDir,
+      final String q,
+      final String supplierNif,
+      final LocalDate from,
+      final LocalDate to) {
     page = page > 0 ? page - 1 : page;
     final Pageable pageable =
         PageRequest.of(
@@ -58,11 +92,22 @@ public class IncomeQueryUseCase {
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending());
 
-    final Page<IncomeEntity> entities = incomePersistencePort.findAllByDeleted(isDeleted, pageable);
+    final String safeQ = blankToEmpty(q);
+    final String safeSupplierNif = blankToEmpty(supplierNif);
+    final LocalDateTime safeFrom = from == null ? null : from.atStartOfDay();
+    final LocalDateTime safeTo = to == null ? null : to.atTime(LocalTime.MAX);
+
+    final Page<IncomeEntity> entities =
+        incomePersistencePort.search(
+            isDeleted, safeQ, safeSupplierNif, safeFrom, safeTo, pageable);
     return new PageImpl<>(
         entities.getContent().stream().map(incomeMapper::toDto).toList(),
         pageable,
         entities.getTotalElements());
+  }
+
+  private static String blankToEmpty(final String value) {
+    return value == null ? "" : value.trim();
   }
 
   @Transactional(readOnly = true)

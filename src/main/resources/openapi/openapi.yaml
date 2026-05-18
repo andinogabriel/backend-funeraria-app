@@ -1434,7 +1434,11 @@ paths:
     get:
       tags: [Incomes]
       summary: Listar ingresos paginados
-      description: Solo ADMIN. Expone la serializacion actual de `Page<IncomeResponseDto>` de Spring Data.
+      description: |
+        Solo ADMIN. Expone la serializacion actual de `Page<IncomeResponseDto>` de Spring Data.
+        Acepta filtros opcionales `q` (busqueda fuzzy sobre razon social, NIF y numero de
+        recibo), `supplierNif` (match exacto de proveedor), `from` y `to` (rango inclusivo
+        de `incomeDate` expandido a inicio/fin del dia).
       security:
         - bearerAuth: []
       parameters:
@@ -1444,6 +1448,32 @@ paths:
         - $ref: '#/components/parameters/LimitQuery'
         - $ref: '#/components/parameters/SortByQuery'
         - $ref: '#/components/parameters/SortDirQuery'
+        - name: q
+          in: query
+          required: false
+          description: Texto libre. Busqueda fuzzy contra razon social y NIF del proveedor y contra el numero de recibo. Mayusculas se ignoran.
+          schema:
+            type: string
+        - name: supplierNif
+          in: query
+          required: false
+          description: NIF / CUIT exacto del proveedor.
+          schema:
+            type: string
+        - name: from
+          in: query
+          required: false
+          description: Fecha de inicio inclusive. Se expande al inicio del dia. Formato ISO `yyyy-MM-dd`.
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: false
+          description: Fecha de fin inclusive. Se expande al fin del dia. Formato ISO `yyyy-MM-dd`.
+          schema:
+            type: string
+            format: date
       responses:
         '200':
           description: Pagina de ingresos.

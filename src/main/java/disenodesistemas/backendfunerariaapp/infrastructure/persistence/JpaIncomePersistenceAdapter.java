@@ -3,6 +3,7 @@ package disenodesistemas.backendfunerariaapp.infrastructure.persistence;
 import disenodesistemas.backendfunerariaapp.application.port.out.IncomePersistencePort;
 import disenodesistemas.backendfunerariaapp.domain.entity.IncomeEntity;
 import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.IncomeRepository;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,17 @@ public class JpaIncomePersistenceAdapter implements IncomePersistencePort {
   @Override
   public Page<IncomeEntity> findAllByDeleted(final boolean deleted, final Pageable pageable) {
     return incomeRepository.findAllByDeleted(deleted, pageable);
+  }
+
+  @Override
+  public Page<IncomeEntity> search(
+      final boolean deleted,
+      final String q,
+      final String supplierNif,
+      final LocalDateTime from,
+      final LocalDateTime to,
+      final Pageable pageable) {
+    return incomeRepository.search(deleted, q, supplierNif, from, to, pageable);
   }
 
   @Override
