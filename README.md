@@ -395,6 +395,10 @@ The repository includes dedicated context files for humans and coding agents:
 
 - [`AGENTS.md`](AGENTS.md)
 - [`MEMORY_BANK.md`](MEMORY_BANK.md)
+- [`CLAUDE.md`](CLAUDE.md) — fast entry point for Claude Code sessions, plus how to run the
+  bundled review agents (`backend-architect`, `test-coverage-auditor`) before opening a PR.
+- [`.claude/agents/`](.claude/agents) — read-only review agents Claude Code discovers
+  automatically when you open the repo in a session. See `CLAUDE.md` for usage.
 - [`docs/api-contract-governance.md`](docs/api-contract-governance.md)
 
 These files describe the architectural constraints, security expectations, coding conventions,
