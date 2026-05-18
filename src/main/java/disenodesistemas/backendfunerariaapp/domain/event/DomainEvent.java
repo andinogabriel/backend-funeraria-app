@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.domain.event;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
@@ -20,6 +21,15 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  * change that needs a consumer-side migration.
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "@type")
+@JsonSubTypes({
+  @JsonSubTypes.Type(value = FuneralCreated.class, name = "FuneralCreated"),
+  @JsonSubTypes.Type(value = FuneralUpdated.class, name = "FuneralUpdated"),
+  @JsonSubTypes.Type(value = FuneralDeleted.class, name = "FuneralDeleted"),
+  @JsonSubTypes.Type(value = AffiliateCreated.class, name = "AffiliateCreated"),
+  @JsonSubTypes.Type(value = AffiliateUpdated.class, name = "AffiliateUpdated"),
+  @JsonSubTypes.Type(value = AffiliateMarkedDeceased.class, name = "AffiliateMarkedDeceased"),
+  @JsonSubTypes.Type(value = AffiliateDeleted.class, name = "AffiliateDeleted"),
+})
 public sealed interface DomainEvent
     permits FuneralCreated,
         FuneralUpdated,

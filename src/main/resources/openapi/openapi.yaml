@@ -1713,6 +1713,44 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
 
+  /api/v1/metrics/activity-feed:
+    get:
+      tags: [Metrics]
+      summary: Feed de actividad reciente
+      description: |
+        Devuelve las entradas mas recientes del read model `activity_log`, alimentado por el
+        consumidor `ActivityLogConsumer` del outbox (ADR-0014). Cada entrada describe un
+        evento de dominio (alta / baja / actualizacion de afiliados o servicios) con una
+        descripcion legible en castellano y la marca temporal en que se registro. El
+        parametro `limit` esta acotado en el servidor: valores fuera de `[1, 100]` se
+        normalizan, asi un cliente no puede solicitar la tabla entera.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - name: limit
+          in: query
+          required: false
+          description: Cantidad maxima de entradas (entre 1 y 100). Por defecto 20.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Lista de entradas, las mas recientes primero.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityFeedResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/plans:
     get:
       tags: [Plans]
@@ -3360,3 +3398,34 @@ components:
         auditedEvents24h:
           $ref: '#/components/schemas/KpiMetricDto'
       required: [affiliatesActive, plansActive, funeralsThisMonth, auditedEvents24h]
+    ActivityFeedEntryDto:
+      type: object
+      description: |
+        Entrada del feed de actividad reciente, proyectada desde el outbox por
+        `ActivityLogConsumer`. `summary` es una descripcion en castellano lista para
+        renderizar; el frontend usa `eventId` como clave estable de `trackBy`.
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+        aggregateType:
+          type: string
+        aggregateId:
+          type: string
+        summary:
+          type: string
+        occurredAt:
+          type: string
+          format: date-time
+      required: [eventId, eventType, aggregateType, aggregateId, summary, occurredAt]
+    ActivityFeedResponseDto:
+      type: object
+      description: Envoltura del feed; deja la puerta abierta a metadata futura.
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityFeedEntryDto'
+      required: [entries]

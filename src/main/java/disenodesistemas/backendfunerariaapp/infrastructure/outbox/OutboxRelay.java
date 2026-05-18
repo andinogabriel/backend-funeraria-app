@@ -1,7 +1,10 @@
 package disenodesistemas.backendfunerariaapp.infrastructure.outbox;
 
+import disenodesistemas.backendfunerariaapp.application.port.out.DomainEventConsumer;
+import disenodesistemas.backendfunerariaapp.domain.event.EventEnvelope;
 import disenodesistemas.backendfunerariaapp.domain.entity.OutboxEvent;
 import disenodesistemas.backendfunerariaapp.domain.enums.OutboxStatus;
+import disenodesistemas.backendfunerariaapp.domain.event.DomainEvent;
 import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.OutboxEventRepository;
 import java.time.Clock;
 import java.time.Instant;
@@ -15,11 +18,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Background poller that drains the outbox table (ADR-0013). Every tick it loads the next
- * batch of {@link OutboxStatus#PENDING} rows, dispatches each event downstream and flips the
- * row to {@link OutboxStatus#PUBLISHED}. In v1 there is no concrete consumer yet — "dispatch"
- * is a structured log line at INFO carrying the full event payload, so a log-aware sink can
- * already consume the event stream while the broker integration is being designed.
+ * Background poller that drains the outbox table (ADR-0013) and fans every dequeued event out
+ * to every registered {@link DomainEventConsumer} (ADR-0014). Every tick it loads the next
+ * batch of {@link OutboxStatus#PENDING} rows, deserialises each payload into the typed
+ * {@link DomainEvent}, invokes each consumer once and flips the row to
+ * {@link OutboxStatus#PUBLISHED}.
  *
  * <h3>Scheduling</h3>
  *
@@ -28,6 +31,23 @@ import org.springframework.transaction.annotation.Transactional;
  * lets deployments tune the cadence; {@code app.outbox.batch-size} caps the per-tick row
  * count so a sudden backlog cannot starve the database connection pool.
  *
+ * <h3>Delivery semantics</h3>
+ *
+ * At-least-once at the outbox layer (a crash between consumer invocation and the row's status
+ * flip will redeliver on the next tick) and at-least-once per consumer independently. The row
+ * flips to PUBLISHED after the fan-out regardless of which consumers failed — re-firing
+ * already-succeeded consumers on retry would violate idempotency expectations of consumers
+ * that talk to non-idempotent downstreams. Per-consumer failures are logged with the
+ * {@code outbox.consumer.failed} event so an operator alert can dead-letter them out of band;
+ * a future PR adds a {@code consumer_dead_letters} table and a re-drive job.
+ *
+ * <h3>Poison pills</h3>
+ *
+ * A payload that cannot be deserialised into a known {@link DomainEvent} subtype is
+ * non-retryable — looping the row through the relay forever would just consume a database
+ * slot. Such rows are marked {@link OutboxStatus#FAILED} immediately so they stop being
+ * picked up; the offending payload is left intact for forensic inspection.
+ *
  * <h3>Concurrency &amp; idempotency</h3>
  *
  * Single-instance for now — the deploy runs one container so there is no risk of two relays
@@ -35,47 +55,52 @@ import org.springframework.transaction.annotation.Transactional;
  * {@code SELECT … FOR UPDATE SKIP LOCKED} fetch; both options are documented in ADR-0013 and
  * will be added when the deploy topology changes. The unique {@code event_id} column on
  * every row guarantees downstream idempotency even if a row is replayed after a crash.
- *
- * <h3>Retries</h3>
- *
- * Dispatch failures bump the row's {@code attempts} counter and leave it in
- * {@link OutboxStatus#PENDING} so the next tick retries. Once {@link OutboxEvent#MAX_ATTEMPTS}
- * is reached the row moves to terminal {@link OutboxStatus#FAILED} and stops being picked up;
- * an operator alert wired off the {@code outbox.batch.failed} log line is the follow-up.
  */
 @Component
 @Slf4j
 public class OutboxRelay {
 
   private final OutboxEventRepository repository;
+  private final DomainEventDeserializer deserializer;
+  private final List<DomainEventConsumer> consumers;
   private final Clock clock;
   private final int batchSize;
 
   /**
    * Production-time constructor wired by Spring. Defaults the clock to {@link Clock#systemUTC()}
    * so the relay behaves correctly without an extra {@code @Bean} declaration; tests use the
-   * package-private overload below to inject a deterministic clock.
+   * package-private overload below to inject a deterministic clock. Spring injects every
+   * {@link DomainEventConsumer} bean in the context into the {@code consumers} list — adding
+   * a new consumer is therefore a zero-config change.
    */
   @Autowired
   public OutboxRelay(
       final OutboxEventRepository repository,
+      final DomainEventDeserializer deserializer,
+      final List<DomainEventConsumer> consumers,
       @Value("${app.outbox.batch-size:100}") final int batchSize) {
-    this(repository, batchSize, Clock.systemUTC());
+    this(repository, deserializer, consumers, batchSize, Clock.systemUTC());
   }
 
   /** Test-friendly overload that lets a deterministic clock drive {@code publishedAt}. */
   public OutboxRelay(
-      final OutboxEventRepository repository, final int batchSize, final Clock clock) {
+      final OutboxEventRepository repository,
+      final DomainEventDeserializer deserializer,
+      final List<DomainEventConsumer> consumers,
+      final int batchSize,
+      final Clock clock) {
     this.repository = repository;
+    this.deserializer = deserializer;
+    this.consumers = consumers;
     this.batchSize = batchSize;
     this.clock = clock;
   }
 
   /**
-   * Loads the next batch of {@link OutboxStatus#PENDING} rows and dispatches each one. The
-   * whole batch runs inside a single transaction so a downstream failure does not leak
-   * partial state — the offending row's status update rolls back together with the rest of
-   * the batch, the next tick retries.
+   * Loads the next batch of {@link OutboxStatus#PENDING} rows and fans each one out to every
+   * registered consumer. The whole batch runs inside a single transaction so the row status
+   * updates commit atomically with the consumer's writes (the activity-log consumer relies on
+   * this — its inserts are part of the same JPA persistence context).
    */
   @Scheduled(
       fixedDelayString = "${app.outbox.poll-interval-ms:5000}",
@@ -91,28 +116,30 @@ public class OutboxRelay {
     final Instant now = Instant.now(clock);
     int published = 0;
     int failed = 0;
+    int consumerFailures = 0;
     for (final OutboxEvent row : batch) {
+      final DomainEvent event;
       try {
-        dispatch(row);
-        row.markPublished(now);
-        published++;
-      } catch (final RuntimeException ex) {
-        // Per-row failures are isolated: bump the row's attempt counter and leave the rest
-        // of the batch to keep flowing. The `markFailure` call mutates the managed entity so
-        // the next-tick read sees the updated counter even without an explicit save call.
-        if (row.getAttempts() + 1 >= OutboxEvent.MAX_ATTEMPTS) {
-          row.markExhausted(ex.getMessage());
-        } else {
-          row.markFailure(ex.getMessage());
-        }
+        event = deserializer.deserialize(row);
+      } catch (final DomainEventDeserializationException poisonPill) {
+        // Non-retryable: the payload shape is broken, no number of replays will help. Stop
+        // the row from looping by moving it straight to terminal FAILED.
+        row.markExhausted(poisonPill.getMessage());
         failed++;
-        log.atWarn()
-            .setCause(ex)
-            .addKeyValue("event", "outbox.event.dispatch_failed")
+        log.atError()
+            .setCause(poisonPill)
+            .addKeyValue("event", "outbox.event.poison_pill")
             .addKeyValue("eventId", row.getEventId())
-            .addKeyValue("attempts", row.getAttempts())
-            .log("outbox.event.dispatch_failed");
+            .log("outbox.event.poison_pill");
+        continue;
       }
+
+      final EventEnvelope envelope =
+          new EventEnvelope(
+              row.getEventId(), row.getOccurredAt(), row.getTraceId(), row.getCorrelationId());
+      consumerFailures += fanOut(event, envelope, row);
+      row.markPublished(now);
+      published++;
     }
 
     log.atInfo()
@@ -120,25 +147,32 @@ public class OutboxRelay {
         .addKeyValue("size", batch.size())
         .addKeyValue("published", published)
         .addKeyValue("failed", failed)
+        .addKeyValue("consumerFailures", consumerFailures)
         .log("outbox.batch.completed");
   }
 
   /**
-   * Hook where the future broker integration will plug in. The v1 implementation emits a
-   * structured log line carrying every field a consumer would otherwise read from the row —
-   * eventType, aggregate, payload, trace context — so the log pipeline already carries the
-   * event stream. Replacing the log line with a real publish call is a one-method change.
+   * Dispatches a single event to every registered consumer. Per-consumer failures are
+   * isolated so one misbehaving consumer cannot block the rest of the fan-out. Returns the
+   * count of consumers that threw — used only for the batch log line.
    */
-  private void dispatch(final OutboxEvent row) {
-    log.atInfo()
-        .addKeyValue("event", "outbox.event.published")
-        .addKeyValue("eventId", row.getEventId())
-        .addKeyValue("eventType", row.getEventType())
-        .addKeyValue("aggregateType", row.getAggregateType())
-        .addKeyValue("aggregateId", row.getAggregateId())
-        .addKeyValue("payload", row.getPayload())
-        .addKeyValue("traceId", row.getTraceId())
-        .addKeyValue("correlationId", row.getCorrelationId())
-        .log("outbox.event.published");
+  private int fanOut(
+      final DomainEvent event, final EventEnvelope envelope, final OutboxEvent row) {
+    int failures = 0;
+    for (final DomainEventConsumer consumer : consumers) {
+      try {
+        consumer.consume(event, envelope);
+      } catch (final RuntimeException ex) {
+        failures++;
+        log.atWarn()
+            .setCause(ex)
+            .addKeyValue("event", "outbox.consumer.failed")
+            .addKeyValue("eventId", row.getEventId())
+            .addKeyValue("eventType", row.getEventType())
+            .addKeyValue("consumer", consumer.name())
+            .log("outbox.consumer.failed");
+      }
+    }
+    return failures;
   }
 }

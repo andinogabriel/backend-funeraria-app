@@ -1,11 +1,13 @@
 package disenodesistemas.backendfunerariaapp.modern.architecture;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
+import disenodesistemas.backendfunerariaapp.application.port.out.DomainEventConsumer;
 import disenodesistemas.backendfunerariaapp.application.port.out.OutboxPort;
 
 /**
@@ -65,4 +67,47 @@ class OutboxBoundaryGuardrailsTest {
           .because(
               "domain events are an outbound integration concern (consumers of the outbox);"
                   + " the HTTP layer ships request/response DTOs, not event records");
+
+  /**
+   * ADR-0014: every {@link DomainEventConsumer} implementation must live under
+   * {@code ..infrastructure.outbox.consumer..}. The relay (in
+   * {@code ..infrastructure.outbox..}) injects {@code List<DomainEventConsumer>}, so a
+   * consumer dropped anywhere on the classpath would silently be picked up — keeping them
+   * collocated makes the fan-out roster easy to audit.
+   */
+  @ArchTest
+  static final ArchRule consumers_must_live_under_outbox_consumer_package =
+      classes()
+          .that()
+          .implement(DomainEventConsumer.class)
+          .should()
+          .resideInAPackage("..infrastructure.outbox.consumer..")
+          .because(
+              "the relay's fan-out roster must be one greppable folder; consumers leaking"
+                  + " into feature packages would be picked up by Spring's autowiring without"
+                  + " any architectural decision");
+
+  /**
+   * The consumer package is an implementation detail of the outbox; nothing outside the
+   * outbox itself should depend on the concrete consumer classes (they are addressed through
+   * the {@link DomainEventConsumer} port). This rule catches a feature accidentally calling
+   * {@code ActivityLogConsumer.consume} directly, which would bypass the relay's failure
+   * isolation and the activity-log's idempotency contract.
+   */
+  @ArchTest
+  static final ArchRule consumers_must_not_be_referenced_outside_outbox =
+      noClasses()
+          .that()
+          .resideOutsideOfPackage("..infrastructure.outbox..")
+          .and()
+          .resideOutsideOfPackage(
+              "..modern.infrastructure.outbox..") // tests under the same package mirror
+          .and()
+          .resideOutsideOfPackage("..modern.infrastructure.persistence..") // ITs
+          .should()
+          .dependOnClassesThat()
+          .resideInAPackage("..infrastructure.outbox.consumer..")
+          .because(
+              "consumers are an outbox-internal detail; call sites must talk to the relay or"
+                  + " the read model they project to, not the consumer class directly");
 }
