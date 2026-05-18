@@ -363,13 +363,29 @@ class InventoryUseCasesTest {
         new IncomeResponseDto("7002", "1001", null, null, BigDecimal.ZERO, BigDecimal.ZERO, null, null, null, null, List.of());
     final ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
 
-    when(incomePersistencePort.findAllByDeleted(any(Boolean.class), any(Pageable.class)))
+    // The paginated path now routes through `search(...)` with empty-string sentinels for
+    // the text filters and null bounds for the date window — the use case normalises
+    // null/blank `q` and `supplierNif` to empty strings before delegating.
+    when(incomePersistencePort.search(
+            any(Boolean.class),
+            org.mockito.Mockito.anyString(),
+            org.mockito.Mockito.anyString(),
+            org.mockito.Mockito.isNull(),
+            org.mockito.Mockito.isNull(),
+            any(Pageable.class)))
         .thenReturn(new PageImpl<>(List.of(incomeEntity)));
     when(incomeMapper.toDto(incomeEntity)).thenReturn(response);
 
     assertThat(incomeQueryUseCase.getIncomesPaginated(false, 1, 10, "receiptNumber", "desc").getContent())
         .containsExactly(response);
-    verify(incomePersistencePort).findAllByDeleted(any(Boolean.class), pageableCaptor.capture());
+    verify(incomePersistencePort)
+        .search(
+            any(Boolean.class),
+            org.mockito.Mockito.anyString(),
+            org.mockito.Mockito.anyString(),
+            org.mockito.Mockito.isNull(),
+            org.mockito.Mockito.isNull(),
+            pageableCaptor.capture());
     assertThat(pageableCaptor.getValue().getPageNumber()).isZero();
   }
 
