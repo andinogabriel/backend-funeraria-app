@@ -126,3 +126,20 @@ app:
     poll-interval-ms: ${APP_OUTBOX_POLL_INTERVAL_MS:5000}
     initial-delay-ms: ${APP_OUTBOX_INITIAL_DELAY_MS:10000}
     batch-size: ${APP_OUTBOX_BATCH_SIZE:100}
+
+  # Retention sweep (ADR-0015). Two-phase soft + hard delete on outbox_events PUBLISHED rows
+  # and on activity_log. Defaults are conservative: 30/90 d outbox, 90/180 d activity_log,
+  # daily cron at 03:30 server time. Override via APP_RETENTION_* env vars per deployment.
+  # Flip enabled=false to temporarily suspend without a code change; the scheduler still
+  # ticks but runOnce() short-circuits to a no-op.
+  retention:
+    enabled: ${APP_RETENTION_ENABLED:true}
+    cron: ${APP_RETENTION_CRON:0 30 3 * * *}
+    batch-size: ${APP_RETENTION_BATCH_SIZE:1000}
+    max-batches-per-run: ${APP_RETENTION_MAX_BATCHES_PER_RUN:50}
+    outbox:
+      soft-delete-after-days: ${APP_RETENTION_OUTBOX_SOFT_AFTER_DAYS:30}
+      hard-delete-after-days: ${APP_RETENTION_OUTBOX_HARD_AFTER_DAYS:60}
+    activity-log:
+      soft-delete-after-days: ${APP_RETENTION_ACTIVITY_SOFT_AFTER_DAYS:90}
+      hard-delete-after-days: ${APP_RETENTION_ACTIVITY_HARD_AFTER_DAYS:90}

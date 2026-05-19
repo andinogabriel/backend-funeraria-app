@@ -7,8 +7,10 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
+import disenodesistemas.backendfunerariaapp.application.port.out.ActivityLogRetentionPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.DomainEventConsumer;
 import disenodesistemas.backendfunerariaapp.application.port.out.OutboxPort;
+import disenodesistemas.backendfunerariaapp.application.port.out.OutboxRetentionPort;
 
 /**
  * Boundary rules locking the transactional outbox in place (ADR-0013).
@@ -110,4 +112,50 @@ class OutboxBoundaryGuardrailsTest {
           .because(
               "consumers are an outbox-internal detail; call sites must talk to the relay or"
                   + " the read model they project to, not the consumer class directly");
+
+  /**
+   * ADR-0015: the retention scheduler lives in {@code ..infrastructure.retention..} so the
+   * cron concern is collocated with the rest of the periodic-job infrastructure. The
+   * use case + ports live in the application layer; the scheduler is the only piece
+   * that actually wears the {@code @Scheduled} annotation.
+   */
+  @ArchTest
+  static final ArchRule retention_scheduler_must_live_under_infrastructure_retention =
+      classes()
+          .that()
+          .haveSimpleNameEndingWith("Scheduler")
+          .and()
+          .resideInAPackage("..backendfunerariaapp..")
+          .and()
+          .areNotInterfaces()
+          .should()
+          .resideInAPackage("..infrastructure..")
+          .because(
+              "schedulers are an infrastructure concern; the use case stays free of cron"
+                  + " annotations so it can be exercised by a unit test without Spring");
+
+  /**
+   * Retention ports must remain pure outbound contracts — only application use cases and
+   * the JPA adapters that implement them may depend on the port types. Lets ArchUnit catch
+   * a future controller or scheduler accidentally short-circuiting the use case.
+   */
+  @ArchTest
+  static final ArchRule retention_ports_must_only_be_used_by_use_cases_and_adapters =
+      noClasses()
+          .that()
+          .resideOutsideOfPackages(
+              "..application.usecase.retention..",
+              "..application.port..",
+              "..infrastructure.persistence..",
+              "..modern..") // tests
+          .should()
+          .dependOnClassesThat()
+          .areAssignableTo(OutboxRetentionPort.class)
+          .orShould()
+          .dependOnClassesThat()
+          .areAssignableTo(ActivityLogRetentionPort.class)
+          .because(
+              "the retention sweep is owned by the application's RetentionUseCase; HTTP"
+                  + " controllers, web filters or other features bypassing the use case"
+                  + " would break the per-batch isolation the use case wraps");
 }

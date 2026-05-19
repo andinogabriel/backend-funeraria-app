@@ -67,6 +67,15 @@ public class ActivityLogEntry {
   private String traceId;
 
   /**
+   * Soft-delete tombstone written by the retention job (ADR-0015). When non-null the row is
+   * hidden from the dashboard activity feed and the per-aggregate lookup but still occupies
+   * storage; the second phase of the retention job hard-deletes rows whose tombstone has
+   * aged past the configured window.
+   */
+  @Column(name = "deleted_at")
+  private Instant deletedAt;
+
+  /**
    * Builds a fresh activity-log row. Used by {@code ActivityLogConsumer} only — there is no
    * other writer in the system.
    */
@@ -85,5 +94,16 @@ public class ActivityLogEntry {
     this.summary = summary;
     this.occurredAt = occurredAt;
     this.traceId = traceId;
+  }
+
+  /**
+   * Marks the row as soft-deleted by the retention job (ADR-0015). Idempotent: re-marking
+   * an already-soft-deleted row does not advance the tombstone, so the hard-delete window
+   * stays anchored to the original deletion time even if the soft-delete query runs twice.
+   */
+  public void markSoftDeleted(final Instant when) {
+    if (this.deletedAt == null) {
+      this.deletedAt = when;
+    }
   }
 }
