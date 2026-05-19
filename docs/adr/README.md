@@ -20,6 +20,7 @@ every PR description.
 | [0012](0012-cucumber-bdd-bootstrap.md)          | Cucumber BDD bootstrap                           | `src/test/resources/features/`, Maven `bdd` profile gating      |
 | [0013](0013-transactional-outbox.md)            | Transactional outbox for domain events           | `outbox_events` table, `OutboxPort`, `OutboxRelay`, Funeral + Affiliate events |
 | [0014](0014-outbox-consumer-fanout.md)          | Outbox consumer fan-out + activity-log read model | `DomainEventConsumer`, `ActivityLogConsumer`, `activity_log` table, `/metrics/activity-feed` |
+| [0015](0015-retention-policy.md)                | Retention policy for outbox + activity-log (two-phase soft + hard delete) | `RetentionUseCase`, `RetentionScheduler`, `deleted_at` columns, V7 migration, `app.retention.*` properties |
 
 ## When to add a new ADR
 

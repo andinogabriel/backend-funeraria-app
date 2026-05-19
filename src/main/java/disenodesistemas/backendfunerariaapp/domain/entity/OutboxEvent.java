@@ -81,6 +81,15 @@ public class OutboxEvent {
   private String correlationId;
 
   /**
+   * Soft-delete tombstone written by the retention job (ADR-0015). When non-null the row is
+   * excluded from operational reads but still occupies storage; the second phase of the
+   * retention job hard-deletes rows whose tombstone has aged past the configured window. A
+   * never-purged row carries {@code null} here.
+   */
+  @Column(name = "deleted_at")
+  private Instant deletedAt;
+
+  /**
    * Constructs a fresh {@code PENDING} row. Used by {@code JpaOutboxAdapter} only — callers in
    * the application layer go through {@code OutboxPort.publish} so trace metadata is resolved
    * consistently.
@@ -128,5 +137,17 @@ public class OutboxEvent {
   public void markExhausted(final String error) {
     this.status = OutboxStatus.FAILED;
     this.lastError = error;
+  }
+
+  /**
+   * Marks the row as soft-deleted by the retention job (ADR-0015). Idempotent: re-marking an
+   * already-soft-deleted row does not advance the tombstone — that way the hard-delete
+   * window stays anchored to the original deletion time and a bug in the soft-delete query
+   * cannot postpone the eventual purge.
+   */
+  public void markSoftDeleted(final Instant when) {
+    if (this.deletedAt == null) {
+      this.deletedAt = when;
+    }
   }
 }
