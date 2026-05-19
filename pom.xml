@@ -272,6 +272,20 @@
       <version>${jackson2.version}</version>
     </dependency>
 
+    <!--
+      Jackson JSR-310 module so the outbox can serialise events that carry java.time types
+      (LocalDate on AffiliateCreated/AffiliateUpdated, Instant on AffiliateMarkedDeceased,
+      etc.) without an "unsupported type" failure. Spring Boot 4 ships Jackson 3 by default
+      and the JJWT exclusion above leaves us on the 2.x Jackson runtime; without this
+      direct dep `findAndRegisterModules()` has nothing to discover on the classpath and
+      the JpaOutboxAdapter throws at the first LocalDate-bearing event.
+    -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+      <version>${jackson2.version}</version>
+    </dependency>
+
     <!-- Tests -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
