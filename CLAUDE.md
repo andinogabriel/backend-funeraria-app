@@ -75,6 +75,34 @@ on changes that touch Spring wiring, persistence or security.
   config-property carriers. MapStruct over hand-rolled mappers.
 - **No emojis in code or commits** unless explicitly requested. Plain prose.
 
+## Review agents — run before opening a PR
+
+This repo ships two read-only Claude Code subagents under `.claude/agents/`. Claude Code
+discovers them automatically once you open the repo in a session — there is no extra setup,
+no API key, and they consume the same plan as the rest of your session (Pro / Max / API).
+
+| Agent | What it checks | When to call it |
+| --- | --- | --- |
+| `backend-architect` | Hexagonal layering, the ADR rules below (JPQL `coalesce`, Flyway count, Tracer injection, Cucumber state reset, outbox boundary), house style (English in code, no emojis). | Right before `gh pr create`, after `mvn verify` passes. |
+| `test-coverage-auditor` | The branches humans forget: stale mocks after a port rename, the 403 path, the all-optional-params-null filter branch, missing ArchUnit guardrail on a cleanup PR. | After the architect agent passes; before declaring a feature done. |
+
+Invocation from a Claude Code session:
+
+```text
+Agent({ subagent_type: "backend-architect", prompt: "Review the diff against master in this branch" })
+Agent({ subagent_type: "test-coverage-auditor", prompt: "Audit coverage for the current branch" })
+```
+
+Both agents are read-only: they call `Read`, `Grep`, `Glob` and `git diff` / `gh pr view`,
+and return a structured report (Blockers / Worth fixing / Follow-ups) with file:line
+citations. They never edit files, run `mvn verify`, or push commits — that is your job, on
+purpose. If you disagree with a blocker, the agent prompt has the source: open
+`.claude/agents/<name>.md` and you will see the exact rule it cited.
+
+If you are not using Claude Code, you can still read the agent files as living checklists —
+they are plain Markdown describing every rule this repo enforces, with the ADR each one
+came from.
+
 ## Don't
 
 - Don't add a second `@CucumberContextConfiguration` — Cucumber-Spring rejects it. The
