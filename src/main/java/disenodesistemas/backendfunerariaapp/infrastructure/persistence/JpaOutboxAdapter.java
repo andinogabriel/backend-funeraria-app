@@ -3,6 +3,7 @@ package disenodesistemas.backendfunerariaapp.infrastructure.persistence;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import disenodesistemas.backendfunerariaapp.application.port.out.OutboxPort;
+import disenodesistemas.backendfunerariaapp.config.OutboxConfig;
 import disenodesistemas.backendfunerariaapp.domain.entity.OutboxEvent;
 import disenodesistemas.backendfunerariaapp.domain.event.DomainEvent;
 import disenodesistemas.backendfunerariaapp.infrastructure.logging.RequestTraceContext;
@@ -12,6 +13,7 @@ import java.time.Instant;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +40,8 @@ public class JpaOutboxAdapter implements OutboxPort {
   /** Production-time constructor wired by Spring; defaults the clock to {@link Clock#systemUTC()}. */
   @Autowired
   public JpaOutboxAdapter(
-      final OutboxEventRepository repository, final ObjectMapper objectMapper) {
+      final OutboxEventRepository repository,
+      @Qualifier(OutboxConfig.OUTBOX_OBJECT_MAPPER) final ObjectMapper objectMapper) {
     this(repository, objectMapper, Clock.systemUTC());
   }
 

@@ -2,8 +2,10 @@ package disenodesistemas.backendfunerariaapp.infrastructure.outbox;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import disenodesistemas.backendfunerariaapp.config.OutboxConfig;
 import disenodesistemas.backendfunerariaapp.domain.entity.OutboxEvent;
 import disenodesistemas.backendfunerariaapp.domain.event.DomainEvent;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 /**
@@ -21,7 +23,8 @@ public class DomainEventDeserializer {
 
   private final ObjectMapper objectMapper;
 
-  public DomainEventDeserializer(final ObjectMapper objectMapper) {
+  public DomainEventDeserializer(
+      @Qualifier(OutboxConfig.OUTBOX_OBJECT_MAPPER) final ObjectMapper objectMapper) {
     this.objectMapper = objectMapper;
   }
 
