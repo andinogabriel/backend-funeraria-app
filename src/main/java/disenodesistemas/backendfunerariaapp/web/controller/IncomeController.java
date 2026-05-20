@@ -57,7 +57,7 @@ public class IncomeController {
       @RequestParam(value = "limit", defaultValue = "5") final int limit,
       @RequestParam(value = "sortBy", defaultValue = "incomeDate") final String sortBy,
       @RequestParam(value = "sortDir", defaultValue = "desc") final String sortDir,
-      @RequestParam(value = "q", required = false) final String q,
+      @RequestParam(value = "receiptNumber", required = false) final String receiptNumber,
       @RequestParam(value = "supplierNif", required = false) final String supplierNif,
       @RequestParam(value = "from", required = false)
           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -66,7 +66,7 @@ public class IncomeController {
           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
           final LocalDate to) {
     return incomeQueryUseCase.getIncomesPaginated(
-        isDeleted, page, limit, sortBy, sortDir, q, supplierNif, from, to);
+        isDeleted, page, limit, sortBy, sortDir, receiptNumber, supplierNif, from, to);
   }
 
   @PreAuthorize("hasRole('ADMIN')")

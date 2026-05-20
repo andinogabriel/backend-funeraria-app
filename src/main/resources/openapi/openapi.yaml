@@ -1436,9 +1436,11 @@ paths:
       summary: Listar ingresos paginados
       description: |
         Solo ADMIN. Expone la serializacion actual de `Page<IncomeResponseDto>` de Spring Data.
-        Acepta filtros opcionales `q` (busqueda fuzzy sobre razon social, NIF y numero de
-        recibo), `supplierNif` (match exacto de proveedor), `from` y `to` (rango inclusivo
-        de `incomeDate` expandido a inicio/fin del dia).
+        Filtros opcionales por columna que se combinan con AND: `receiptNumber` (substring
+        case-insensitive sobre el numero de recibo), `supplierNif` (match exacto del
+        proveedor; el frontend lo alimenta desde un autocomplete que permite buscar por
+        nombre y selecciona el NIF), `from` y `to` (rango inclusivo de `incomeDate` expandido
+        a inicio/fin del dia).
       security:
         - bearerAuth: []
       parameters:
@@ -1448,10 +1450,10 @@ paths:
         - $ref: '#/components/parameters/LimitQuery'
         - $ref: '#/components/parameters/SortByQuery'
         - $ref: '#/components/parameters/SortDirQuery'
-        - name: q
+        - name: receiptNumber
           in: query
           required: false
-          description: Texto libre. Busqueda fuzzy contra razon social y NIF del proveedor y contra el numero de recibo. Mayusculas se ignoran.
+          description: Substring case-insensitive sobre el numero de recibo. Omitir o mandar vacio = sin filtro.
           schema:
             type: string
         - name: supplierNif

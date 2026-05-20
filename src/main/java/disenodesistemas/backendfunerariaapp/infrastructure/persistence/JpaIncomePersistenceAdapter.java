@@ -37,12 +37,12 @@ public class JpaIncomePersistenceAdapter implements IncomePersistencePort {
   @Override
   public Page<IncomeEntity> search(
       final boolean deleted,
-      final String q,
+      final String receiptNumber,
       final String supplierNif,
       final LocalDateTime from,
       final LocalDateTime to,
       final Pageable pageable) {
-    return incomeRepository.search(deleted, q, supplierNif, from, to, pageable);
+    return incomeRepository.search(deleted, receiptNumber, supplierNif, from, to, pageable);
   }
 
   @Override

@@ -16,13 +16,16 @@ public interface IncomePersistencePort {
   Page<IncomeEntity> findAllByDeleted(boolean deleted, Pageable pageable);
 
   /**
-   * Server-side filtered read. Empty strings on {@code q} / {@code supplierNif} signal "no
-   * filter" so the adapter can use the ADR-0010-compatible JPQL idiom; {@code null} on the
-   * {@code from} / {@code to} bounds signal "open-ended".
+   * Server-side filtered read with per-column predicates. Empty strings on
+   * {@code receiptNumber} / {@code supplierNif} signal "no filter" so the adapter can use
+   * the ADR-0010-compatible JPQL idiom; {@code null} on the {@code from} / {@code to}
+   * bounds signal "open-ended". {@code receiptNumber} is matched case-insensitively as a
+   * substring; {@code supplierNif} is matched exactly (the frontend feeds it from an
+   * autocomplete-selected supplier).
    */
   Page<IncomeEntity> search(
       boolean deleted,
-      String q,
+      String receiptNumber,
       String supplierNif,
       LocalDateTime from,
       LocalDateTime to,

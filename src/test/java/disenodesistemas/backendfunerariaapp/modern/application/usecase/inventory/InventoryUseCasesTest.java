@@ -363,9 +363,9 @@ class InventoryUseCasesTest {
         new IncomeResponseDto("7002", "1001", null, null, BigDecimal.ZERO, BigDecimal.ZERO, null, null, null, null, List.of());
     final ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
 
-    // The paginated path now routes through `search(...)` with empty-string sentinels for
-    // the text filters and null bounds for the date window — the use case normalises
-    // null/blank `q` and `supplierNif` to empty strings before delegating.
+    // The paginated path routes through `search(...)` with empty-string sentinels for the
+    // text filters and null bounds for the date window — the use case normalises null/blank
+    // `receiptNumber` and `supplierNif` to empty strings before delegating.
     when(incomePersistencePort.search(
             any(Boolean.class),
             org.mockito.Mockito.anyString(),
