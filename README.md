@@ -655,6 +655,7 @@ If you are taking over the repository, these files are good starting points:
 - [`AGENTS.md`](AGENTS.md)
 - [`MEMORY_BANK.md`](MEMORY_BANK.md)
 - [`docs/adr`](docs/adr)
+- [`docs/runbooks`](docs/runbooks) — operational runbooks (retention sweep, backup restore).
 - [`config/observability`](config/observability)
 - [`src/main/resources/openapi/openapi.yaml`](src/main/resources/openapi/openapi.yaml)
 - [`src/main/resources/application.yaml`](src/main/resources/application.yaml)
