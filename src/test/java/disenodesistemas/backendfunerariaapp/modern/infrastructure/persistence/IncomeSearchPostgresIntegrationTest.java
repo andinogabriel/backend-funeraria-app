@@ -17,15 +17,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * Verifies the new filter surface on `IncomePersistencePort.search` against a real PostgreSQL
- * container. Seeds two suppliers + four incomes covering the dimensions every filter operates
- * on (supplier name + nif, receipt number, incomeDate range) and asserts that each filter
- * narrows the result set in the expected direction.
+ * Verifies the per-column filter surface on {@link IncomePersistencePort#search} against a
+ * real PostgreSQL container. The filters are independent (AND semantics, no multi-purpose
+ * fallback) so each test pins one filter at a time and asserts the result set shape.
  *
  * <p>The fixture is built with `JdbcTemplate` instead of the JPA repositories so the test
- * stays decoupled from the mapper code and the same setup also exercises the JPQL query's
- * left-join behaviour around suppliers — the income with `supplier_id = null` only matches
- * `q` predicates that hit the receipt number, never the supplier-name/nif branches.
+ * stays decoupled from the mapper code, and the same setup exercises the JPQL query's
+ * left-join behaviour around suppliers — the income with {@code supplier_id = null} is
+ * still matchable by the {@code receiptNumber} predicate but never by {@code supplierNif}.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 class IncomeSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTest {
@@ -59,33 +58,36 @@ class IncomeSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTes
 
   @Test
   @DisplayName(
-      "Given a fuzzy `q` against the supplier name when the search runs then only incomes whose supplier matches are returned")
-  void qMatchesAgainstSupplierName() {
-    final Page<IncomeEntity> result =
-        port.search(false, "acme", "", null, null, defaultPageable());
-    assertThat(result.getContent()).extracting(IncomeEntity::getReceiptNumber).containsOnly(1001L, 1003L);
-  }
-
-  @Test
-  @DisplayName(
-      "Given a fuzzy `q` against the supplier NIF when the search runs then matches by NIF substring")
-  void qMatchesAgainstSupplierNif() {
-    final Page<IncomeEntity> result =
-        port.search(false, "22222222", "", null, null, defaultPageable());
-    assertThat(result.getContent())
-        .extracting(IncomeEntity::getReceiptNumber)
-        .containsOnly(1002L);
-  }
-
-  @Test
-  @DisplayName(
-      "Given a fuzzy `q` against the receipt number when the search runs then matches incomes with that substring (including those without a supplier)")
-  void qMatchesAgainstReceiptNumber() {
+      "Given a `receiptNumber` substring when the search runs then only incomes whose receipt contains the value are returned (including those without a supplier)")
+  void receiptNumberMatchesSubstring() {
     final Page<IncomeEntity> result =
         port.search(false, "9900", "", null, null, defaultPageable());
     assertThat(result.getContent())
         .extracting(IncomeEntity::getReceiptNumber)
         .containsOnly(99001L);
+  }
+
+  @Test
+  @DisplayName(
+      "Given a `receiptNumber` substring that matches more than one row when the search runs then every match is returned")
+  void receiptNumberMatchesMultiple() {
+    final Page<IncomeEntity> result =
+        port.search(false, "100", "", null, null, defaultPageable());
+    assertThat(result.getContent())
+        .extracting(IncomeEntity::getReceiptNumber)
+        .containsOnly(1001L, 1002L, 1003L);
+  }
+
+  @Test
+  @DisplayName(
+      "Given a `receiptNumber` value that looks like a supplier name when the search runs then it does NOT match suppliers (per-column scoping)")
+  void receiptNumberDoesNotMatchSupplierName() {
+    // 'acme' was the old multi-purpose `q` match against supplier.name; the new
+    // receiptNumber filter is column-scoped, so a substring that matches a supplier name
+    // but not any receipt must return nothing.
+    final Page<IncomeEntity> result =
+        port.search(false, "acme", "", null, null, defaultPageable());
+    assertThat(result.getContent()).isEmpty();
   }
 
   @Test
@@ -118,7 +120,26 @@ class IncomeSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTes
 
   @Test
   @DisplayName(
-      "Given empty `q` and `supplierNif` and null bounds when the search runs then every non-deleted income comes back")
+      "Given multiple column filters at once when the search runs then they AND together")
+  void multipleFiltersCombineWithAnd() {
+    // receiptNumber narrows to the two ACME receipts (1001 + 1003); the from-bound trims
+    // out 1001 (May 1) and leaves 1003 (Jun 3).
+    final Page<IncomeEntity> result =
+        port.search(
+            false,
+            "100",
+            "30-11111111-1",
+            LocalDateTime.parse("2026-06-01T00:00:00"),
+            null,
+            defaultPageable());
+    assertThat(result.getContent())
+        .extracting(IncomeEntity::getReceiptNumber)
+        .containsOnly(1003L);
+  }
+
+  @Test
+  @DisplayName(
+      "Given empty strings on every text filter and null bounds when the search runs then every non-deleted income comes back")
   void noFiltersReturnsEverything() {
     final Page<IncomeEntity> result = port.search(false, "", "", null, null, defaultPageable());
     assertThat(result.getTotalElements()).isEqualTo(4);
