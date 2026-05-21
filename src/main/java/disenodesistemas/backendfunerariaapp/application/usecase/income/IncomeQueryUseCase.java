@@ -72,14 +72,16 @@ public class IncomeQueryUseCase {
    *       {@code to} to the end so the operator can think in calendar days.
    * </ul>
    *
-   * <p>The legacy {@code page > 0 ? page - 1 : page} mapping is preserved for backwards
-   * compatibility — clients that already send 0-indexed values keep working, and that one
-   * adjustment is not the right thing to clean up inside this PR.
+   * <p>Pagination is 0-indexed (Spring Data convention) and matches Material's paginator
+   * directly. An earlier version of this method ran {@code page = page > 0 ? page - 1 : page}
+   * under the comment "legacy 1-indexed clients" — but that branch silently collapsed
+   * page indices 0 and 1 onto the same backend page, so paginating from page 1 to page 2
+   * in the UI showed the same first slice twice. The mapping is removed.
    */
   @Transactional(readOnly = true)
   public Page<IncomeResponseDto> getIncomesPaginated(
       final boolean isDeleted,
-      int page,
+      final int page,
       final int limit,
       final String sortBy,
       final String sortDir,
@@ -87,7 +89,6 @@ public class IncomeQueryUseCase {
       final String supplierNif,
       final LocalDate from,
       final LocalDate to) {
-    page = page > 0 ? page - 1 : page;
     final Pageable pageable =
         PageRequest.of(
             page,

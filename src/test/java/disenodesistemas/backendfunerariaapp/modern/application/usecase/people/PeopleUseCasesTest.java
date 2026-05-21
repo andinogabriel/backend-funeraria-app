@@ -252,7 +252,9 @@ class PeopleUseCasesTest {
 
     when(userPersistencePort.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(user)));
 
-    assertThat(userQueryUseCase.getAllUsers(1, 20, "email", "asc").getContent()).containsExactly(user);
+    // 0-indexed pagination (Spring Data convention). page=0 = first page.
+    assertThat(userQueryUseCase.getAllUsers(0, 20, "email", "asc").getContent())
+        .containsExactly(user);
     verify(userPersistencePort).findAll(pageableCaptor.capture());
     assertThat(pageableCaptor.getValue().getPageNumber()).isZero();
     assertThat(pageableCaptor.getValue().getSort().getOrderFor("email").isAscending()).isTrue();
