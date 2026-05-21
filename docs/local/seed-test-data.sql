@@ -431,25 +431,25 @@ select
     (select id from supplier_lookup where nif = seed.supplier_nif),
     (select id from admin_user),
     (select id from admin_user)
--- Totals are scaled to fit numeric(8,2) — the incomes table caps at 999,999.99
--- per V1 schema. The income_details rows below sum to plausible values within
--- that ceiling (a real wholesale order of a single cofre line + accessories).
+-- V8 widened these to numeric(13, 2) so the seed can use realistic ARS amounts
+-- (typical wholesale order of several cofres + accessories runs into the
+-- millions of pesos at current price levels).
 from (values
     -- September: 4 incomes
-    (99001, '2025-09-03'::date, 21.00, 485000.00, '30-99100001-1'),  -- Florestanía
-    (99002, '2025-09-09'::date, 21.00, 620000.00, '30-99100003-7'),  -- Cirial Velas
-    (99003, '2025-09-18'::date, 21.00, 910000.00, '30-99100002-9'),  -- Cofres del Litoral
-    (99004, '2025-09-26'::date, 10.50, 185000.00, '30-99100004-5'),  -- Requiem Textiles
+    (99001, '2025-09-03'::date, 21.00,  1485000.00, '30-99100001-1'),  -- Florestanía
+    (99002, '2025-09-09'::date, 21.00,   620000.00, '30-99100003-7'),  -- Cirial Velas
+    (99003, '2025-09-18'::date, 21.00,  2310000.00, '30-99100002-9'),  -- Cofres del Litoral
+    (99004, '2025-09-26'::date, 10.50,   185000.00, '30-99100004-5'),  -- Requiem Textiles
     -- October: 4 incomes
-    (99005, '2025-10-04'::date, 21.00, 240000.00, '30-99100001-1'),
-    (99006, '2025-10-11'::date, 21.00, 390000.00, '30-99100005-3'),  -- Servicios Cobrera
-    (99007, '2025-10-18'::date, 21.00, 750000.00, '30-99100002-9'),
-    (99008, '2025-10-25'::date, 21.00, 275000.00, '30-99100003-7'),
+    (99005, '2025-10-04'::date, 21.00,   840000.00, '30-99100001-1'),
+    (99006, '2025-10-11'::date, 21.00,   390000.00, '30-99100005-3'),  -- Servicios Cobrera
+    (99007, '2025-10-18'::date, 21.00,  1750000.00, '30-99100002-9'),
+    (99008, '2025-10-25'::date, 21.00,   275000.00, '30-99100003-7'),
     -- November: 4 incomes
-    (99009, '2025-11-02'::date, 21.00, 320000.00, '30-99100001-1'),
-    (99010, '2025-11-09'::date, 21.00, 455000.00, '30-99100004-5'),
-    (99011, '2025-11-17'::date, 21.00, 880000.00, '30-99100002-9'),
-    (99012, '2025-11-24'::date, 10.50, 148000.00, '30-99100005-3')
+    (99009, '2025-11-02'::date, 21.00,   920000.00, '30-99100001-1'),
+    (99010, '2025-11-09'::date, 21.00,   455000.00, '30-99100004-5'),
+    (99011, '2025-11-17'::date, 21.00,  1980000.00, '30-99100002-9'),
+    (99012, '2025-11-24'::date, 10.50,   148000.00, '30-99100005-3')
 ) as seed(receipt_number, income_date, tax, total_amount, supplier_nif);
 
 -- ---------------------------------------------------------------------------
