@@ -59,8 +59,10 @@ public class UserQueryUseCase {
 
   @Transactional(readOnly = true)
   public Page<UserEntity> getAllUsers(
-      int page, final int limit, final String sortBy, final String sortDir) {
-    page = page > 0 ? page - 1 : page;
+      final int page, final int limit, final String sortBy, final String sortDir) {
+    // 0-indexed pagination (Spring Data + Material paginator); the previous
+    // `page > 0 ? page - 1 : page` mapping silently collapsed pages 0 and 1
+    // onto the same backend slice.
     final Pageable pageable =
         PageRequest.of(
             page,

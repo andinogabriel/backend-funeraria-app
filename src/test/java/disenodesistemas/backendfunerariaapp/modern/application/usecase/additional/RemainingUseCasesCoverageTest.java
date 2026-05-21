@@ -89,7 +89,8 @@ class RemainingUseCasesCoverageTest {
     assertThat(incomeQueryUseCase.findAll()).containsExactly(response);
     assertThat(incomeQueryUseCase.findById(7002L)).isEqualTo(response);
     assertThat(incomeQueryUseCase.findByReceiptNumber(7002L)).isEqualTo(response);
-    assertThat(incomeQueryUseCase.getIncomesPaginated(false, 1, 10, "receiptNumber", "desc").getContent())
+    // 0-indexed pagination (Spring Data + Material paginator). page=0 = first page.
+    assertThat(incomeQueryUseCase.getIncomesPaginated(false, 0, 10, "receiptNumber", "desc").getContent())
         .containsExactly(response);
   }
 

@@ -376,7 +376,8 @@ class InventoryUseCasesTest {
         .thenReturn(new PageImpl<>(List.of(incomeEntity)));
     when(incomeMapper.toDto(incomeEntity)).thenReturn(response);
 
-    assertThat(incomeQueryUseCase.getIncomesPaginated(false, 1, 10, "receiptNumber", "desc").getContent())
+    // 0-indexed pagination (Spring Data + Material paginator). page=0 = first page.
+    assertThat(incomeQueryUseCase.getIncomesPaginated(false, 0, 10, "receiptNumber", "desc").getContent())
         .containsExactly(response);
     verify(incomePersistencePort)
         .search(
