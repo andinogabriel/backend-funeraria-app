@@ -1,7 +1,7 @@
 package disenodesistemas.backendfunerariaapp.application.port.out;
 
 import disenodesistemas.backendfunerariaapp.domain.entity.IncomeEntity;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -27,8 +27,8 @@ public interface IncomePersistencePort {
       boolean deleted,
       String receiptNumber,
       String supplierNif,
-      LocalDateTime from,
-      LocalDateTime to,
+      Instant from,
+      Instant to,
       Pageable pageable);
 
   IncomeEntity save(IncomeEntity income);

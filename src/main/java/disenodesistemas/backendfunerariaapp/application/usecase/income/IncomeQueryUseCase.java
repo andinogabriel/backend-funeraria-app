@@ -5,9 +5,10 @@ import disenodesistemas.backendfunerariaapp.domain.entity.IncomeEntity;
 import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
 import disenodesistemas.backendfunerariaapp.mapping.IncomeMapper;
 import disenodesistemas.backendfunerariaapp.web.dto.response.IncomeResponseDto;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.Strings;
@@ -24,6 +25,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class IncomeQueryUseCase {
 
   private static final String ASC = "asc";
+  /**
+   * Timezone used to bracket the operator's date-range filter into absolute
+   * UTC instants. The funeral home runs out of Argentina, so a "Desde
+   * 2025-09-26" filter on the UI means "anything that happened on or after
+   * 2025-09-26 00:00 Buenos Aires time" — not UTC midnight. Externalising
+   * this constant makes it easy to flip to an environment-driven zone later
+   * if the service ever sells into another region.
+   */
+  private static final ZoneId REPORTING_ZONE = ZoneId.of("America/Argentina/Buenos_Aires");
 
   private final IncomePersistencePort incomePersistencePort;
   private final IncomeMapper incomeMapper;
@@ -99,8 +109,12 @@ public class IncomeQueryUseCase {
 
     final String safeReceiptNumber = blankToEmpty(receiptNumber);
     final String safeSupplierNif = blankToEmpty(supplierNif);
-    final LocalDateTime safeFrom = from == null ? null : from.atStartOfDay();
-    final LocalDateTime safeTo = to == null ? null : to.atTime(LocalTime.MAX);
+    // Operators pick dates in Argentina local time ("everything that happened
+    // on calendar day 2025-09-26 in Buenos Aires"). We convert the inclusive
+    // local-day bounds to absolute UTC instants here so the JPQL stays a
+    // straight comparison against the `Instant` columns.
+    final Instant safeFrom = from == null ? null : from.atStartOfDay(REPORTING_ZONE).toInstant();
+    final Instant safeTo = to == null ? null : to.atTime(LocalTime.MAX).atZone(REPORTING_ZONE).toInstant();
 
     final Page<IncomeEntity> entities =
         incomePersistencePort.search(

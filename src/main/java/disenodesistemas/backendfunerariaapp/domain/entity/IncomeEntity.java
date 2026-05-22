@@ -1,6 +1,5 @@
 package disenodesistemas.backendfunerariaapp.domain.entity;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,7 +23,7 @@ import jakarta.validation.constraints.Digits;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -44,9 +43,16 @@ public class IncomeEntity implements Serializable {
   @Column(nullable = false)
   private Long receiptSeries;
 
-  @CreatedDate
-  @JsonFormat(pattern = "dd-MM-yyyy HH:mm")
-  private LocalDateTime incomeDate;
+  /**
+   * Moment when the receipt was registered, populated by Spring Data's
+   * {@link AuditingEntityListener}. Modelled as {@link Instant} (UTC) so the
+   * wire payload carries an unambiguous absolute timestamp — Jackson serialises
+   * it as ISO 8601 with a trailing {@code Z}, and the frontend converts to the
+   * operator's local timezone on display. The {@code dd-MM-yyyy HH:mm} legacy
+   * string the previous {@link com.fasterxml.jackson.annotation.JsonFormat}
+   * produced lost the timezone context entirely.
+   */
+  @CreatedDate private Instant incomeDate;
 
   @Digits(integer = 3, fraction = 2)
   private BigDecimal tax;
@@ -73,9 +79,8 @@ public class IncomeEntity implements Serializable {
   @JoinColumn(name = "user_modified_id")
   private UserEntity lastModifiedBy;
 
-  @LastModifiedDate
-  @JsonFormat(pattern = "dd-MM-yyyy HH:mm")
-  private LocalDateTime lastModifiedDate;
+  /** Moment of the last update — same conventions as {@link #incomeDate}. */
+  @LastModifiedDate private Instant lastModifiedDate;
 
   @OneToMany(
       cascade = CascadeType.ALL,
