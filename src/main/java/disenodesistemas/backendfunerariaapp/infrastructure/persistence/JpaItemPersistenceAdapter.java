@@ -7,6 +7,8 @@ import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repositor
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +37,16 @@ public class JpaItemPersistenceAdapter implements ItemPersistencePort {
   @Override
   public List<ItemEntity> findByCategoryOrderByName(final CategoryEntity categoryEntity) {
     return itemRepository.findByCategoryOrderByName(categoryEntity);
+  }
+
+  @Override
+  public Page<ItemEntity> search(
+      final String code,
+      final String name,
+      final String categoryName,
+      final String brandName,
+      final Pageable pageable) {
+    return itemRepository.search(code, name, categoryName, brandName, pageable);
   }
 
   @Override
