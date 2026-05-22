@@ -5,7 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import disenodesistemas.backendfunerariaapp.application.port.out.IncomePersistencePort;
 import disenodesistemas.backendfunerariaapp.domain.entity.IncomeEntity;
 import disenodesistemas.backendfunerariaapp.modern.support.AbstractPostgresIntegrationTest;
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
+import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,9 +30,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 class IncomeSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTest {
 
-  private static final LocalDateTime T_2026_05_01 = LocalDateTime.parse("2026-05-01T10:00:00");
-  private static final LocalDateTime T_2026_05_15 = LocalDateTime.parse("2026-05-15T11:00:00");
-  private static final LocalDateTime T_2026_06_03 = LocalDateTime.parse("2026-06-03T12:00:00");
+  // Instants explicitly carry the UTC offset so the JPQL comparison against the
+  // `Instant` column stays unambiguous regardless of the JVM default zone.
+  private static final Instant T_2026_05_01 = Instant.parse("2026-05-01T10:00:00Z");
+  private static final Instant T_2026_05_15 = Instant.parse("2026-05-15T11:00:00Z");
+  private static final Instant T_2026_06_03 = Instant.parse("2026-06-03T12:00:00Z");
 
   @Autowired private IncomePersistencePort port;
   @Autowired private JdbcTemplate jdbcTemplate;
@@ -110,8 +113,8 @@ class IncomeSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTes
             false,
             "",
             "",
-            LocalDateTime.parse("2026-05-10T00:00:00"),
-            LocalDateTime.parse("2026-05-31T23:59:59"),
+            Instant.parse("2026-05-10T00:00:00Z"),
+            Instant.parse("2026-05-31T23:59:59Z"),
             defaultPageable());
     assertThat(result.getContent())
         .extracting(IncomeEntity::getReceiptNumber)
@@ -129,7 +132,7 @@ class IncomeSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTes
             false,
             "100",
             "30-11111111-1",
-            LocalDateTime.parse("2026-06-01T00:00:00"),
+            Instant.parse("2026-06-01T00:00:00Z"),
             null,
             defaultPageable());
     assertThat(result.getContent())
@@ -153,14 +156,19 @@ class IncomeSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTes
   private void insertIncome(
       final long id,
       final long receiptNumber,
-      final LocalDateTime incomeDate,
+      final Instant incomeDate,
       final Integer supplierId) {
+    // The PostgreSQL JDBC driver does not auto-bind `Instant` to a `timestamp`
+    // column (lacks a SQL-type mapping). We convert through Timestamp.from so
+    // the value lands as the UTC wall-clock — what Hibernate writes via the
+    // `Instant` entity field, with `hibernate.jdbc.time_zone=UTC` keeping the
+    // round-trip in UTC regardless of the JVM default zone.
     jdbcTemplate.update(
         "insert into incomes (id, deleted, tax, total_amount, income_date, receipt_number,"
             + " receipt_series, supplier_id)"
             + " values (?, false, 21, 0, ?, ?, 1, ?)",
         id,
-        incomeDate,
+        Timestamp.from(incomeDate),
         receiptNumber,
         supplierId);
   }

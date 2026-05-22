@@ -1,7 +1,7 @@
 package disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository;
 
 import disenodesistemas.backendfunerariaapp.domain.entity.IncomeEntity;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -66,7 +66,7 @@ public interface IncomeRepository extends JpaRepository<IncomeEntity, Long> {
       @Param("deleted") boolean deleted,
       @Param("receiptNumber") String receiptNumber,
       @Param("supplierNif") String supplierNif,
-      @Param("from") LocalDateTime from,
-      @Param("to") LocalDateTime to,
+      @Param("from") Instant from,
+      @Param("to") Instant to,
       Pageable pageable);
 }

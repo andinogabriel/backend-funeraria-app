@@ -3,7 +3,7 @@ package disenodesistemas.backendfunerariaapp.infrastructure.persistence;
 import disenodesistemas.backendfunerariaapp.application.port.out.IncomePersistencePort;
 import disenodesistemas.backendfunerariaapp.domain.entity.IncomeEntity;
 import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.IncomeRepository;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -39,8 +39,8 @@ public class JpaIncomePersistenceAdapter implements IncomePersistencePort {
       final boolean deleted,
       final String receiptNumber,
       final String supplierNif,
-      final LocalDateTime from,
-      final LocalDateTime to,
+      final Instant from,
+      final Instant to,
       final Pageable pageable) {
     return incomeRepository.search(deleted, receiptNumber, supplierNif, from, to, pageable);
   }
