@@ -6,8 +6,11 @@ import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.web.dto.request.AffiliateRequestDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.AffiliateResponseDto;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -50,6 +53,34 @@ public class AffiliateController {
   @GetMapping
   public ResponseEntity<List<AffiliateResponseDto>> findAllByDeceasedFalse() {
     return ResponseEntity.ok(affiliateQueryUseCase.findAllByDeceasedFalse());
+  }
+
+  /**
+   * Server-side paginated read for the affiliates list page. Mirrors the contract used by
+   * {@code /api/v1/incomes/paginated}: 0-indexed page param, configurable sort, every
+   * filter param optional. The frontend's per-column header menus map to one query param
+   * each. Sort defaults to {@code lastName asc} so the operator lands on an alphabetised
+   * page when no preference is persisted.
+   */
+  @PreAuthorize("hasRole('ADMIN')")
+  @GetMapping("/paginated")
+  public Page<AffiliateResponseDto> getAffiliatesPaginated(
+      @RequestParam(value = "page", defaultValue = "0") final int page,
+      @RequestParam(value = "limit", defaultValue = "10") final int limit,
+      @RequestParam(value = "sortBy", defaultValue = "lastName") final String sortBy,
+      @RequestParam(value = "sortDir", defaultValue = "asc") final String sortDir,
+      @RequestParam(value = "firstName", required = false) final String firstName,
+      @RequestParam(value = "lastName", required = false) final String lastName,
+      @RequestParam(value = "dni", required = false) final String dni,
+      @RequestParam(value = "relationshipName", required = false) final String relationshipName,
+      @RequestParam(value = "from", required = false)
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          final LocalDate from,
+      @RequestParam(value = "to", required = false)
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          final LocalDate to) {
+    return affiliateQueryUseCase.getAffiliatesPaginated(
+        page, limit, sortBy, sortDir, firstName, lastName, dni, relationshipName, from, to);
   }
 
   @PreAuthorize("hasRole('ADMIN')")

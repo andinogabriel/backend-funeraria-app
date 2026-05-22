@@ -3,9 +3,12 @@ package disenodesistemas.backendfunerariaapp.infrastructure.persistence;
 import disenodesistemas.backendfunerariaapp.application.port.out.AffiliatePersistencePort;
 import disenodesistemas.backendfunerariaapp.domain.entity.AffiliateEntity;
 import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.AffiliateRepository;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +47,20 @@ public class JpaAffiliatePersistenceAdapter implements AffiliatePersistencePort 
   @Override
   public List<AffiliateEntity> searchByFirstNameOrLastNameOrDni(final String valueToSearch) {
     return affiliateRepository.searchByFirstNameOrLastNameOrDni(valueToSearch);
+  }
+
+  @Override
+  public Page<AffiliateEntity> search(
+      final boolean deceased,
+      final String firstName,
+      final String lastName,
+      final String dni,
+      final String relationshipName,
+      final LocalDate from,
+      final LocalDate to,
+      final Pageable pageable) {
+    return affiliateRepository.search(
+        deceased, firstName, lastName, dni, relationshipName, from, to, pageable);
   }
 
   @Override
