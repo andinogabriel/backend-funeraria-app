@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -42,6 +43,27 @@ public class ItemController {
   @GetMapping
   public ResponseEntity<List<ItemResponseDto>> findAll() {
     return ResponseEntity.ok(itemQueryUseCase.findAll());
+  }
+
+  /**
+   * Server-side paginated read for the items list page. Mirrors the contract used by the
+   * affiliates / incomes paginated endpoints: 0-indexed page, configurable sort, every
+   * filter param optional. Defaults to {@code sortBy=name asc} so the operator lands on
+   * an alphabetised page when no preference is persisted.
+   */
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  @GetMapping("/paginated")
+  public Page<ItemResponseDto> getItemsPaginated(
+      @RequestParam(value = "page", defaultValue = "0") final int page,
+      @RequestParam(value = "limit", defaultValue = "10") final int limit,
+      @RequestParam(value = "sortBy", defaultValue = "name") final String sortBy,
+      @RequestParam(value = "sortDir", defaultValue = "asc") final String sortDir,
+      @RequestParam(value = "code", required = false) final String code,
+      @RequestParam(value = "name", required = false) final String name,
+      @RequestParam(value = "categoryName", required = false) final String categoryName,
+      @RequestParam(value = "brandName", required = false) final String brandName) {
+    return itemQueryUseCase.getItemsPaginated(
+        page, limit, sortBy, sortDir, code, name, categoryName, brandName);
   }
 
   @PreAuthorize("hasRole('ADMIN')")
