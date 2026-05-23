@@ -265,12 +265,20 @@ public class OpenPdfFuneralPdfRenderAdapter implements FuneralPdfRenderPort {
     return cell;
   }
 
+  /**
+   * Currency string with the {@code $} symbol glued to the digits by a
+   * non-breaking space (U+00A0). OpenPDF treats a regular ASCII space as a
+   * soft break point, so the narrow Total cell was wrapping the symbol onto
+   * its own line ("$" + newline + "1.100.000,00"). The non-breaking space
+   * forces both fragments to render together; the visual result matches the
+   * "$ 1.100.000,00" formatting Argentine receipts use.
+   */
   private String formatCurrency(final BigDecimal amount) {
     if (amount == null) {
       return "—";
     }
     final BigDecimal scaled = amount.setScale(2, RoundingMode.HALF_UP);
-    return String.format(AR_LOCALE, "$ %,.2f", scaled);
+    return String.format(AR_LOCALE, "$ %,.2f", scaled);
   }
 
   private String formatDate(final LocalDate date) {
