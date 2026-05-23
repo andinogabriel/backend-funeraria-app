@@ -1245,6 +1245,42 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
 
+  /api/v1/funerals/{id}/pdf:
+    get:
+      tags: [Funerals]
+      summary: Descargar el servicio funerario como PDF
+      description: |
+        Renderiza el servicio identificado por `id` como un PDF imprimible de
+        una sola página. Devuelve `application/pdf` con
+        `Content-Disposition: attachment; filename="servicio-{id}.pdf"`.
+        Admin o el usuario propietario del registro.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: PDF del servicio funerario.
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/funerals/by-user:
     get:
       tags: [Funerals]

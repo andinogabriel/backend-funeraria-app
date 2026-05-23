@@ -1,6 +1,7 @@
 package disenodesistemas.backendfunerariaapp.web.controller;
 
 import disenodesistemas.backendfunerariaapp.application.usecase.funeral.FuneralCommandUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.funeral.FuneralPdfUseCase;
 import disenodesistemas.backendfunerariaapp.application.usecase.funeral.FuneralQueryUseCase;
 import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.web.dto.request.FuneralRequestDto;
@@ -11,7 +12,10 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,6 +35,7 @@ public class FuneralController {
 
   private final FuneralCommandUseCase funeralCommandUseCase;
   private final FuneralQueryUseCase funeralQueryUseCase;
+  private final FuneralPdfUseCase funeralPdfUseCase;
 
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping
@@ -98,5 +103,23 @@ public class FuneralController {
   @GetMapping("/by-user")
   public ResponseEntity<List<FuneralResponseDto>> findFuneralsByUser() {
     return ResponseEntity.ok(funeralQueryUseCase.findFuneralsByUser());
+  }
+
+  /**
+   * Renders the funeral as a printable PDF the operator can download / e-mail / file.
+   * Same authorisation envelope as the read endpoints — admins and the user who owns
+   * the record can both fetch it. The {@code Content-Disposition} header proposes a
+   * stable filename based on the funeral id so multiple downloads do not collide.
+   */
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  @GetMapping(value = "/{id}/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+  public ResponseEntity<byte[]> downloadPdf(@PathVariable final Long id) {
+    final byte[] body = funeralPdfUseCase.generatePdf(id);
+    final ContentDisposition disposition =
+        ContentDisposition.attachment().filename("servicio-" + id + ".pdf").build();
+    return ResponseEntity.ok()
+        .contentType(MediaType.APPLICATION_PDF)
+        .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
+        .body(body);
   }
 }
