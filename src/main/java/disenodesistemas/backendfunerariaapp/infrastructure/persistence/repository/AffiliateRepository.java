@@ -2,6 +2,7 @@ package disenodesistemas.backendfunerariaapp.infrastructure.persistence.reposito
 
 import disenodesistemas.backendfunerariaapp.domain.entity.AffiliateEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -141,13 +142,57 @@ public interface AffiliateRepository extends JpaRepository<AffiliateEntity, Long
         Pageable pageable);
 
     /**
-     * Paginated read of soft-deleted affiliates ordered by most-recent-first. Backs the
-     * admin-only papelera surface — never invoked from the regular operator flows.
+     * Filtered + paginated read of soft-deleted affiliates ordered by most-recent-first.
+     * Backs the admin-only papelera surface — never invoked from the regular operator
+     * flows.
+     *
+     * <p>Mirrors the empty-string sentinel pattern used by {@link #search}: the caller
+     * passes {@code ""} for inactive text filters so PostgreSQL never has to infer the
+     * bind type from a {@code null} literal. The {@code deletedAt} bounds use
+     * {@code coalesce(:p, col)} so a missing boundary resolves to {@code col >= col} /
+     * {@code col <= col}, which is always true on rows where {@code deletedAt is not
+     * null} (the where clause already filters those in).
+     *
+     * <ul>
+     *   <li>{@code firstName} / {@code lastName}: case-insensitive substring match.</li>
+     *   <li>{@code dni}: case-insensitive substring against the DNI cast to string.</li>
+     *   <li>{@code deletedBy}: case-insensitive substring against the admin email
+     *       captured at delete time.</li>
+     *   <li>{@code deletedFrom} / {@code deletedTo}: inclusive bounds on
+     *       {@code deletedAt}. Frontend converts AR-local dates to UTC instants before
+     *       sending so the comparison matches the operator's intent.</li>
+     * </ul>
      */
     @Query("""
         select a from affiliates a
         where a.deletedAt is not null
+          and (
+            :firstName = ''
+            or lower(a.firstName) like lower(concat('%', :firstName, '%'))
+          )
+          and (
+            :lastName = ''
+            or lower(a.lastName) like lower(concat('%', :lastName, '%'))
+          )
+          and (
+            :dni = ''
+            or lower(str(a.dni)) like lower(concat('%', :dni, '%'))
+          )
+          and (
+            :deletedBy = ''
+            or (a.deletedBy is not null
+                and lower(a.deletedBy) like lower(concat('%', :deletedBy, '%')))
+          )
+          and a.deletedAt >= coalesce(:deletedFrom, a.deletedAt)
+          and a.deletedAt <= coalesce(:deletedTo, a.deletedAt)
         order by a.deletedAt desc
         """)
-    Page<AffiliateEntity> findAllDeleted(Pageable pageable);
+    Page<AffiliateEntity> findAllDeleted(
+        @Param("firstName") String firstName,
+        @Param("lastName") String lastName,
+        @Param("dni") String dni,
+        @Param("deletedBy") String deletedBy,
+        @Param("deletedFrom") Instant deletedFrom,
+        @Param("deletedTo") Instant deletedTo,
+        Pageable pageable);
 }

@@ -6,6 +6,7 @@ import disenodesistemas.backendfunerariaapp.domain.entity.AffiliateEntity;
 import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
 import disenodesistemas.backendfunerariaapp.mapping.AffiliateMapper;
 import disenodesistemas.backendfunerariaapp.web.dto.response.AffiliateResponseDto;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -37,13 +38,40 @@ public class AffiliateQueryUseCase {
   }
 
   /**
-   * Admin-only listing of the soft-deleted affiliates ordered most-recent-first. Powers the
-   * "papelera" surface — read-only by design, no restore / purge actions in this PR.
+   * Admin-only filtered listing of the soft-deleted affiliates ordered
+   * most-recent-first. Powers the "papelera" surface — read-only by design, no restore /
+   * purge actions in this PR.
+   *
+   * <p>Same sentinel contract as
+   * {@link #getAffiliatesPaginated}: empty / blank text filters become {@code ""}, null
+   * date bounds pass through unchanged.
    */
   @Transactional(readOnly = true)
-  public Page<AffiliateResponseDto> findAllDeleted(final int page, final int limit) {
+  public Page<AffiliateResponseDto> findAllDeleted(
+      final int page,
+      final int limit,
+      final String firstName,
+      final String lastName,
+      final String dni,
+      final String deletedBy,
+      final Instant deletedFrom,
+      final Instant deletedTo) {
     final Pageable pageable = PageRequest.of(page, limit);
-    return affiliatePersistencePort.findAllDeleted(pageable).map(affiliateMapper::toDto);
+    return affiliatePersistencePort
+        .findAllDeleted(
+            sanitize(firstName),
+            sanitize(lastName),
+            sanitize(dni),
+            sanitize(deletedBy),
+            deletedFrom,
+            deletedTo,
+            pageable)
+        .map(affiliateMapper::toDto);
+  }
+
+  /** Empty-string sentinel: trim, then replace null / blank with {@code ""}. */
+  private static String sanitize(final String value) {
+    return StringUtils.isBlank(value) ? "" : value.trim();
   }
 
   @Transactional(readOnly = true)

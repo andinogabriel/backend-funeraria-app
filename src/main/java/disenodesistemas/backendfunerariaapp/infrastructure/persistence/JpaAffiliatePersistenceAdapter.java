@@ -3,6 +3,7 @@ package disenodesistemas.backendfunerariaapp.infrastructure.persistence;
 import disenodesistemas.backendfunerariaapp.application.port.out.AffiliatePersistencePort;
 import disenodesistemas.backendfunerariaapp.domain.entity.AffiliateEntity;
 import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.AffiliateRepository;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -76,7 +77,15 @@ public class JpaAffiliatePersistenceAdapter implements AffiliatePersistencePort 
   }
 
   @Override
-  public Page<AffiliateEntity> findAllDeleted(final Pageable pageable) {
-    return affiliateRepository.findAllDeleted(pageable);
+  public Page<AffiliateEntity> findAllDeleted(
+      final String firstName,
+      final String lastName,
+      final String dni,
+      final String deletedBy,
+      final Instant deletedFrom,
+      final Instant deletedTo,
+      final Pageable pageable) {
+    return affiliateRepository.findAllDeleted(
+        firstName, lastName, dni, deletedBy, deletedFrom, deletedTo, pageable);
   }
 }
