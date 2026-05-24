@@ -148,17 +148,25 @@ public class AffiliateCommandUseCase {
   }
 
   /**
-   * Deletes the affiliate identified by the supplied dni and records an
-   * {@link AuditAction#AFFILIATE_DELETED} entry stamped with the requesting admin. The dni
-   * is captured before the delete so it survives in the audit row even though the underlying
-   * entity is gone.
+   * Soft-deletes the affiliate identified by the supplied dni: stamps
+   * {@code deletedAt = now()} and {@code deletedBy = <actor email>}, then saves. The row
+   * stays in the DB so the admin-only papelera surface can still surface it, but every
+   * regular read filters it out (see {@code AffiliateRepository}). The dni stays globally
+   * unique — a future create with the same dni keeps hitting the existing 409 path.
+   *
+   * <p>An {@link AuditAction#AFFILIATE_DELETED} entry is still recorded so the audit log
+   * carries the operator-readable trail; the dni is captured before the save so it survives
+   * even if a future change ever drops the row physically.
    */
   @Transactional
   public void delete(final Integer dni) {
     final AffiliateEntity affiliate = affiliateQueryUseCase.findByDni(dni);
-    affiliatePersistencePort.delete(affiliate);
-
     final UserEntity actor = authenticatedUserPort.getAuthenticatedUser();
+
+    affiliate.setDeletedAt(Instant.now(clock));
+    affiliate.setDeletedBy(actor.getEmail());
+    affiliatePersistencePort.save(affiliate);
+
     auditEventPort.record(
         AuditAction.AFFILIATE_DELETED,
         actor.getEmail(),

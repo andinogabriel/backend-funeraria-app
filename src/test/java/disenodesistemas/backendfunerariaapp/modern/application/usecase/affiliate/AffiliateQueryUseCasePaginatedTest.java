@@ -70,6 +70,8 @@ class AffiliateQueryUseCasePaginatedTest {
             null,
             null,
             null,
+            null,
+            null,
             null);
     when(port.search(
             eq(false), eq(""), eq(""), eq(""), eq(""), eq(null), eq(null), any(Pageable.class)))

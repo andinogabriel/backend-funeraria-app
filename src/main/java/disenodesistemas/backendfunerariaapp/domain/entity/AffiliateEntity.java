@@ -1,6 +1,7 @@
 package disenodesistemas.backendfunerariaapp.domain.entity;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Objects;
 import jakarta.persistence.Column;
@@ -54,6 +55,23 @@ public class AffiliateEntity implements Serializable {
 
     @Column(name = "deceased", columnDefinition = "boolean default false")
     private Boolean deceased;
+
+    /**
+     * Soft-delete tombstone. Populated by {@code AffiliateCommandUseCase.delete} with the
+     * UTC moment the record was removed; {@code null} for active affiliates. Every operational
+     * read filters on {@code deletedAt is null} so soft-deleted rows are invisible to the
+     * normal listings. The admin-only papelera endpoint queries the inverse.
+     */
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    /**
+     * Email of the admin that requested the soft delete. Captured from
+     * {@code AuthenticatedUserPort} at delete time so the papelera can show "borrado por"
+     * without joining the audit log. {@code null} for active affiliates.
+     */
+    @Column(name = "deleted_by", length = 255)
+    private String deletedBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gender_id")

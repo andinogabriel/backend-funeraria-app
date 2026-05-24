@@ -12,19 +12,62 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+/**
+ * Spring Data repository for {@link AffiliateEntity}.
+ *
+ * <h3>Soft delete filtering</h3>
+ *
+ * Every operational read here filters {@code where deletedAt is null} so callers see only
+ * active affiliates. The two exceptions are
+ * {@link #existsAffiliateEntitiesByDni(Integer)} — the dni is globally unique by product
+ * decision, so a soft-deleted row should still block re-creation — and
+ * {@link #findAllDeleted(Pageable)} which powers the admin-only papelera surface.
+ */
 @Repository
 public interface AffiliateRepository extends JpaRepository<AffiliateEntity, Long> {
-    Optional<AffiliateEntity> findByDni(final Integer dni);
+
+    @Query("select a from affiliates a where a.dni = :dni and a.deletedAt is null")
+    Optional<AffiliateEntity> findByDni(@Param("dni") Integer dni);
+
+    /**
+     * Globally unique dni check — returns true even when the matching affiliate is soft
+     * deleted, so the create / update flow keeps rejecting a dni reuse the same way it
+     * always has. Product decision: the dni stays the legal identity of the person across
+     * the active/deleted boundary.
+     */
     Boolean existsAffiliateEntitiesByDni(Integer dni);
+
     List<AffiliateEntity> findByUserOrderByStartDateDesc(final UserEntity userEntity);
-    List<AffiliateEntity> findByUserEmailOrderByStartDateDesc(String email);
+
+    @Query("""
+        select a from affiliates a
+        where a.user.email = :email
+          and a.deletedAt is null
+        order by a.startDate desc
+        """)
+    List<AffiliateEntity> findByUserEmailOrderByStartDateDesc(@Param("email") String email);
+
+    @Query("""
+        select a from affiliates a
+        where a.deletedAt is null
+        order by a.startDate desc
+        """)
     List<AffiliateEntity> findAllByOrderByStartDateDesc();
+
+    @Query("""
+        select a from affiliates a
+        where a.deceased = false
+          and a.deletedAt is null
+        order by a.startDate desc
+        """)
     List<AffiliateEntity> findAllByDeceasedFalseOrderByStartDateDesc();
+
     @Query("""
         SELECT a FROM affiliates a
-        WHERE lower(a.firstName) LIKE lower(concat('%', :valueToSearch, '%'))
+        WHERE a.deletedAt is null
+          AND (lower(a.firstName) LIKE lower(concat('%', :valueToSearch, '%'))
            OR lower(a.lastName) LIKE lower(concat('%', :valueToSearch, '%'))
-           OR str(a.dni) LIKE concat('%', :valueToSearch, '%')
+           OR str(a.dni) LIKE concat('%', :valueToSearch, '%'))
         ORDER BY a.startDate DESC
         """)
     List<AffiliateEntity> searchByFirstNameOrLastNameOrDni(@Param("valueToSearch") String valueToSearch);
@@ -46,6 +89,9 @@ public interface AffiliateRepository extends JpaRepository<AffiliateEntity, Long
      * {@code NOT NULL} in the schema so the {@code col >=/<= col} fallback is always
      * satisfied for rows where the operator left the boundary blank.
      *
+     * <p>Soft-deleted rows are always filtered out — the active listing surface never shows
+     * them. The papelera uses {@link #findAllDeleted(Pageable)}.
+     *
      * <p>Per-column semantics:
      *
      * <ul>
@@ -64,6 +110,7 @@ public interface AffiliateRepository extends JpaRepository<AffiliateEntity, Long
         select a from affiliates a
         left join a.relationship r
         where a.deceased = :deceased
+          and a.deletedAt is null
           and (
             :firstName = ''
             or lower(a.firstName) like lower(concat('%', :firstName, '%'))
@@ -92,4 +139,15 @@ public interface AffiliateRepository extends JpaRepository<AffiliateEntity, Long
         @Param("from") LocalDate from,
         @Param("to") LocalDate to,
         Pageable pageable);
+
+    /**
+     * Paginated read of soft-deleted affiliates ordered by most-recent-first. Backs the
+     * admin-only papelera surface — never invoked from the regular operator flows.
+     */
+    @Query("""
+        select a from affiliates a
+        where a.deletedAt is not null
+        order by a.deletedAt desc
+        """)
+    Page<AffiliateEntity> findAllDeleted(Pageable pageable);
 }
