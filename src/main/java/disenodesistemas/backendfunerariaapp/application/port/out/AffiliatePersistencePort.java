@@ -40,4 +40,11 @@ public interface AffiliatePersistencePort {
   AffiliateEntity save(AffiliateEntity affiliate);
 
   void delete(AffiliateEntity affiliate);
+
+  /**
+   * Admin-only read of the soft-deleted affiliates. Returns rows where
+   * {@code deletedAt is not null}, ordered most-recent-first. Backs the
+   * "papelera" surface.
+   */
+  Page<AffiliateEntity> findAllDeleted(Pageable pageable);
 }

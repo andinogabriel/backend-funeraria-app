@@ -157,6 +157,26 @@ class AffiliateSearchPostgresIntegrationTest extends AbstractPostgresIntegration
     assertThat(result.getTotalElements()).isEqualTo(4);
   }
 
+  @Test
+  @DisplayName(
+      "Given a soft-deleted affiliate when the regular search runs then it is filtered out, but findAllDeleted returns it")
+  void softDeletedAffiliateIsHiddenFromRegularReadsAndShownByDeletedQuery() {
+    softDeleteAffiliate(8001L, "admin@example.com");
+
+    // Regular search no longer surfaces the soft-deleted row.
+    final Page<AffiliateEntity> active =
+        port.search(false, "", "", "", "", null, null, defaultPageable());
+    assertThat(active.getContent())
+        .extracting(AffiliateEntity::getDni)
+        .doesNotContain(35000001);
+
+    // The papelera query lists exactly the deleted row with the tombstone fields populated.
+    final Page<AffiliateEntity> deleted = port.findAllDeleted(PageRequest.of(0, 10));
+    assertThat(deleted.getContent()).extracting(AffiliateEntity::getDni).containsExactly(35000001);
+    assertThat(deleted.getContent().get(0).getDeletedAt()).isNotNull();
+    assertThat(deleted.getContent().get(0).getDeletedBy()).isEqualTo("admin@example.com");
+  }
+
   /**
    * Inserts a minimal affiliate row using JdbcTemplate so the test stays decoupled from the
    * JPA mapper. Sets the columns the search query reads from — start_date defaults to the
@@ -187,5 +207,17 @@ class AffiliateSearchPostgresIntegrationTest extends AbstractPostgresIntegration
 
   private static PageRequest defaultPageable() {
     return PageRequest.of(0, 50, Sort.by(Sort.Direction.ASC, "lastName"));
+  }
+
+  /**
+   * Stamps the soft-delete tombstone columns directly via JDBC so the test stays decoupled
+   * from the {@code AffiliateCommandUseCase} flow (which also emits audit + outbox events
+   * that pull a full Spring context worth of fixtures).
+   */
+  private void softDeleteAffiliate(final long id, final String deletedBy) {
+    jdbcTemplate.update(
+        "update affiliates set deleted_at = now(), deleted_by = ? where id = ?",
+        deletedBy,
+        id);
   }
 }

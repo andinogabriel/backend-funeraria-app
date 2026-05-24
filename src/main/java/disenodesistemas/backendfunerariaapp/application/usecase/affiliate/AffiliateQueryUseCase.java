@@ -36,6 +36,16 @@ public class AffiliateQueryUseCase {
         .toList();
   }
 
+  /**
+   * Admin-only listing of the soft-deleted affiliates ordered most-recent-first. Powers the
+   * "papelera" surface — read-only by design, no restore / purge actions in this PR.
+   */
+  @Transactional(readOnly = true)
+  public Page<AffiliateResponseDto> findAllDeleted(final int page, final int limit) {
+    final Pageable pageable = PageRequest.of(page, limit);
+    return affiliatePersistencePort.findAllDeleted(pageable).map(affiliateMapper::toDto);
+  }
+
   @Transactional(readOnly = true)
   public List<AffiliateResponseDto> findAll() {
     return affiliatePersistencePort.findAllByOrderByStartDateDesc().stream()

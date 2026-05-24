@@ -482,6 +482,48 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
 
+  /api/v1/affiliates/deleted:
+    get:
+      tags: [Affiliates]
+      summary: Listar afiliados soft-deleted (papelera, solo ADMIN)
+      description: |
+        Devuelve los afiliados marcados como eliminados (`deletedAt is not null`)
+        ordenados por fecha de borrado descendente. Surface de solo lectura — no
+        existen acciones de restore ni purga en esta versión. Cada item incluye
+        los campos `deletedAt` (ISO-8601 UTC) y `deletedBy` (email del admin que
+        ejecutó el borrado).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Página de afiliados eliminados.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AffiliatePage'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/affiliates/by-user:
     get:
       tags: [Affiliates]
@@ -2984,6 +3026,48 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AddressResponseDto'
+        deletedAt:
+          type: string
+          format: date-time
+          description: |
+            Instant UTC en que el afiliado fue soft-deleted. Ausente en afiliados activos
+            (`@JsonInclude(NON_NULL)`); solo aparece en respuestas del endpoint `/deleted`.
+          example: '2026-05-23T19:42:11Z'
+        deletedBy:
+          type: string
+          description: |
+            Email del admin que ejecutó el soft-delete. Misma semántica de presencia que
+            `deletedAt`.
+          example: admin@example.com
+    AffiliatePage:
+      type: object
+      description: Serializacion del `Page<AffiliateResponseDto>` devuelto por Spring Data.
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/AffiliateResponseDto'
+        pageable:
+          $ref: '#/components/schemas/PageableObject'
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        last:
+          type: boolean
+        size:
+          type: integer
+        number:
+          type: integer
+        sort:
+          $ref: '#/components/schemas/SortObject'
+        first:
+          type: boolean
+        numberOfElements:
+          type: integer
+        empty:
+          type: boolean
     DeceasedRequestDto:
       type: object
       properties:

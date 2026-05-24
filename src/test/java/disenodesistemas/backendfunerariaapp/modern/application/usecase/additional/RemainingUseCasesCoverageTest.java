@@ -126,7 +126,9 @@ class RemainingUseCasesCoverageTest {
         new AffiliateQueryUseCase(affiliatePersistencePort, affiliateMapper, authenticatedUserPort);
     final AffiliateEntity affiliate = AffiliateEntity.builder().dni(30111222).build();
     final AffiliateResponseDto response =
-        new AffiliateResponseDto("Juan", "Perez", 30111222, LocalDate.of(1980, 1, 1), null, Boolean.FALSE, null, null, null, List.of(), List.of());
+        new AffiliateResponseDto(
+            "Juan", "Perez", 30111222, LocalDate.of(1980, 1, 1), null, Boolean.FALSE, null, null,
+            null, List.of(), List.of(), null, null);
 
     when(affiliatePersistencePort.findAllByDeceasedFalseOrderByStartDateDesc()).thenReturn(List.of(affiliate));
     when(affiliatePersistencePort.findAllByOrderByStartDateDesc()).thenReturn(List.of(affiliate));

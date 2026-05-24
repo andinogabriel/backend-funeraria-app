@@ -74,4 +74,9 @@ public class JpaAffiliatePersistenceAdapter implements AffiliatePersistencePort 
   public void delete(final AffiliateEntity affiliate) {
     affiliateRepository.delete(affiliate);
   }
+
+  @Override
+  public Page<AffiliateEntity> findAllDeleted(final Pageable pageable) {
+    return affiliateRepository.findAllDeleted(pageable);
+  }
 }

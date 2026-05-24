@@ -89,6 +89,19 @@ public class AffiliateController {
     return ResponseEntity.ok(affiliateQueryUseCase.findAll());
   }
 
+  /**
+   * Admin-only papelera surface — paginated read of the soft-deleted affiliates ordered
+   * most-recent-first. Read-only by design: this PR ships no restore / purge actions, the
+   * view is for compliance / audit consultation only.
+   */
+  @PreAuthorize("hasRole('ADMIN')")
+  @GetMapping("/deleted")
+  public Page<AffiliateResponseDto> findAllDeleted(
+      @RequestParam(value = "page", defaultValue = "0") final int page,
+      @RequestParam(value = "limit", defaultValue = "10") final int limit) {
+    return affiliateQueryUseCase.findAllDeleted(page, limit);
+  }
+
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
   @GetMapping("/by-user")
   public ResponseEntity<List<AffiliateResponseDto>> findAffiliatesByUser() {

@@ -16,11 +16,15 @@ public interface AffiliateMapper {
   @Mapping(target = "startDate", ignore = true)
   @Mapping(target = "user", ignore = true)
   @Mapping(target = "deceased", ignore = true)
+  @Mapping(target = "deletedAt", ignore = true)
+  @Mapping(target = "deletedBy", ignore = true)
   AffiliateEntity toEntity(AffiliateRequestDto dto);
 
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "startDate", ignore = true)
   @Mapping(target = "user", ignore = true)
   @Mapping(target = "deceased", ignore = true)
+  @Mapping(target = "deletedAt", ignore = true)
+  @Mapping(target = "deletedBy", ignore = true)
   void updateEntity(AffiliateRequestDto dto, @MappingTarget AffiliateEntity entity);
 }
