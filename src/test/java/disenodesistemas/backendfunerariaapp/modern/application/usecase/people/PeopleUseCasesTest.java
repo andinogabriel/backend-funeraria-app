@@ -384,7 +384,8 @@ class PeopleUseCasesTest {
         new FuneralQueryUseCase(funeralPersistencePort, funeralMapper, authenticatedUserPort);
     final Funeral funeral = new Funeral();
     final FuneralResponseDto response =
-        new FuneralResponseDto(1L, null, null, "REC-123", "SER-001", null, null, null, null, null);
+        new FuneralResponseDto(
+            1L, null, null, "REC-123", "SER-001", null, null, null, null, null, null, null);
 
     when(authenticatedUserPort.getAuthenticatedEmail()).thenReturn(TestValues.USER_EMAIL);
     when(funeralPersistencePort.findFuneralsByUserEmail(TestValues.USER_EMAIL))

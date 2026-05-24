@@ -1357,6 +1357,83 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
 
+  /api/v1/funerals/deleted:
+    get:
+      tags: [Funerals]
+      summary: Listar funerales soft-deleted (papelera, solo ADMIN)
+      description: |
+        Devuelve los funerales marcados como eliminados (`deletedAt is not null`)
+        ordenados por fecha de borrado descendente. Surface de solo lectura — no
+        existen acciones de restore ni purga en esta versión. Cada item incluye
+        los campos `deletedAt` (ISO-8601 UTC) y `deletedBy` (email del admin que
+        ejecutó el borrado).
+
+        Filtros opcionales (combinación AND): `deceasedName` / `dni` /
+        `receiptNumber` / `deletedBy` como substring case-insensitive;
+        `deletedFrom` / `deletedTo` como instantes UTC inclusivos sobre
+        `deletedAt`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+        - name: deceasedName
+          in: query
+          required: false
+          schema: { type: string }
+          description: Substring case-insensitive contra `firstName + ' ' + lastName` del fallecido.
+        - name: dni
+          in: query
+          required: false
+          schema: { type: string }
+          description: Substring contra el DNI del fallecido castado a string.
+        - name: receiptNumber
+          in: query
+          required: false
+          schema: { type: string }
+          description: Substring contra el número de recibo del servicio.
+        - name: deletedBy
+          in: query
+          required: false
+          schema: { type: string }
+          description: Substring contra el email del admin que ejecutó el borrado.
+        - name: deletedFrom
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+          description: Instante ISO-8601 UTC inclusivo (cota inferior de `deletedAt`).
+        - name: deletedTo
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+          description: Instante ISO-8601 UTC inclusivo (cota superior de `deletedAt`).
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Página de funerales eliminados.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuneralPage'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/funerals/by-user:
     get:
       tags: [Funerals]
@@ -3515,6 +3592,48 @@ components:
           $ref: '#/components/schemas/DeceasedResponseDto'
         plan:
           $ref: '#/components/schemas/PlanResponseDto'
+        deletedAt:
+          type: string
+          format: date-time
+          description: |
+            Instant UTC en que el funeral fue soft-deleted. Ausente en funerales activos
+            (`@JsonInclude(NON_NULL)`); solo aparece en respuestas del endpoint `/deleted`.
+          example: '2026-05-23T19:42:11Z'
+        deletedBy:
+          type: string
+          description: |
+            Email del admin que ejecutó el soft-delete. Misma semántica de presencia que
+            `deletedAt`.
+          example: admin@example.com
+    FuneralPage:
+      type: object
+      description: Serializacion del `Page<FuneralResponseDto>` devuelto por Spring Data.
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/FuneralResponseDto'
+        pageable:
+          $ref: '#/components/schemas/PageableObject'
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        last:
+          type: boolean
+        size:
+          type: integer
+        number:
+          type: integer
+        sort:
+          $ref: '#/components/schemas/SortObject'
+        first:
+          type: boolean
+        numberOfElements:
+          type: integer
+        empty:
+          type: boolean
     KpiMetricDto:
       type: object
       description: |

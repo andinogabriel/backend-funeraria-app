@@ -7,6 +7,7 @@ import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.web.dto.request.FuneralRequestDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.FuneralResponseDto;
 import jakarta.validation.Valid;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -103,6 +104,31 @@ public class FuneralController {
   @GetMapping("/by-user")
   public ResponseEntity<List<FuneralResponseDto>> findFuneralsByUser() {
     return ResponseEntity.ok(funeralQueryUseCase.findFuneralsByUser());
+  }
+
+  /**
+   * Admin-only papelera surface — filtered + paginated read of the soft-deleted funerals
+   * ordered most-recent-first. Read-only by design: this endpoint ships no restore /
+   * purge actions, the view is for compliance / audit consultation only.
+   *
+   * <p>Same filter contract as the affiliate papelera: ADR-0010 empty-string sentinels
+   * for text params, `deletedFrom` / `deletedTo` as ISO-8601 instants for the
+   * `deletedAt` range. The frontend converts AR-local dates to UTC instants before
+   * sending so the comparison matches operator intent.
+   */
+  @PreAuthorize("hasRole('ADMIN')")
+  @GetMapping("/deleted")
+  public Page<FuneralResponseDto> findAllDeleted(
+      @RequestParam(value = "page", defaultValue = "0") final int page,
+      @RequestParam(value = "limit", defaultValue = "10") final int limit,
+      @RequestParam(value = "deceasedName", required = false) final String deceasedName,
+      @RequestParam(value = "dni", required = false) final String dni,
+      @RequestParam(value = "receiptNumber", required = false) final String receiptNumber,
+      @RequestParam(value = "deletedBy", required = false) final String deletedBy,
+      @RequestParam(value = "deletedFrom", required = false) final Instant deletedFrom,
+      @RequestParam(value = "deletedTo", required = false) final Instant deletedTo) {
+    return funeralQueryUseCase.findAllDeleted(
+        page, limit, deceasedName, dni, receiptNumber, deletedBy, deletedFrom, deletedTo);
   }
 
   /**

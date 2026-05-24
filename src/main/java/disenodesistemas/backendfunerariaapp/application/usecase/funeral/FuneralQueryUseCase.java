@@ -6,6 +6,7 @@ import disenodesistemas.backendfunerariaapp.domain.entity.Funeral;
 import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
 import disenodesistemas.backendfunerariaapp.mapping.FuneralMapper;
 import disenodesistemas.backendfunerariaapp.web.dto.response.FuneralResponseDto;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -112,5 +113,39 @@ public class FuneralQueryUseCase {
 
   private static String blankToEmpty(final String value) {
     return value == null ? "" : value.trim();
+  }
+
+  /**
+   * Admin-only filtered listing of the soft-deleted funerals ordered
+   * most-recent-first. Powers the "papelera" surface — read-only by design, no restore /
+   * purge actions in this PR.
+   *
+   * <p>Same sentinel contract as {@link #getFuneralsPaginated}: empty / blank text
+   * filters become {@code ""}, null date bounds pass through unchanged.
+   */
+  @Transactional(readOnly = true)
+  public Page<FuneralResponseDto> findAllDeleted(
+      final int page,
+      final int limit,
+      final String deceasedName,
+      final String dni,
+      final String receiptNumber,
+      final String deletedBy,
+      final Instant deletedFrom,
+      final Instant deletedTo) {
+    final Pageable pageable = PageRequest.of(page, limit);
+    final Page<Funeral> entities =
+        funeralPersistencePort.findAllDeleted(
+            blankToEmpty(deceasedName),
+            blankToEmpty(dni),
+            blankToEmpty(receiptNumber),
+            blankToEmpty(deletedBy),
+            deletedFrom,
+            deletedTo,
+            pageable);
+    return new PageImpl<>(
+        entities.getContent().stream().map(funeralMapper::toDto).toList(),
+        pageable,
+        entities.getTotalElements());
   }
 }

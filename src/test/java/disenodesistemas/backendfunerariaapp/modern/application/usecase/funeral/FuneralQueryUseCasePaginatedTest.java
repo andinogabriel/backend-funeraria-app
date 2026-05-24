@@ -141,6 +141,6 @@ class FuneralQueryUseCasePaginatedTest {
     // Use the no-arg constructor — record fields default to null which is fine for
     // identity-only assertions.
     return new FuneralResponseDto(
-        null, null, null, null, null, null, null, null, null, null);
+        null, null, null, null, null, null, null, null, null, null, null, null);
   }
 }

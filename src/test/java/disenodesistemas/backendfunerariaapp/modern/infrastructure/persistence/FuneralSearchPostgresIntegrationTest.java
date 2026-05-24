@@ -152,6 +152,63 @@ class FuneralSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTe
     assertThat(result.getTotalElements()).isEqualTo(3);
   }
 
+  @Test
+  @DisplayName(
+      "Given a soft-deleted funeral when the regular search runs then it is filtered out, but findAllDeleted returns it with the tombstone populated")
+  void softDeletedFuneralIsHiddenFromRegularReadsAndShownByDeletedQuery() {
+    softDeleteFuneral(9201L, "admin@example.com");
+
+    // Regular search no longer surfaces the soft-deleted row.
+    final Page<Funeral> active = port.search("", "", "", "", null, null, defaultPageable());
+    assertThat(active.getContent())
+        .extracting(Funeral::getReceiptNumber)
+        .doesNotContain("F-99001");
+
+    // The papelera query lists exactly the deleted row with the tombstone fields populated.
+    final Page<Funeral> deleted =
+        port.findAllDeleted("", "", "", "", null, null, PageRequest.of(0, 10));
+    assertThat(deleted.getContent())
+        .extracting(Funeral::getReceiptNumber)
+        .containsExactly("F-99001");
+    assertThat(deleted.getContent().get(0).getDeletedAt()).isNotNull();
+    assertThat(deleted.getContent().get(0).getDeletedBy()).isEqualTo("admin@example.com");
+  }
+
+  @Test
+  @DisplayName(
+      "Given multiple soft-deleted funerals when the papelera filters narrow the slice then only matching rows come back")
+  void papeleraFiltersNarrowTheDeletedSlice() {
+    softDeleteFuneral(9201L, "alice@example.com");
+    softDeleteFuneral(9202L, "bob@example.com");
+    softDeleteFuneral(9203L, "alice@example.com");
+
+    // deletedBy substring narrows to Alice's two soft-deletes.
+    final Page<Funeral> byActor =
+        port.findAllDeleted("", "", "", "alice", null, null, PageRequest.of(0, 10));
+    assertThat(byActor.getContent())
+        .extracting(Funeral::getReceiptNumber)
+        .containsExactlyInAnyOrder("F-99001", "F-99003");
+
+    // receiptNumber substring narrows to a single recibo.
+    final Page<Funeral> byReceipt =
+        port.findAllDeleted("", "", "002", "", null, null, PageRequest.of(0, 10));
+    assertThat(byReceipt.getContent())
+        .extracting(Funeral::getReceiptNumber)
+        .containsExactly("F-99002");
+  }
+
+  /**
+   * Stamps the soft-delete tombstone columns directly via JDBC so the test stays
+   * decoupled from the {@code FuneralCommandUseCase} flow (which pulls the full Spring
+   * context worth of fixtures).
+   */
+  private void softDeleteFuneral(final long id, final String deletedBy) {
+    jdbcTemplate.update(
+        "update funeral set deleted_at = now(), deleted_by = ? where id = ?",
+        deletedBy,
+        id);
+  }
+
   private void insertDeceased(
       final long id,
       final int dni,

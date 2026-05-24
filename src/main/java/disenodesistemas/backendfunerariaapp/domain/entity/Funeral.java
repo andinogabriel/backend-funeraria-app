@@ -20,6 +20,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.Digits;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity(name = "funeral")
@@ -51,6 +52,23 @@ public class Funeral implements Serializable {
   private BigDecimal totalAmount;
 
   private LocalDateTime registerDate;
+
+  /**
+   * Soft-delete tombstone. Populated by {@code FuneralCommandUseCase.delete} with the UTC
+   * moment the record was removed; {@code null} for active funerals. Every operational read
+   * filters on {@code deletedAt is null} so soft-deleted rows stay invisible to the normal
+   * listings. The admin-only papelera endpoint queries the inverse.
+   */
+  @Column(name = "deleted_at")
+  private Instant deletedAt;
+
+  /**
+   * Email of the admin that requested the soft delete. Captured from
+   * {@code AuthenticatedUserPort} at delete time so the papelera can show "borrado por"
+   * without joining the audit log. {@code null} for active funerals.
+   */
+  @Column(name = "deleted_by", length = 255)
+  private String deletedBy;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "receipt_type_id")
