@@ -95,6 +95,8 @@ class FuneralCommandUseCaseTest {
                 null,
                 null,
                 null),
+            null,
+            null,
             null);
 
     final UserEntity actor = SecurityTestDataFactory.userEntity();
@@ -156,17 +158,23 @@ class FuneralCommandUseCaseTest {
 
   @Test
   @DisplayName(
-      "Given a persisted funeral when the funeral is deleted then it removes the aggregate resolved by the query use case")
-  void givenAPersistedFuneralWhenTheFuneralIsDeletedThenItRemovesTheAggregateResolvedByTheQueryUseCase() {
+      "Given a persisted funeral when the funeral is deleted then it stamps the tombstone fields and saves (soft-delete) instead of hard-removing the row")
+  void givenAPersistedFuneralWhenTheFuneralIsDeletedThenItSoftDeletesTheAggregate() {
     final Funeral persistedFuneral = new Funeral();
     final UserEntity actor = SecurityTestDataFactory.userEntity();
 
     when(funeralQueryUseCase.findEntityById(1L)).thenReturn(persistedFuneral);
+    when(authenticatedUserPort.getAuthenticatedEmail()).thenReturn(actor.getEmail());
     when(authenticatedUserPort.getAuthenticatedUser()).thenReturn(actor);
 
     funeralCommandUseCase.delete(1L);
 
-    verify(funeralPersistencePort).delete(persistedFuneral);
+    // Soft-delete contract: the tombstone fields are populated and the entity is
+    // saved (not removed). The audit + outbox emission stays identical.
+    assertThat(persistedFuneral.getDeletedAt()).isNotNull();
+    assertThat(persistedFuneral.getDeletedBy()).isEqualTo(actor.getEmail());
+    verify(funeralPersistencePort).save(persistedFuneral);
+    verify(funeralPersistencePort, org.mockito.Mockito.never()).delete(persistedFuneral);
     verify(auditEventPort)
         .record(
             AuditAction.FUNERAL_DELETED,

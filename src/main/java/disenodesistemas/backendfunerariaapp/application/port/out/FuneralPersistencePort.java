@@ -1,6 +1,7 @@
 package disenodesistemas.backendfunerariaapp.application.port.out;
 
 import disenodesistemas.backendfunerariaapp.domain.entity.Funeral;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -33,4 +34,19 @@ public interface FuneralPersistencePort {
   Funeral save(Funeral funeral);
 
   void delete(Funeral funeral);
+
+  /**
+   * Filtered + paginated admin-only read of the soft-deleted funerals ordered
+   * most-recent-first. Sentinel contract mirrors {@link #search}: callers pass
+   * {@code ""} for inactive text filters and {@code null} for inactive {@code deletedAt}
+   * bounds.
+   */
+  Page<Funeral> findAllDeleted(
+      String deceasedName,
+      String dni,
+      String receiptNumber,
+      String deletedBy,
+      Instant deletedFrom,
+      Instant deletedTo,
+      Pageable pageable);
 }

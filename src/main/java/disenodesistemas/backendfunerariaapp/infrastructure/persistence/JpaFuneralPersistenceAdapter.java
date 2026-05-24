@@ -3,6 +3,7 @@ package disenodesistemas.backendfunerariaapp.infrastructure.persistence;
 import disenodesistemas.backendfunerariaapp.application.port.out.FuneralPersistencePort;
 import disenodesistemas.backendfunerariaapp.domain.entity.Funeral;
 import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.FuneralRepository;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -62,5 +63,18 @@ public class JpaFuneralPersistenceAdapter implements FuneralPersistencePort {
   @Transactional
   public void delete(final Funeral funeral) {
     funeralRepository.delete(funeral);
+  }
+
+  @Override
+  public Page<Funeral> findAllDeleted(
+      final String deceasedName,
+      final String dni,
+      final String receiptNumber,
+      final String deletedBy,
+      final Instant deletedFrom,
+      final Instant deletedTo,
+      final Pageable pageable) {
+    return funeralRepository.findAllDeleted(
+        deceasedName, dni, receiptNumber, deletedBy, deletedFrom, deletedTo, pageable);
   }
 }

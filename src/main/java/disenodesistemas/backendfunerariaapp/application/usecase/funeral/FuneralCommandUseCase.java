@@ -17,6 +17,7 @@ import disenodesistemas.backendfunerariaapp.mapping.FuneralMapper;
 import disenodesistemas.backendfunerariaapp.web.dto.request.FuneralRequestDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.DeceasedResponseDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.FuneralResponseDto;
+import java.time.Instant;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -74,9 +75,23 @@ public class FuneralCommandUseCase {
     return updatedFuneral;
   }
 
+  /**
+   * Soft-deletes the funeral identified by {@code id}: stamps {@code deletedAt = now()}
+   * and {@code deletedBy = <actor email>}, then saves. The row stays in the DB so the
+   * admin-only papelera surface can still surface it, but every regular read filters
+   * it out (see {@code FuneralRepository}). The receipt number stays globally unique —
+   * a future create with the same number keeps hitting the existing 409 path.
+   *
+   * <p>The {@link AuditAction#FUNERAL_DELETED} audit entry and {@link FuneralDeleted}
+   * outbox event are still emitted so the trail downstream consumers depend on stays
+   * intact.
+   */
   @Transactional
   public void delete(final Long id) {
-    funeralPersistencePort.delete(funeralQueryUseCase.findEntityById(id));
+    final Funeral funeral = funeralQueryUseCase.findEntityById(id);
+    funeral.setDeletedAt(Instant.now());
+    funeral.setDeletedBy(authenticatedUserPort.getAuthenticatedEmail());
+    funeralPersistencePort.save(funeral);
     logFuneralDeleted(id);
     recordFuneralDeleted(id);
     outboxPort.publish(new FuneralDeleted(id));

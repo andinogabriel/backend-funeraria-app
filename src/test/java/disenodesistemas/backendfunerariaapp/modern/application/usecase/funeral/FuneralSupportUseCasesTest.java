@@ -264,7 +264,8 @@ class FuneralSupportUseCasesTest {
     final Funeral funeral = new Funeral();
     funeral.setId(1L);
     final FuneralResponseDto response =
-        new FuneralResponseDto(1L, null, null, "REC-123", "SER-001", null, null, null, null, null);
+        new FuneralResponseDto(
+            1L, null, null, "REC-123", "SER-001", null, null, null, null, null, null, null);
 
     when(funeralPersistencePort.findAllByOrderByRegisterDateDesc()).thenReturn(List.of(funeral));
     when(funeralPersistencePort.findById(1L)).thenReturn(Optional.of(funeral));
