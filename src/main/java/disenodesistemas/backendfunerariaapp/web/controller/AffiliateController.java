@@ -6,6 +6,7 @@ import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.web.dto.request.AffiliateRequestDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.AffiliateResponseDto;
 import jakarta.validation.Valid;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -90,16 +91,29 @@ public class AffiliateController {
   }
 
   /**
-   * Admin-only papelera surface — paginated read of the soft-deleted affiliates ordered
-   * most-recent-first. Read-only by design: this PR ships no restore / purge actions, the
-   * view is for compliance / audit consultation only.
+   * Admin-only papelera surface — filtered + paginated read of the soft-deleted affiliates
+   * ordered most-recent-first. Read-only by design: this endpoint ships no restore / purge
+   * actions, the view is for compliance / audit consultation only.
+   *
+   * <p>Filters mirror the per-column header menus on the frontend papelera table. Every
+   * filter is optional and combines with AND semantics; the empty-string sentinel pattern
+   * applies (an absent param is treated as the empty filter). {@code deletedFrom} and
+   * {@code deletedTo} are ISO-8601 instants — the frontend converts AR-local dates to UTC
+   * before sending so the comparison matches operator intent.
    */
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping("/deleted")
   public Page<AffiliateResponseDto> findAllDeleted(
       @RequestParam(value = "page", defaultValue = "0") final int page,
-      @RequestParam(value = "limit", defaultValue = "10") final int limit) {
-    return affiliateQueryUseCase.findAllDeleted(page, limit);
+      @RequestParam(value = "limit", defaultValue = "10") final int limit,
+      @RequestParam(value = "firstName", required = false) final String firstName,
+      @RequestParam(value = "lastName", required = false) final String lastName,
+      @RequestParam(value = "dni", required = false) final String dni,
+      @RequestParam(value = "deletedBy", required = false) final String deletedBy,
+      @RequestParam(value = "deletedFrom", required = false) final Instant deletedFrom,
+      @RequestParam(value = "deletedTo", required = false) final Instant deletedTo) {
+    return affiliateQueryUseCase.findAllDeleted(
+        page, limit, firstName, lastName, dni, deletedBy, deletedFrom, deletedTo);
   }
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")

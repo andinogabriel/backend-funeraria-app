@@ -492,6 +492,10 @@ paths:
         existen acciones de restore ni purga en esta versión. Cada item incluye
         los campos `deletedAt` (ISO-8601 UTC) y `deletedBy` (email del admin que
         ejecutó el borrado).
+
+        Filtros opcionales (combinación AND): `firstName` / `lastName` / `dni` /
+        `deletedBy` como substring case-insensitive; `deletedFrom` / `deletedTo`
+        como instantes UTC inclusivos sobre `deletedAt`.
       security:
         - bearerAuth: []
       parameters:
@@ -509,6 +513,36 @@ paths:
             type: integer
             default: 10
             minimum: 1
+        - name: firstName
+          in: query
+          required: false
+          schema: { type: string }
+          description: Substring case-insensitive contra el nombre del afiliado.
+        - name: lastName
+          in: query
+          required: false
+          schema: { type: string }
+          description: Substring case-insensitive contra el apellido del afiliado.
+        - name: dni
+          in: query
+          required: false
+          schema: { type: string }
+          description: Substring case-insensitive contra el DNI castado a string.
+        - name: deletedBy
+          in: query
+          required: false
+          schema: { type: string }
+          description: Substring case-insensitive contra el email del admin que ejecutó el borrado.
+        - name: deletedFrom
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+          description: Instante ISO-8601 UTC inclusivo (cota inferior de `deletedAt`).
+        - name: deletedTo
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+          description: Instante ISO-8601 UTC inclusivo (cota superior de `deletedAt`).
         - $ref: '#/components/parameters/XDeviceId'
       responses:
         '200':

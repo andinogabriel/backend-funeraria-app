@@ -171,10 +171,41 @@ class AffiliateSearchPostgresIntegrationTest extends AbstractPostgresIntegration
         .doesNotContain(35000001);
 
     // The papelera query lists exactly the deleted row with the tombstone fields populated.
-    final Page<AffiliateEntity> deleted = port.findAllDeleted(PageRequest.of(0, 10));
+    final Page<AffiliateEntity> deleted = unfilteredDeleted();
     assertThat(deleted.getContent()).extracting(AffiliateEntity::getDni).containsExactly(35000001);
     assertThat(deleted.getContent().get(0).getDeletedAt()).isNotNull();
     assertThat(deleted.getContent().get(0).getDeletedBy()).isEqualTo("admin@example.com");
+  }
+
+  @Test
+  @DisplayName(
+      "Given multiple soft-deleted affiliates when the papelera filters narrow the slice then only matching rows come back")
+  void papeleraFiltersNarrowTheDeletedSlice() {
+    softDeleteAffiliate(8001L, "alice@example.com"); // Mariana Quiroga
+    softDeleteAffiliate(8002L, "bob@example.com"); // Ricardo Ferreyra
+    softDeleteAffiliate(8003L, "alice@example.com"); // Sofia Vazquez
+
+    // firstName substring narrows to the two whose first name matches "ma" — case-insensitive
+    // (Mariana matches; Sofía does not; Ricardo does not).
+    final Page<AffiliateEntity> byFirstName =
+        port.findAllDeleted("ma", "", "", "", null, null, PageRequest.of(0, 10));
+    assertThat(byFirstName.getContent())
+        .extracting(AffiliateEntity::getDni)
+        .containsExactly(35000001);
+
+    // deletedBy substring narrows to Alice's two soft-deletes.
+    final Page<AffiliateEntity> byActor =
+        port.findAllDeleted("", "", "", "alice", null, null, PageRequest.of(0, 10));
+    assertThat(byActor.getContent())
+        .extracting(AffiliateEntity::getDni)
+        .containsExactlyInAnyOrder(35000001, 35000003);
+
+    // No filters at all returns every deleted row.
+    assertThat(unfilteredDeleted().getTotalElements()).isEqualTo(3);
+  }
+
+  private Page<AffiliateEntity> unfilteredDeleted() {
+    return port.findAllDeleted("", "", "", "", null, null, PageRequest.of(0, 10));
   }
 
   /**

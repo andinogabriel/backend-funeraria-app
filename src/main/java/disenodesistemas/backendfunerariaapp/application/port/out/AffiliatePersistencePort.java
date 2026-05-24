@@ -1,6 +1,7 @@
 package disenodesistemas.backendfunerariaapp.application.port.out;
 
 import disenodesistemas.backendfunerariaapp.domain.entity.AffiliateEntity;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -42,9 +43,18 @@ public interface AffiliatePersistencePort {
   void delete(AffiliateEntity affiliate);
 
   /**
-   * Admin-only read of the soft-deleted affiliates. Returns rows where
-   * {@code deletedAt is not null}, ordered most-recent-first. Backs the
-   * "papelera" surface.
+   * Filtered + paginated admin-only read of the soft-deleted affiliates ordered
+   * most-recent-first. Sentinel contract: callers pass {@code ""} for inactive text
+   * filters and {@code null} for inactive {@code deletedAt} bounds. See
+   * {@link disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.AffiliateRepository#findAllDeleted}
+   * for the JPQL behind it.
    */
-  Page<AffiliateEntity> findAllDeleted(Pageable pageable);
+  Page<AffiliateEntity> findAllDeleted(
+      String firstName,
+      String lastName,
+      String dni,
+      String deletedBy,
+      Instant deletedFrom,
+      Instant deletedTo,
+      Pageable pageable);
 }
