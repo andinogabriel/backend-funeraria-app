@@ -71,8 +71,13 @@ public class FuneralController {
         page, limit, sortBy, sortDir, deceasedName, dni, receiptNumber, planName, from, to);
   }
 
+  // The `{id:\\d+}` constraint prevents Spring from matching literal segments like
+  // `/deleted` against this pattern — without it, the dispatcher tried to convert
+  // the string `"deleted"` to `Long` and threw 500 (production bug discovered after
+  // the papelera endpoint shipped). Same constraint applied to every `{id}`-bound
+  // mapping in this controller so the rule is consistent.
   @PreAuthorize("hasRole('ADMIN')")
-  @GetMapping("/{id}")
+  @GetMapping("/{id:\\d+}")
   public ResponseEntity<FuneralResponseDto> findById(@PathVariable final Long id) {
     return ResponseEntity.ok(funeralQueryUseCase.findById(id));
   }
@@ -86,14 +91,14 @@ public class FuneralController {
   }
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-  @PutMapping("/{id}")
+  @PutMapping("/{id:\\d+}")
   public ResponseEntity<FuneralResponseDto> update(
       @PathVariable final Long id, @RequestBody @Valid final FuneralRequestDto funeralRequestDto) {
     return ResponseEntity.ok(funeralCommandUseCase.update(id, funeralRequestDto));
   }
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-  @DeleteMapping("/{id}")
+  @DeleteMapping("/{id:\\d+}")
   public ResponseEntity<OperationStatusModel> delete(@PathVariable final Long id) {
     funeralCommandUseCase.delete(id);
     return ResponseEntity.ok(
@@ -138,7 +143,7 @@ public class FuneralController {
    * stable filename based on the funeral id so multiple downloads do not collide.
    */
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-  @GetMapping(value = "/{id}/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+  @GetMapping(value = "/{id:\\d+}/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
   public ResponseEntity<byte[]> downloadPdf(@PathVariable final Long id) {
     final byte[] body = funeralPdfUseCase.generatePdf(id);
     final ContentDisposition disposition =
