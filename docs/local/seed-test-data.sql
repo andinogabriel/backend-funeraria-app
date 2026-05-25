@@ -9,12 +9,18 @@
 -- format NIFs, plausible prices) but carries clear markers so you can tell at
 -- a glance which rows are test data:
 --
---   * Affiliates have DNIs in the 35000001 .. 35000020 range.
+--   * Affiliates have DNIs in the 35000001 .. 35000150 range.
+--   * Deceased have DNIs in the 38000001 .. 38000120 range.
 --   * Suppliers have NIFs starting with "30-99" (the 99 prefix is rare in
 --     real Argentine CUIT issuance).
---   * Incomes have receipt numbers in the 99001 .. 99099 range.
---   * Funerals have receipt numbers F-99001 .. F-99099 with series "T".
+--   * Incomes have receipt numbers in the 99001 .. 99100 range.
+--   * Funerals have receipt numbers F-99001 .. F-99120 with series "T".
 --   * Items have codes prefixed "TEST-".
+--
+-- Volumes are sized so the operator hits the pagination + per-column filters
+-- on every server-side list (~10–15 pages of 10 rows on each surface). Names,
+-- birth dates, deceased flags, plans, etc. cycle deterministically through
+-- the catalogs via modulo arithmetic so re-runs produce identical data.
 --
 -- Run it
 -- ------
@@ -34,16 +40,18 @@
 --
 -- What the seed populates
 -- -----------------------
---   *  5 suppliers
---   *  8 brands
---   *  6 categories
---   * 18 items (each linked to a brand + category)
---   *  4 plans + items_plan rows for each
---   * 18 affiliates (mix of alive / deceased)
---   *  4 deceased rows with addresses (linked to funerals)
---   *  4 funerals (different receipt types + plans)
---   * 12 incomes (mix of suppliers + dates spanning ~3 months for date-range tests)
---   * 24 income_details (2 per income avg)
+--   *   5 suppliers
+--   *   8 brands
+--   *   6 categories
+--   *  18 items (each linked to a brand + category)
+--   *   4 plans + items_plan rows for each
+--   * 150 affiliates (18 hand-crafted with intentional family groupings +
+--                     132 synthetic via generate_series)
+--   * 120 deceased rows with linked funerals (4 hand-crafted with addresses +
+--                     116 synthetic; funerals spread across ~32 months)
+--   * 120 funerals (matching deceased 1:1, receipt types + plans cycled)
+--   * 100 incomes (12 hand-crafted + 88 synthetic across ~28 months)
+--   * ~200 income_details (2 lines per synthetic income on average)
 --
 -- After running, the activity-feed + dashboard KPIs will NOT immediately reflect
 -- this data: those panels project events from the outbox, and direct SQL inserts
@@ -68,9 +76,9 @@ begin;
 -- income_details → incomes
 delete from income_details
 where income_id in (
-    select id from incomes where receipt_number between 99001 and 99099
+    select id from incomes where receipt_number between 99001 and 99999
 );
-delete from incomes where receipt_number between 99001 and 99099;
+delete from incomes where receipt_number between 99001 and 99999;
 
 -- funeral → deceased → addresses (deceased.address_id is unique on the address)
 -- We keep a stash of address ids first because the addresses are FK-cascaded only
@@ -82,11 +90,11 @@ declare
 begin
     select coalesce(array_agg(id), array[]::bigint[]) into test_deceased_ids
     from deceased
-    where dni between 38000001 and 38000099;
+    where dni between 38000001 and 38000999;
 
     select coalesce(array_agg(address_id), array[]::bigint[]) into test_address_ids
     from deceased
-    where dni between 38000001 and 38000099 and address_id is not null;
+    where dni between 38000001 and 38000999 and address_id is not null;
 
     delete from funeral where deceased_id = any(test_deceased_ids);
     delete from deceased where id = any(test_deceased_ids);
@@ -110,7 +118,7 @@ delete from categories where name like '[TEST]%';
 -- But the audit log + outbox carry rows with these dnis; those are NOT cleaned
 -- here because they're operational logs of past activity, not part of the
 -- seed itself. See header.
-delete from affiliates where dni between 35000001 and 35000020;
+delete from affiliates where dni between 35000001 and 35000999;
 
 -- suppliers — referenced by addresses (FK), mobile_numbers (FK), incomes (cleaned above),
 -- and the items table doesn't link directly. Wipe addresses tied to test suppliers.
@@ -332,6 +340,67 @@ from (values
 ) as seed(dni, first_name, last_name, birth_date, deceased, start_date, gender_id, relationship_id);
 
 -- ---------------------------------------------------------------------------
+-- 7b. AFFILIATES bulk — 132 more synthetic rows so the operator hits the
+-- pagination + filter affordances on /afiliados with realistic volume.
+-- DNIs 35000019..35000150. Deterministic from `n` so re-runs produce identical
+-- data; modulo arithmetic spreads names, birth dates, gender, relationships
+-- across the catalog. ~8% flipped to `deceased = true` so the deceased flag
+-- has something to surface.
+-- ---------------------------------------------------------------------------
+
+with admin_user as (
+    select u.id
+    from users u
+    join user_role ur on ur.user_id = u.id
+    join roles r on r.id = ur.role_id
+    where r.name = 'ROLE_ADMIN'
+    order by u.id
+    limit 1
+),
+first_names(name) as (values
+    ('Lucas'), ('Martín'), ('Diego'), ('Federico'), ('Carlos'), ('Roberto'),
+    ('Hernán'), ('Pablo'), ('Sergio'), ('Daniel'), ('Maximiliano'), ('Nicolás'),
+    ('Sebastián'), ('Mauricio'), ('Gustavo'), ('Eduardo'), ('Alejandro'),
+    ('Fernando'), ('Gabriel'), ('Andrés'),
+    ('Laura'), ('Patricia'), ('Silvia'), ('Verónica'), ('Claudia'), ('Mónica'),
+    ('Adriana'), ('Marta'), ('Susana'), ('Liliana'), ('Florencia'), ('Carolina'),
+    ('Belén'), ('Romina'), ('Daniela'), ('Camila'), ('Agustina'), ('Julieta'),
+    ('Lorena'), ('Natalia')
+),
+last_names(name) as (values
+    ('González'), ('Rodríguez'), ('Gómez'), ('Fernández'), ('López'), ('Díaz'),
+    ('Martínez'), ('Pérez'), ('García'), ('Sánchez'), ('Romero'), ('Torres'),
+    ('Álvarez'), ('Ruiz'), ('Ramírez'), ('Flores'), ('Acosta'), ('Benítez'),
+    ('Medina'), ('Suárez'), ('Aguirre'), ('Ojeda'), ('Ortega'), ('Molina'),
+    ('Castro'), ('Vega'), ('Cabrera'), ('Núñez'), ('Rojas'), ('Silva')
+),
+first_indexed as (
+    select name, row_number() over () - 1 as idx from first_names
+),
+last_indexed as (
+    select name, row_number() over () - 1 as idx from last_names
+)
+insert into affiliates (dni, first_name, last_name, birth_date, deceased, start_date, gender_id, relationship_id, user_id)
+select
+    35000000 + n,
+    (select name from first_indexed where idx = (n * 7) % 40),
+    (select name from last_indexed where idx = (n * 11) % 30),
+    -- Birth dates between 1935-01-01 and 2010-12-31 (~75 years span, ~27000 days).
+    date '1935-01-01' + ((n * 137) % 27000) * interval '1 day',
+    -- ~8% deceased so the lifecycle filter on /afiliados has matches.
+    (n % 13 = 0),
+    -- Start dates between 2022-01-01 and 2026-04-30 (~1580 days).
+    date '2022-01-01' + ((n * 17) % 1580) * interval '1 day',
+    -- Gender 1 (Femenino) or 2 (Masculino), alternating.
+    1 + (n % 2),
+    -- Cycle through relationships 1..30 (the V2 catalog has 31 with one
+    -- intentional duplicate); modulo gives a deterministic spread without
+    -- skewing the distribution toward early ids.
+    1 + (n % 30),
+    (select id from admin_user)
+from generate_series(19, 150) as n;
+
+-- ---------------------------------------------------------------------------
 -- 8. ADDRESSES for the deceased (deceased.address_id is unique).
 -- ---------------------------------------------------------------------------
 
@@ -399,6 +468,114 @@ from (values
     ('F-99003', '2024-11-24'::date, 21.00,  850000.00, '[TEST] Plan Premium',   1, 38000003),
     ('F-99004', '2024-12-10'::date, 21.00, 1100000.00, '[TEST] Plan Memorial',  1, 38000004)
 ) as seed(receipt_number, funeral_date, tax, total_amount, plan_name, receipt_type_id, deceased_dni);
+
+-- ---------------------------------------------------------------------------
+-- 10b. DECEASED + FUNERAL bulk — 116 more synthetic services so the operator
+-- hits pagination + dateRange filters on /servicios with realistic volume.
+-- DNIs 38000005..38000120, receipt numbers F-99005..F-99120. Funeral dates
+-- spread across ~32 months (2023-09 through 2026-05) so the dateRange column
+-- menu actually slices something. `address_id` left null on the bulk rows —
+-- the placeOfDeath section on the detail view is optional.
+-- ---------------------------------------------------------------------------
+
+with admin_user as (
+    select u.id
+    from users u
+    join user_role ur on ur.user_id = u.id
+    join roles r on r.id = ur.role_id
+    where r.name = 'ROLE_ADMIN'
+    order by u.id
+    limit 1
+),
+first_names(name) as (values
+    ('Lucas'), ('Martín'), ('Diego'), ('Federico'), ('Carlos'), ('Roberto'),
+    ('Hernán'), ('Pablo'), ('Sergio'), ('Daniel'), ('Maximiliano'), ('Nicolás'),
+    ('Sebastián'), ('Mauricio'), ('Gustavo'), ('Eduardo'), ('Alejandro'),
+    ('Fernando'), ('Gabriel'), ('Andrés'),
+    ('Laura'), ('Patricia'), ('Silvia'), ('Verónica'), ('Claudia'), ('Mónica'),
+    ('Adriana'), ('Marta'), ('Susana'), ('Liliana'), ('Florencia'), ('Carolina'),
+    ('Belén'), ('Romina'), ('Daniela'), ('Camila'), ('Agustina'), ('Julieta'),
+    ('Lorena'), ('Natalia')
+),
+last_names(name) as (values
+    ('González'), ('Rodríguez'), ('Gómez'), ('Fernández'), ('López'), ('Díaz'),
+    ('Martínez'), ('Pérez'), ('García'), ('Sánchez'), ('Romero'), ('Torres'),
+    ('Álvarez'), ('Ruiz'), ('Ramírez'), ('Flores'), ('Acosta'), ('Benítez'),
+    ('Medina'), ('Suárez'), ('Aguirre'), ('Ojeda'), ('Ortega'), ('Molina'),
+    ('Castro'), ('Vega'), ('Cabrera'), ('Núñez'), ('Rojas'), ('Silva')
+),
+first_indexed as (
+    select name, row_number() over () - 1 as idx from first_names
+),
+last_indexed as (
+    select name, row_number() over () - 1 as idx from last_names
+),
+plan_lookup as (
+    select id, name, row_number() over (order by id) - 1 as idx
+    from plans where name like '[TEST]%'
+),
+plan_total_amounts(name, amount) as (values
+    ('[TEST] Plan Económico',  280000.00::numeric),
+    ('[TEST] Plan Standard',   520000.00::numeric),
+    ('[TEST] Plan Premium',    850000.00::numeric),
+    ('[TEST] Plan Memorial',  1100000.00::numeric)
+),
+bulk_input as (
+    select
+        n,
+        38000000 + n as dni,
+        'F-' || lpad((99000 + n)::text, 5, '0') as receipt_number,
+        (select name from first_indexed where idx = (n * 7) % 40) as first_name,
+        (select name from last_indexed where idx = (n * 11) % 30) as last_name,
+        -- Birth dates between 1925-01-01 and 1985-12-31 (~60 years; the
+        -- deceased skew older than the affiliate population).
+        date '1925-01-01' + ((n * 113) % 22300) as birth_date,
+        -- Funeral dates between 2023-09-01 and 2026-05-15 (~990 days).
+        date '2023-09-01' + ((n * 23) % 990) as funeral_date,
+        -- Cycle through gender / relationship / death_cause (V2 catalogs):
+        --   genders 1..3, relationships 1..31, death_causes 1..4.
+        1 + (n % 3) as gender_id,
+        1 + (n % 31) as relationship_id,
+        1 + (n % 4) as death_cause_id,
+        -- ~30% bound to an existing affiliate via the `affiliated` flag.
+        (n % 3 = 0) as affiliated,
+        -- Receipt types 1..3 cycle so the column filter on /servicios has data.
+        1 + (n % 3) as receipt_type_id,
+        -- Pick the plan deterministically across the 4-tier catalog.
+        (select name from plan_lookup where idx = n % 4) as plan_name
+    from generate_series(5, 120) as n
+),
+inserted_deceased as (
+    insert into deceased (id, dni, first_name, last_name, birth_date, death_date, register_date, affiliated, gender_id, relationship_id, death_cause_id, address_id, user_id)
+    select
+        nextval('deceased_seq'),
+        bulk_input.dni,
+        bulk_input.first_name,
+        bulk_input.last_name,
+        bulk_input.birth_date,
+        -- Death date is the day before the funeral (1-day funeral lead time).
+        bulk_input.funeral_date - interval '1 day',
+        (bulk_input.funeral_date - interval '1 day')::timestamp + time '14:00',
+        bulk_input.affiliated,
+        bulk_input.gender_id,
+        bulk_input.relationship_id,
+        bulk_input.death_cause_id,
+        null,
+        (select id from admin_user)
+    from bulk_input
+    returning id, dni
+)
+insert into funeral (receipt_number, receipt_series, funeral_date, register_date, tax, total_amount, plan_id, receipt_type_id, deceased_id)
+select
+    bulk_input.receipt_number, 'T',
+    bulk_input.funeral_date::timestamp + time '10:30',
+    bulk_input.funeral_date::timestamp - interval '1 day',
+    21.00,
+    (select amount from plan_total_amounts where name = bulk_input.plan_name),
+    (select id from plan_lookup where name = bulk_input.plan_name),
+    bulk_input.receipt_type_id,
+    (select id from inserted_deceased where dni = bulk_input.dni)
+from bulk_input;
 
 -- ---------------------------------------------------------------------------
 -- 11. INCOMES (compras a proveedores). 12 receipts spread over 3 months so the
@@ -506,6 +683,93 @@ from (values
 ) as seed(receipt_number, item_code, quantity, purchase_price, sale_price);
 
 -- ---------------------------------------------------------------------------
+-- 12b. INCOMES + INCOME_DETAILS bulk — 88 more receipts spread across ~28
+-- months (2024-01 through 2026-05) so the /ingresos dateRange filter has
+-- volume to slice. Receipt numbers 99013..99100. Two detail lines per
+-- income on average so the totals + detail dialog look populated.
+-- ---------------------------------------------------------------------------
+
+with admin_user as (
+    select u.id
+    from users u
+    join user_role ur on ur.user_id = u.id
+    join roles r on r.id = ur.role_id
+    where r.name = 'ROLE_ADMIN'
+    order by u.id
+    limit 1
+),
+supplier_lookup as (
+    select id, nif, row_number() over (order by id) - 1 as idx
+    from suppliers where nif like '30-99%'
+),
+item_lookup as (
+    select id, code, price, row_number() over (order by id) - 1 as idx
+    from items where code like 'TEST-%'
+),
+item_count as (select count(*)::int as n from item_lookup),
+bulk_input as (
+    select
+        n,
+        99000 + n as receipt_number,
+        -- Income dates between 2024-01-15 and 2026-05-10 (~846 days).
+        date '2024-01-15' + ((n * 19) % 846) as income_date,
+        -- Cycle through the 5 suppliers; tax 21% on most, 10.5% on a few.
+        (select nif from supplier_lookup where idx = n % 5) as supplier_nif,
+        case when n % 7 = 0 then 10.50 else 21.00 end as tax,
+        -- Plausible total amounts between $150k and $2.5M.
+        round(150000 + ((n * 47) % 2350000)::numeric, 2) as total_amount
+    from generate_series(13, 100) as n
+),
+inserted_incomes as (
+    insert into incomes (id, deleted, tax, total_amount, income_date, last_modified_date, receipt_number, receipt_series, receipt_type_id, supplier_id, user_id, user_modified_id)
+    select
+        nextval('incomes_seq'),
+        false,
+        bulk_input.tax,
+        bulk_input.total_amount,
+        bulk_input.income_date::timestamp + time '11:00',
+        bulk_input.income_date::timestamp + time '11:00',
+        bulk_input.receipt_number,
+        1001,
+        1,
+        (select id from supplier_lookup where nif = bulk_input.supplier_nif),
+        (select id from admin_user),
+        (select id from admin_user)
+    from bulk_input
+    returning id, receipt_number
+),
+-- Two synthetic detail lines per bulk income — picking items deterministically
+-- from the cycle so each receipt has different content.
+detail_rows as (
+    select
+        bulk_input.receipt_number,
+        (select code from item_lookup
+         where idx = (bulk_input.n * 3) % (select n from item_count)) as item_code,
+        2 + (bulk_input.n % 8) as quantity,
+        round((50000 + ((bulk_input.n * 41) % 250000))::numeric, 2) as purchase_price,
+        round((70000 + ((bulk_input.n * 41) % 250000))::numeric, 2) as sale_price
+    from bulk_input
+    union all
+    select
+        bulk_input.receipt_number,
+        (select code from item_lookup
+         where idx = (bulk_input.n * 5 + 1) % (select n from item_count)) as item_code,
+        1 + (bulk_input.n % 4) as quantity,
+        round((30000 + ((bulk_input.n * 67) % 200000))::numeric, 2) as purchase_price,
+        round((45000 + ((bulk_input.n * 67) % 200000))::numeric, 2) as sale_price
+    from bulk_input
+)
+insert into income_details (id, income_id, item_id, quantity, purchase_price, sale_price)
+select
+    nextval('income_details_seq'),
+    (select id from inserted_incomes where receipt_number = detail_rows.receipt_number),
+    (select id from item_lookup where code = detail_rows.item_code),
+    detail_rows.quantity,
+    detail_rows.purchase_price,
+    detail_rows.sale_price
+from detail_rows;
+
+-- ---------------------------------------------------------------------------
 -- 13. SEQUENCE REFRESH so future inserts via JPA do not collide.
 -- ---------------------------------------------------------------------------
 
@@ -532,9 +796,9 @@ commit;
 --   select count(*) from categories where name like '[TEST]%';   -- expects 6
 --   select count(*) from items      where code like 'TEST-%';    -- expects 18
 --   select count(*) from plans      where name like '[TEST]%';   -- expects 4
---   select count(*) from affiliates where dni between 35000001 and 35000020;  -- expects 18
---   select count(*) from deceased   where dni between 38000001 and 38000099;  -- expects 4
---   select count(*) from funeral    where receipt_number like 'F-9900%';      -- expects 4
---   select count(*) from incomes    where receipt_number between 99001 and 99099; -- expects 12
+--   select count(*) from affiliates where dni between 35000001 and 35000999;   -- expects 150
+--   select count(*) from deceased   where dni between 38000001 and 38000999;   -- expects 120
+--   select count(*) from funeral    where receipt_number like 'F-99%';         -- expects 120
+--   select count(*) from incomes    where receipt_number between 99001 and 99999; -- expects 100
 --   select count(*) from income_details
---     where income_id in (select id from incomes where receipt_number between 99001 and 99099); -- expects 22
+--     where income_id in (select id from incomes where receipt_number between 99001 and 99999); -- expects ~198 (22 hand-crafted + 2 per bulk income)
