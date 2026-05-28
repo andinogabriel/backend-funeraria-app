@@ -50,11 +50,21 @@ public class ItemCommandUseCase {
    */
   private final Clock clock;
 
+  /**
+   * Mirrors the {@code items.low_stock_threshold NOT NULL DEFAULT 10} column. Used on the
+   * create path so a request that omits the field still ends up with a sensible floor
+   * rather than triggering an NPE-flavoured insert.
+   */
+  private static final int DEFAULT_LOW_STOCK_THRESHOLD = 10;
+
   @Transactional
   public ItemResponseDto create(final ItemRequestDto itemRequestDto) {
     logItemCreateStarted(itemRequestDto);
     final ItemEntity itemEntity = itemMapper.toEntity(itemRequestDto);
     itemEntity.setCode(UUID.randomUUID().toString());
+    if (itemEntity.getLowStockThreshold() == null) {
+      itemEntity.setLowStockThreshold(DEFAULT_LOW_STOCK_THRESHOLD);
+    }
     final ItemResponseDto createdItem = itemMapper.toDto(itemPersistencePort.save(itemEntity));
     recordItemCreated(createdItem);
     logItemCompleted("item.create.completed", createdItem);
@@ -65,8 +75,19 @@ public class ItemCommandUseCase {
   public ItemResponseDto update(final String code, final ItemRequestDto itemRequestDto) {
     logItemStarted("item.update.started", code);
     final ItemEntity itemEntity = itemQueryUseCase.getItemByCode(code);
+    // Snapshot the threshold before the mapper applies the request so we can detect
+    // genuine changes — MapStruct's IGNORE strategy leaves the field unchanged when
+    // the DTO carries null, so we only audit when the operator explicitly sets a
+    // different value.
+    final Integer previousThreshold = itemEntity.getLowStockThreshold();
     itemMapper.updateEntity(itemRequestDto, itemEntity);
+    final boolean thresholdChanged =
+        itemRequestDto.lowStockThreshold() != null
+            && !java.util.Objects.equals(previousThreshold, itemRequestDto.lowStockThreshold());
     final ItemResponseDto updatedItem = itemMapper.toDto(itemPersistencePort.save(itemEntity));
+    if (thresholdChanged) {
+      recordThresholdUpdated(itemEntity, previousThreshold, itemEntity.getLowStockThreshold());
+    }
     logItemCompleted("item.update.completed", updatedItem);
     return updatedItem;
   }
@@ -184,6 +205,31 @@ public class ItemCommandUseCase {
         actor.getId(),
         AUDIT_TARGET_TYPE,
         created.code(),
+        payload);
+  }
+
+  /**
+   * Emits the audit entry for a low-stock threshold change. Payload carries the
+   * previous and new values so audit consumers can trace how the floor evolved
+   * over time without joining back to the items table.
+   */
+  private void recordThresholdUpdated(
+      final ItemEntity item, final Integer previous, final Integer next) {
+    final UserEntity actor = authenticatedUserPort.getAuthenticatedUser();
+    final String payload =
+        "{\"previous\":"
+            + (previous == null ? "null" : previous.toString())
+            + ",\"next\":"
+            + (next == null ? "null" : next.toString())
+            + ",\"code\":\""
+            + escape(item.getCode())
+            + "\"}";
+    auditEventPort.record(
+        AuditAction.ITEM_THRESHOLD_UPDATED,
+        actor.getEmail(),
+        actor.getId(),
+        AUDIT_TARGET_TYPE,
+        String.valueOf(item.getId()),
         payload);
   }
 

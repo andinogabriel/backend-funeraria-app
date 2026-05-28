@@ -48,5 +48,13 @@ public enum AuditAction {
    * {@code originalId} and {@code reversalId} so audit consumers can join the pair
    * without an extra lookup.
    */
-  INCOME_ANNULLED
+  INCOME_ANNULLED,
+
+  /**
+   * The per-item {@code low_stock_threshold} was updated by an admin (either through
+   * the Item edit form or inline from an Income line). Payload carries the previous
+   * and new values so audit consumers can see how the threshold evolved without
+   * joining back to the items table.
+   */
+  ITEM_THRESHOLD_UPDATED
 }

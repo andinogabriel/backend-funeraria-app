@@ -117,6 +117,7 @@ class InventoryUseCasesTest {
             null,
             null,
             null,
+            null, // lowStockThreshold
             null,
             null);
 
@@ -307,6 +308,7 @@ class InventoryUseCasesTest {
             null,
             null,
             null,
+            null, // lowStockThreshold
             null,
             null);
 
@@ -319,6 +321,148 @@ class InventoryUseCasesTest {
     assertThat(updated).isEqualTo(response);
     verify(itemMapper).updateEntity(request, itemEntity);
     verify(itemPersistencePort).save(itemEntity);
+  }
+
+  @Test
+  @DisplayName(
+      "Given a null lowStockThreshold on the create request when the item is created then it falls back to the default 10 (mirroring the DB column default)")
+  void givenANullLowStockThresholdOnCreateThenItFallsBackToTheDefault() {
+    final ItemPersistencePort itemPersistencePort = mock(ItemPersistencePort.class);
+    final ItemMapper itemMapper = mock(ItemMapper.class);
+    final ItemQueryUseCase itemQueryUseCase =
+        new ItemQueryUseCase(itemPersistencePort, itemMapper, mock(CategoryQueryUseCase.class));
+    final var authenticatedUserPort = mock(AuthenticatedUserPort.class);
+    when(authenticatedUserPort.getAuthenticatedUser())
+        .thenReturn(
+            disenodesistemas.backendfunerariaapp.modern.support.SecurityTestDataFactory
+                .userEntity());
+    final ItemCommandUseCase itemCommandUseCase =
+        new ItemCommandUseCase(
+            itemPersistencePort,
+            mock(PlanPersistencePort.class),
+            itemMapper,
+            mock(FileStoragePort.class),
+            itemQueryUseCase,
+            authenticatedUserPort,
+            mock(AuditEventPort.class),
+            mock(OutboxPort.class),
+            Clock.systemUTC());
+    final ItemRequestDto request =
+        ItemRequestDto.builder().name("Urna").price(new BigDecimal("100.00")).build();
+    final ItemEntity itemEntity = new ItemEntity();
+
+    when(itemMapper.toEntity(request)).thenReturn(itemEntity);
+    when(itemPersistencePort.save(itemEntity)).thenReturn(itemEntity);
+    when(itemMapper.toDto(itemEntity)).thenReturn(stubItemResponse("Urna", "ITEM-001", null));
+
+    itemCommandUseCase.create(request);
+
+    // The DTO carried no explicit threshold; the entity was assigned the default of 10
+    // before being persisted, mirroring the V14 `NOT NULL DEFAULT 10` column constraint.
+    assertThat(itemEntity.getLowStockThreshold()).isEqualTo(10);
+  }
+
+  @Test
+  @DisplayName(
+      "Given an update request that changes the lowStockThreshold to a different value when the use case runs then it emits an ITEM_THRESHOLD_UPDATED audit entry with the previous and new values")
+  void givenAThresholdChangeOnUpdateThenItEmitsTheAudit() {
+    final ItemPersistencePort itemPersistencePort = mock(ItemPersistencePort.class);
+    final ItemMapper itemMapper = mock(ItemMapper.class);
+    final ItemEntity itemEntity = DomainTestDataFactory.itemEntity();
+    itemEntity.setId(42L);
+    itemEntity.setCode(TestValues.ITEM_CODE);
+    itemEntity.setLowStockThreshold(10);
+    // Mapper application is mocked, so apply the threshold change ourselves to mirror
+    // what MapStruct does in production for non-null source properties.
+    org.mockito.Mockito.doAnswer(
+            invocation -> {
+              itemEntity.setLowStockThreshold(25);
+              return null;
+            })
+        .when(itemMapper)
+        .updateEntity(any(ItemRequestDto.class), eq(itemEntity));
+    final ItemQueryUseCase itemQueryUseCase =
+        new ItemQueryUseCase(itemPersistencePort, itemMapper, mock(CategoryQueryUseCase.class));
+    final var actor =
+        disenodesistemas.backendfunerariaapp.modern.support.SecurityTestDataFactory.userEntity();
+    final var authenticatedUserPort = mock(AuthenticatedUserPort.class);
+    when(authenticatedUserPort.getAuthenticatedUser()).thenReturn(actor);
+    final AuditEventPort auditEventPort = mock(AuditEventPort.class);
+    final ItemCommandUseCase itemCommandUseCase =
+        new ItemCommandUseCase(
+            itemPersistencePort,
+            mock(PlanPersistencePort.class),
+            itemMapper,
+            mock(FileStoragePort.class),
+            itemQueryUseCase,
+            authenticatedUserPort,
+            auditEventPort,
+            mock(OutboxPort.class),
+            Clock.systemUTC());
+    final ItemRequestDto request =
+        ItemRequestDto.builder().name("Urna").price(new BigDecimal("100")).lowStockThreshold(25).build();
+
+    when(itemPersistencePort.findByCode(TestValues.ITEM_CODE)).thenReturn(Optional.of(itemEntity));
+    when(itemPersistencePort.save(itemEntity)).thenReturn(itemEntity);
+    when(itemMapper.toDto(itemEntity))
+        .thenReturn(stubItemResponse("Urna", TestValues.ITEM_CODE, 25));
+
+    itemCommandUseCase.update(TestValues.ITEM_CODE, request);
+
+    // Audit emission carries both the previous and new threshold so consumers can
+    // trace the change without joining back to the items table.
+    verify(auditEventPort)
+        .record(
+            eq(disenodesistemas.backendfunerariaapp.domain.enums.AuditAction.ITEM_THRESHOLD_UPDATED),
+            eq(actor.getEmail()),
+            eq(actor.getId()),
+            eq("ITEM"),
+            eq("42"),
+            eq("{\"previous\":10,\"next\":25,\"code\":\"" + TestValues.ITEM_CODE + "\"}"));
+  }
+
+  @Test
+  @DisplayName(
+      "Given an update request that omits the lowStockThreshold (null) when the use case runs then it never records an ITEM_THRESHOLD_UPDATED audit entry")
+  void givenANullThresholdOnUpdateThenItDoesNotEmitTheAudit() {
+    final ItemPersistencePort itemPersistencePort = mock(ItemPersistencePort.class);
+    final ItemMapper itemMapper = mock(ItemMapper.class);
+    final ItemEntity itemEntity = DomainTestDataFactory.itemEntity();
+    itemEntity.setLowStockThreshold(10);
+    final ItemQueryUseCase itemQueryUseCase =
+        new ItemQueryUseCase(itemPersistencePort, itemMapper, mock(CategoryQueryUseCase.class));
+    final AuditEventPort auditEventPort = mock(AuditEventPort.class);
+    final ItemCommandUseCase itemCommandUseCase =
+        new ItemCommandUseCase(
+            itemPersistencePort,
+            mock(PlanPersistencePort.class),
+            itemMapper,
+            mock(FileStoragePort.class),
+            itemQueryUseCase,
+            mock(AuthenticatedUserPort.class),
+            auditEventPort,
+            mock(OutboxPort.class),
+            Clock.systemUTC());
+    final ItemRequestDto request =
+        ItemRequestDto.builder().name("Urna actualizada").price(new BigDecimal("100")).build();
+
+    when(itemPersistencePort.findByCode(TestValues.ITEM_CODE)).thenReturn(Optional.of(itemEntity));
+    when(itemPersistencePort.save(itemEntity)).thenReturn(itemEntity);
+    when(itemMapper.toDto(itemEntity))
+        .thenReturn(stubItemResponse("Urna actualizada", TestValues.ITEM_CODE, 10));
+
+    itemCommandUseCase.update(TestValues.ITEM_CODE, request);
+
+    // No threshold change means no audit emission — keeps the audit log noise-free
+    // when the operator edits unrelated fields and leaves the threshold alone.
+    verify(auditEventPort, never())
+        .record(
+            eq(disenodesistemas.backendfunerariaapp.domain.enums.AuditAction.ITEM_THRESHOLD_UPDATED),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
   }
 
   @Test
@@ -411,6 +555,7 @@ class InventoryUseCasesTest {
             null,
             null,
             null,
+            null, // lowStockThreshold
             null,
             null);
 
@@ -611,5 +756,33 @@ class InventoryUseCasesTest {
     when(planMapper.toDto(plan)).thenReturn(response);
 
     assertThat(planQueryUseCase.findAll()).containsExactly(response);
+  }
+
+  /**
+   * Convenience factory so the threshold-related tests can stub the mapper without
+   * dragging the full 18-arg ItemResponseDto literal into every site. Only the
+   * fields the use case reads (code, name, lowStockThreshold) carry real values.
+   */
+  private static ItemResponseDto stubItemResponse(
+      final String name, final String code, final Integer threshold) {
+    return new ItemResponseDto(
+        name,
+        null,
+        code,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        threshold,
+        null,
+        null);
   }
 }
