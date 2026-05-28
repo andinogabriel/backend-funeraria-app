@@ -8,8 +8,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,29 +41,20 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class DashboardMetricsQueryUseCase {
 
   private static final int DAILY_BUCKETS = 8;
   private static final int HOURLY_BUCKETS = 8;
 
   private final JdbcTemplate jdbcTemplate;
-  private final Clock clock;
-
   /**
-   * Production-time constructor wired by Spring; defaults the clock to {@link Clock#systemUTC()}
-   * so the use case behaves correctly without an extra {@code @Bean} declaration. Tests use the
-   * package-private overload below to inject a fixed clock.
+   * Wall-clock read used to anchor the "current" window boundaries (current
+   * month for funerals, last 24 h for audit events). Wired from the shared
+   * {@code TimeConfig} bean ({@link Clock#systemUTC()} in production, fixed at
+   * a known instant in tests).
    */
-  @Autowired
-  public DashboardMetricsQueryUseCase(final JdbcTemplate jdbcTemplate) {
-    this(jdbcTemplate, Clock.systemUTC());
-  }
-
-  /** Test-friendly overload that lets a fixed clock drive the "current" window boundaries. */
-  public DashboardMetricsQueryUseCase(final JdbcTemplate jdbcTemplate, final Clock clock) {
-    this.jdbcTemplate = jdbcTemplate;
-    this.clock = clock;
-  }
+  private final Clock clock;
 
   /** Builds the dashboard snapshot. Runs read-only so the four count queries share a tx. */
   @Transactional(readOnly = true)
