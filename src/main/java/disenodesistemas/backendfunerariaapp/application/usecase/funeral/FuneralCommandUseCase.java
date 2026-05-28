@@ -4,6 +4,7 @@ import disenodesistemas.backendfunerariaapp.application.port.out.AuditEventPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.FuneralPersistencePort;
 import disenodesistemas.backendfunerariaapp.application.port.out.OutboxPort;
+import disenodesistemas.backendfunerariaapp.application.support.FuneralStockService;
 import disenodesistemas.backendfunerariaapp.application.usecase.plan.PlanQueryUseCase;
 import disenodesistemas.backendfunerariaapp.domain.entity.Funeral;
 import disenodesistemas.backendfunerariaapp.domain.entity.Plan;
@@ -41,6 +42,7 @@ public class FuneralCommandUseCase {
   private final AuthenticatedUserPort authenticatedUserPort;
   private final AuditEventPort auditEventPort;
   private final OutboxPort outboxPort;
+  private final FuneralStockService funeralStockService;
 
   @Transactional
   public FuneralResponseDto create(final FuneralRequestDto funeralRequest) {
@@ -55,6 +57,11 @@ public class FuneralCommandUseCase {
             funeralDeceasedUseCase.registerDeceased(funeralRequest.deceased()));
 
     final FuneralResponseDto createdFuneral = funeralMapper.toDto(funeralPersistencePort.save(funeral));
+    // Inventory side-effect: every funeral consumes the items the plan bundles.
+    // Allowed to go negative on purpose (reality dictates — the funeral cannot be
+    // refused because the system shows insufficient stock); the future low-stock
+    // notification surfaces the threshold crossing for the admin.
+    funeralStockService.applyStockForFuneral(funeralPlan);
     logFuneralCompleted("funeral.create.completed", createdFuneral);
     recordFuneralCreated(createdFuneral);
     outboxPort.publish(toFuneralCreated(createdFuneral));
@@ -67,9 +74,25 @@ public class FuneralCommandUseCase {
     final Funeral funeralToUpdate = funeralQueryUseCase.findEntityById(id);
     validateUniqueReceiptNumber(funeralRequest.receiptNumber(), funeralToUpdate.getReceiptNumber());
 
+    // Snapshot the plan that was previously consuming stock so a plan swap can roll
+    // it back before the new plan starts consuming. Comparing by id keeps the check
+    // robust against Hibernate proxy quirks.
+    final Plan previousPlan = funeralToUpdate.getPlan();
     final Plan funeralPlan = planQueryUseCase.findEntityById(funeralRequest.plan().id());
     funeralDraftFactory.update(funeralToUpdate, funeralRequest, funeralPlan);
     final FuneralResponseDto updatedFuneral = funeralMapper.toDto(funeralPersistencePort.save(funeralToUpdate));
+
+    // Stock side-effect on plan swap: restore everything we decremented before
+    // (under the old plan's current composition) and re-apply against the new plan.
+    // If the operator kept the same plan, both calls are skipped — we intentionally
+    // do NOT chase intra-plan item edits here; the plan-edit use case is the place
+    // for that reconciliation, not the funeral one.
+    if (previousPlan != null
+        && !java.util.Objects.equals(previousPlan.getId(), funeralPlan.getId())) {
+      funeralStockService.restoreStockForFuneral(previousPlan);
+      funeralStockService.applyStockForFuneral(funeralPlan);
+    }
+
     logFuneralCompleted("funeral.update.completed", updatedFuneral);
     outboxPort.publish(toFuneralUpdated(updatedFuneral));
     return updatedFuneral;
@@ -89,6 +112,13 @@ public class FuneralCommandUseCase {
   @Transactional
   public void delete(final Long id) {
     final Funeral funeral = funeralQueryUseCase.findEntityById(id);
+    // Inventory rollback: a soft-deleted funeral returns its plan's items to the
+    // catalog. Done before the tombstone is stamped so the inventory write happens
+    // against the still-active aggregate; either way both writes share the same
+    // transaction so the atomicity contract holds.
+    if (funeral.getPlan() != null) {
+      funeralStockService.restoreStockForFuneral(funeral.getPlan());
+    }
     funeral.setDeletedAt(Instant.now());
     funeral.setDeletedBy(authenticatedUserPort.getAuthenticatedEmail());
     funeralPersistencePort.save(funeral);
