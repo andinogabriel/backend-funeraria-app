@@ -3,15 +3,19 @@ package disenodesistemas.backendfunerariaapp.modern.application.usecase.inventor
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import disenodesistemas.backendfunerariaapp.application.model.FilePayload;
+import disenodesistemas.backendfunerariaapp.application.port.out.AuditEventPort;
+import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.FileStoragePort;
 import disenodesistemas.backendfunerariaapp.application.port.out.IncomePersistencePort;
 import disenodesistemas.backendfunerariaapp.application.port.out.ItemPersistencePort;
+import disenodesistemas.backendfunerariaapp.application.port.out.OutboxPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.PlanPersistencePort;
 import disenodesistemas.backendfunerariaapp.application.port.out.SupplierPersistencePort;
 import disenodesistemas.backendfunerariaapp.application.usecase.category.CategoryQueryUseCase;
@@ -50,6 +54,9 @@ import disenodesistemas.backendfunerariaapp.web.dto.response.ItemResponseDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.PlanResponseDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.SupplierResponseDto;
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -70,8 +77,22 @@ class InventoryUseCasesTest {
     final FileStoragePort fileStoragePort = mock(FileStoragePort.class);
     final ItemQueryUseCase itemQueryUseCase =
         new ItemQueryUseCase(itemPersistencePort, itemMapper, mock(CategoryQueryUseCase.class));
+    final AuthenticatedUserPort authenticatedUserPort = mock(AuthenticatedUserPort.class);
+    when(authenticatedUserPort.getAuthenticatedUser())
+        .thenReturn(
+            disenodesistemas.backendfunerariaapp.modern.support.SecurityTestDataFactory
+                .userEntity());
     final ItemCommandUseCase itemCommandUseCase =
-        new ItemCommandUseCase(itemPersistencePort, itemMapper, fileStoragePort, itemQueryUseCase);
+        new ItemCommandUseCase(
+            itemPersistencePort,
+            mock(PlanPersistencePort.class),
+            itemMapper,
+            fileStoragePort,
+            itemQueryUseCase,
+            authenticatedUserPort,
+            mock(AuditEventPort.class),
+            mock(OutboxPort.class),
+            Clock.systemUTC());
     final ItemRequestDto request =
         ItemRequestDto.builder()
             .name(TestValues.ITEM_NAME)
@@ -95,6 +116,8 @@ class InventoryUseCasesTest {
             null,
             null,
             null,
+            null,
+            null,
             null);
 
     when(itemMapper.toEntity(request)).thenReturn(itemEntity);
@@ -110,23 +133,138 @@ class InventoryUseCasesTest {
 
   @Test
   @DisplayName(
-      "Given an item with a stored image when the item is deleted then it removes the external file and deletes the aggregate")
-  void givenAnItemWithAStoredImageWhenTheItemIsDeletedThenItRemovesTheExternalFileAndDeletesTheAggregate() {
+      "Given an item with stock cleared and no active plan references when the item is deleted then it stamps the tombstone fields and saves (soft-delete) without touching the attached image file")
+  void givenAnItemWithStockClearedAndNoActivePlanReferencesWhenTheItemIsDeletedThenItSoftDeletesTheAggregate() {
     final ItemPersistencePort itemPersistencePort = mock(ItemPersistencePort.class);
+    final PlanPersistencePort planPersistencePort = mock(PlanPersistencePort.class);
     final FileStoragePort fileStoragePort = mock(FileStoragePort.class);
+    final AuditEventPort auditEventPort = mock(AuditEventPort.class);
+    final OutboxPort outboxPort = mock(OutboxPort.class);
+    final AuthenticatedUserPort authenticatedUserPort = mock(AuthenticatedUserPort.class);
+    final var actor =
+        disenodesistemas.backendfunerariaapp.modern.support.SecurityTestDataFactory.userEntity();
+    final Instant frozenNow = Instant.parse("2026-05-28T03:00:00Z");
     final ItemEntity itemEntity = DomainTestDataFactory.itemEntity();
+    itemEntity.setId(42L);
+    itemEntity.setStock(0);
     itemEntity.setItemImageLink("https://bucket/items/ITEM-001/image.png");
     final ItemQueryUseCase itemQueryUseCase =
-        new ItemQueryUseCase(itemPersistencePort, mock(ItemMapper.class), mock(CategoryQueryUseCase.class));
+        new ItemQueryUseCase(
+            itemPersistencePort, mock(ItemMapper.class), mock(CategoryQueryUseCase.class));
     final ItemCommandUseCase itemCommandUseCase =
-        new ItemCommandUseCase(itemPersistencePort, mock(ItemMapper.class), fileStoragePort, itemQueryUseCase);
+        new ItemCommandUseCase(
+            itemPersistencePort,
+            planPersistencePort,
+            mock(ItemMapper.class),
+            fileStoragePort,
+            itemQueryUseCase,
+            authenticatedUserPort,
+            auditEventPort,
+            outboxPort,
+            Clock.fixed(frozenNow, ZoneOffset.UTC));
 
     when(itemPersistencePort.findByCode(TestValues.ITEM_CODE)).thenReturn(Optional.of(itemEntity));
+    when(planPersistencePort.findPlansContainingAnyOfThisItems(List.of(itemEntity)))
+        .thenReturn(List.of());
+    when(authenticatedUserPort.getAuthenticatedUser()).thenReturn(actor);
 
     itemCommandUseCase.delete(TestValues.ITEM_CODE);
 
-    verify(fileStoragePort).deleteFiles(itemEntity);
-    verify(itemPersistencePort).delete(itemEntity);
+    // Soft-delete contract: tombstone populated, entity saved (not removed). The image
+    // file stays on disk on purpose so the papelera UI can still render the thumbnail.
+    assertThat(itemEntity.getDeletedAt()).isEqualTo(frozenNow);
+    assertThat(itemEntity.getDeletedBy()).isEqualTo(actor.getEmail());
+    verify(itemPersistencePort).save(itemEntity);
+    verify(fileStoragePort, never()).deleteFiles(any());
+    verify(auditEventPort)
+        .record(
+            eq(disenodesistemas.backendfunerariaapp.domain.enums.AuditAction.ITEM_DELETED),
+            eq(actor.getEmail()),
+            eq(actor.getId()),
+            eq("ITEM"),
+            eq("42"),
+            eq("{\"code\":\"" + itemEntity.getCode() + "\"}"));
+    verify(outboxPort)
+        .publish(
+            new disenodesistemas.backendfunerariaapp.domain.event.ItemDeleted(
+                42L, itemEntity.getCode()));
+  }
+
+  @Test
+  @DisplayName(
+      "Given an item with stock greater than zero when the item is deleted then it rejects the command as a 409 conflict and never persists")
+  void givenAnItemWithStockGreaterThanZeroWhenTheItemIsDeletedThenItRejectsTheCommandAsAConflict() {
+    final ItemPersistencePort itemPersistencePort = mock(ItemPersistencePort.class);
+    final PlanPersistencePort planPersistencePort = mock(PlanPersistencePort.class);
+    final ItemEntity itemEntity = DomainTestDataFactory.itemEntity();
+    itemEntity.setStock(5);
+    final ItemQueryUseCase itemQueryUseCase =
+        new ItemQueryUseCase(
+            itemPersistencePort, mock(ItemMapper.class), mock(CategoryQueryUseCase.class));
+    final ItemCommandUseCase itemCommandUseCase =
+        new ItemCommandUseCase(
+            itemPersistencePort,
+            planPersistencePort,
+            mock(ItemMapper.class),
+            mock(FileStoragePort.class),
+            itemQueryUseCase,
+            mock(AuthenticatedUserPort.class),
+            mock(AuditEventPort.class),
+            mock(OutboxPort.class),
+            Clock.systemUTC());
+
+    when(itemPersistencePort.findByCode(TestValues.ITEM_CODE)).thenReturn(Optional.of(itemEntity));
+
+    assertThatThrownBy(() -> itemCommandUseCase.delete(TestValues.ITEM_CODE))
+        .isInstanceOf(
+            disenodesistemas.backendfunerariaapp.exception.ConflictException.class)
+        .extracting("message")
+        .isEqualTo("item.error.delete.stock.not.cleared");
+
+    // The guard fires before any persistence write or audit / outbox emission so the
+    // operator sees a clean 409 instead of a half-applied delete.
+    verify(itemPersistencePort, never()).save(any());
+    verify(planPersistencePort, never()).findPlansContainingAnyOfThisItems(any());
+  }
+
+  @Test
+  @DisplayName(
+      "Given an item still referenced by at least one active plan when the item is deleted then it rejects the command as a 409 conflict and never persists")
+  void givenAnItemReferencedByActivePlansWhenTheItemIsDeletedThenItRejectsTheCommandAsAConflict() {
+    final ItemPersistencePort itemPersistencePort = mock(ItemPersistencePort.class);
+    final PlanPersistencePort planPersistencePort = mock(PlanPersistencePort.class);
+    final ItemEntity itemEntity = DomainTestDataFactory.itemEntity();
+    itemEntity.setStock(0);
+    final Plan referencingPlan = DomainTestDataFactory.plan();
+    final ItemQueryUseCase itemQueryUseCase =
+        new ItemQueryUseCase(
+            itemPersistencePort, mock(ItemMapper.class), mock(CategoryQueryUseCase.class));
+    final AuditEventPort auditEventPort = mock(AuditEventPort.class);
+    final ItemCommandUseCase itemCommandUseCase =
+        new ItemCommandUseCase(
+            itemPersistencePort,
+            planPersistencePort,
+            mock(ItemMapper.class),
+            mock(FileStoragePort.class),
+            itemQueryUseCase,
+            mock(AuthenticatedUserPort.class),
+            auditEventPort,
+            mock(OutboxPort.class),
+            Clock.systemUTC());
+
+    when(itemPersistencePort.findByCode(TestValues.ITEM_CODE)).thenReturn(Optional.of(itemEntity));
+    when(planPersistencePort.findPlansContainingAnyOfThisItems(List.of(itemEntity)))
+        .thenReturn(List.of(referencingPlan));
+
+    assertThatThrownBy(() -> itemCommandUseCase.delete(TestValues.ITEM_CODE))
+        .isInstanceOf(
+            disenodesistemas.backendfunerariaapp.exception.ConflictException.class)
+        .extracting("message")
+        .isEqualTo("item.error.delete.plan.references");
+
+    verify(itemPersistencePort, never()).save(any());
+    verify(auditEventPort, never())
+        .record(any(), any(), any(), any(), any(), any());
   }
 
   @Test
@@ -139,7 +277,16 @@ class InventoryUseCasesTest {
     final ItemQueryUseCase itemQueryUseCase =
         new ItemQueryUseCase(itemPersistencePort, itemMapper, mock(CategoryQueryUseCase.class));
     final ItemCommandUseCase itemCommandUseCase =
-        new ItemCommandUseCase(itemPersistencePort, itemMapper, fileStoragePort, itemQueryUseCase);
+        new ItemCommandUseCase(
+            itemPersistencePort,
+            mock(PlanPersistencePort.class),
+            itemMapper,
+            fileStoragePort,
+            itemQueryUseCase,
+            mock(AuthenticatedUserPort.class),
+            mock(AuditEventPort.class),
+            mock(OutboxPort.class),
+            Clock.systemUTC());
     final ItemRequestDto request =
         ItemRequestDto.builder().name("Urna actualizada").description("Nueva descripcion").build();
     final ItemEntity itemEntity = DomainTestDataFactory.itemEntity();
@@ -151,6 +298,8 @@ class InventoryUseCasesTest {
             null,
             null,
             new BigDecimal("150.00"),
+            null,
+            null,
             null,
             null,
             null,
@@ -182,7 +331,16 @@ class InventoryUseCasesTest {
     final ItemQueryUseCase itemQueryUseCase =
         new ItemQueryUseCase(itemPersistencePort, mock(ItemMapper.class), mock(CategoryQueryUseCase.class));
     final ItemCommandUseCase itemCommandUseCase =
-        new ItemCommandUseCase(itemPersistencePort, mock(ItemMapper.class), fileStoragePort, itemQueryUseCase);
+        new ItemCommandUseCase(
+            itemPersistencePort,
+            mock(PlanPersistencePort.class),
+            mock(ItemMapper.class),
+            fileStoragePort,
+            itemQueryUseCase,
+            mock(AuthenticatedUserPort.class),
+            mock(AuditEventPort.class),
+            mock(OutboxPort.class),
+            Clock.systemUTC());
 
     when(itemPersistencePort.findByCode(TestValues.ITEM_CODE)).thenReturn(Optional.of(itemEntity));
 
@@ -203,7 +361,16 @@ class InventoryUseCasesTest {
     final ItemQueryUseCase itemQueryUseCase =
         new ItemQueryUseCase(itemPersistencePort, mock(ItemMapper.class), mock(CategoryQueryUseCase.class));
     final ItemCommandUseCase itemCommandUseCase =
-        new ItemCommandUseCase(itemPersistencePort, mock(ItemMapper.class), fileStoragePort, itemQueryUseCase);
+        new ItemCommandUseCase(
+            itemPersistencePort,
+            mock(PlanPersistencePort.class),
+            mock(ItemMapper.class),
+            fileStoragePort,
+            itemQueryUseCase,
+            mock(AuthenticatedUserPort.class),
+            mock(AuditEventPort.class),
+            mock(OutboxPort.class),
+            Clock.systemUTC());
 
     when(itemPersistencePort.findByCode(TestValues.ITEM_CODE)).thenReturn(Optional.of(itemEntity));
     when(fileStoragePort.store(itemEntity, filePayload))
@@ -240,6 +407,8 @@ class InventoryUseCasesTest {
             null,
             new CategoryResponseDto(1L, "Urnas", "Productos funerarios"),
             new BrandResponseDto(1L, "Acme", "https://acme.example"),
+            null,
+            null,
             null,
             null,
             null,

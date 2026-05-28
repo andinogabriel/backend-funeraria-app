@@ -12,6 +12,7 @@ import disenodesistemas.backendfunerariaapp.web.dto.request.ItemRequestDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.ItemResponseDto;
 import jakarta.validation.Valid;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -100,6 +101,33 @@ public class ItemController {
     itemCommandUseCase.delete(code);
     return ResponseEntity.ok(
         new OperationStatusModel("DELETE ITEM", "SUCCESSFUL"));
+  }
+
+  /**
+   * Admin-only papelera surface — filtered + paginated read of the soft-deleted items
+   * ordered most-recent-first. Read-only by design: this endpoint ships no restore /
+   * purge actions, the view is for compliance / audit consultation only (same shape
+   * decided for the funeral / affiliate / plan papelera).
+   *
+   * <p>Spring's path matching gives literal segments priority over path variables, so
+   * {@code GET /api/v1/items/deleted} lands here rather than on
+   * {@code GET /api/v1/items/{code}}. No regex constraint is added on {@code {code}}
+   * because existing items may carry non-UUID codes from earlier seed data.
+   */
+  @PreAuthorize("hasRole('ADMIN')")
+  @GetMapping("/deleted")
+  public Page<ItemResponseDto> findAllDeleted(
+      @RequestParam(value = "page", defaultValue = "0") final int page,
+      @RequestParam(value = "limit", defaultValue = "20") final int limit,
+      @RequestParam(value = "code", required = false) final String code,
+      @RequestParam(value = "name", required = false) final String name,
+      @RequestParam(value = "categoryName", required = false) final String categoryName,
+      @RequestParam(value = "brandName", required = false) final String brandName,
+      @RequestParam(value = "deletedBy", required = false) final String deletedBy,
+      @RequestParam(value = "deletedFrom", required = false) final Instant deletedFrom,
+      @RequestParam(value = "deletedTo", required = false) final Instant deletedTo) {
+    return itemQueryUseCase.findAllDeleted(
+        page, limit, code, name, categoryName, brandName, deletedBy, deletedFrom, deletedTo);
   }
 
   @PreAuthorize("hasRole('ADMIN')")

@@ -262,29 +262,36 @@ class JpaPersistenceAdaptersTest {
 
   @Test
   @DisplayName(
-      "Given item repository responses when the item persistence adapter is invoked then it delegates catalog queries and writes to the repository")
+      "Given item repository responses when the item persistence adapter is invoked then it delegates catalog queries and writes to the repository, including the admin-only findAllDeleted papelera path")
   void givenItemRepositoryResponsesWhenTheItemPersistenceAdapterIsInvokedThenItDelegatesCatalogQueriesAndWritesToTheRepository() {
     final ItemRepository repository = mock(ItemRepository.class);
     final JpaItemPersistenceAdapter adapter = new JpaItemPersistenceAdapter(repository);
     final ItemEntity item = DomainTestDataFactory.itemEntity();
     final CategoryEntity category = DomainTestDataFactory.categoryEntity();
+    final org.springframework.data.domain.Pageable pageable =
+        org.springframework.data.domain.PageRequest.of(0, 20);
+    final org.springframework.data.domain.Page<ItemEntity> deletedPage =
+        new org.springframework.data.domain.PageImpl<>(List.of(item));
 
     when(repository.findByCode(TestValues.ITEM_CODE)).thenReturn(Optional.of(item));
     when(repository.findAllByCodeIn(List.of(TestValues.ITEM_CODE))).thenReturn(List.of(item));
     when(repository.findAll()).thenReturn(List.of(item));
     when(repository.findByCategoryOrderByName(category)).thenReturn(List.of(item));
+    when(repository.existsByCode(TestValues.ITEM_CODE)).thenReturn(true);
     when(repository.save(item)).thenReturn(item);
     when(repository.saveAll(List.of(item))).thenReturn(List.of(item));
+    when(repository.findAllDeleted("", "", "", "", "", null, null, pageable))
+        .thenReturn(deletedPage);
 
     assertThat(adapter.findByCode(TestValues.ITEM_CODE)).contains(item);
     assertThat(adapter.findAllByCodeIn(List.of(TestValues.ITEM_CODE))).containsExactly(item);
     assertThat(adapter.findAll()).containsExactly(item);
     assertThat(adapter.findByCategoryOrderByName(category)).containsExactly(item);
+    assertThat(adapter.existsByCode(TestValues.ITEM_CODE)).isTrue();
     assertThat(adapter.save(item)).isEqualTo(item);
     assertThat(adapter.saveAll(List.of(item))).containsExactly(item);
-    adapter.delete(item);
-
-    verify(repository).delete(item);
+    assertThat(adapter.findAllDeleted("", "", "", "", "", null, null, pageable).getContent())
+        .containsExactly(item);
   }
 
   @Test

@@ -117,6 +117,28 @@ public class ItemEntity implements Serializable {
   @Column(name = "updated_by", length = 255)
   private String updatedBy;
 
+  /**
+   * Soft-delete tombstone. Populated by {@code ItemCommandUseCase.delete} with the UTC
+   * moment the record was removed; {@code null} for active items. Every operational read
+   * filters on {@code deletedAt is null} so soft-deleted rows stay invisible to the
+   * regular catalog the operator picks from on the funeral / income forms. The
+   * admin-only papelera endpoint queries the inverse.
+   *
+   * <p>The {@code items.code unique} constraint stays untouched by the soft delete on
+   * purpose — see V12 migration for the rationale: a code that was once in use cannot
+   * be reused by a future item, even if the original was removed.
+   */
+  @Column(name = "deleted_at")
+  private Instant deletedAt;
+
+  /**
+   * Email of the admin that requested the soft delete. Captured from
+   * {@code AuthenticatedUserPort} at delete time so the papelera can show "borrado por"
+   * without joining the audit log. {@code null} for active items.
+   */
+  @Column(name = "deleted_by", length = 255)
+  private String deletedBy;
+
   @Builder
   public ItemEntity(
       final String name,
