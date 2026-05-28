@@ -6,8 +6,8 @@ import disenodesistemas.backendfunerariaapp.config.RetentionProperties;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -36,33 +36,18 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class RetentionUseCase {
 
   private final OutboxRetentionPort outboxRetention;
   private final ActivityLogRetentionPort activityLogRetention;
   private final RetentionProperties properties;
+  /**
+   * Wall-clock read used to anchor the soft / hard retention cutoffs. Wired
+   * from the shared {@code TimeConfig} bean ({@link Clock#systemUTC()} in
+   * production, fixed at a known instant in tests).
+   */
   private final Clock clock;
-
-  /** Production-time constructor wired by Spring; defaults the clock to {@link Clock#systemUTC()}. */
-  @Autowired
-  public RetentionUseCase(
-      final OutboxRetentionPort outboxRetention,
-      final ActivityLogRetentionPort activityLogRetention,
-      final RetentionProperties properties) {
-    this(outboxRetention, activityLogRetention, properties, Clock.systemUTC());
-  }
-
-  /** Test-friendly overload that lets a deterministic clock drive cutoff calculations. */
-  public RetentionUseCase(
-      final OutboxRetentionPort outboxRetention,
-      final ActivityLogRetentionPort activityLogRetention,
-      final RetentionProperties properties,
-      final Clock clock) {
-    this.outboxRetention = outboxRetention;
-    this.activityLogRetention = activityLogRetention;
-    this.properties = properties;
-    this.clock = clock;
-  }
 
   /** Runs the full four-phase sweep. Safe to call from a {@code @Scheduled} hook. */
   public RetentionResult runOnce() {

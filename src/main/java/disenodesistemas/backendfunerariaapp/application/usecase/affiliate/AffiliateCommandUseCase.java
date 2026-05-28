@@ -18,11 +18,12 @@ import disenodesistemas.backendfunerariaapp.web.dto.response.AffiliateResponseDt
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Objects;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class AffiliateCommandUseCase {
 
   private static final String AUDIT_TARGET_TYPE = "AFFILIATE";
@@ -33,44 +34,12 @@ public class AffiliateCommandUseCase {
   private final AffiliateQueryUseCase affiliateQueryUseCase;
   private final AuditEventPort auditEventPort;
   private final OutboxPort outboxPort;
+  /**
+   * Wall-clock read used for {@link AffiliateMarkedDeceased} and soft-delete
+   * tombstones. Wired from the shared {@code TimeConfig} bean
+   * ({@link Clock#systemUTC()} in production, fixed at a known instant in tests).
+   */
   private final Clock clock;
-
-  /** Production-time constructor wired by Spring; defaults the clock to {@link Clock#systemUTC()}. */
-  @Autowired
-  public AffiliateCommandUseCase(
-      final AffiliatePersistencePort affiliatePersistencePort,
-      final AffiliateMapper affiliateMapper,
-      final AuthenticatedUserPort authenticatedUserPort,
-      final AffiliateQueryUseCase affiliateQueryUseCase,
-      final AuditEventPort auditEventPort,
-      final OutboxPort outboxPort) {
-    this(
-        affiliatePersistencePort,
-        affiliateMapper,
-        authenticatedUserPort,
-        affiliateQueryUseCase,
-        auditEventPort,
-        outboxPort,
-        Clock.systemUTC());
-  }
-
-  /** Test-friendly overload that lets a deterministic clock drive {@link AffiliateMarkedDeceased}. */
-  public AffiliateCommandUseCase(
-      final AffiliatePersistencePort affiliatePersistencePort,
-      final AffiliateMapper affiliateMapper,
-      final AuthenticatedUserPort authenticatedUserPort,
-      final AffiliateQueryUseCase affiliateQueryUseCase,
-      final AuditEventPort auditEventPort,
-      final OutboxPort outboxPort,
-      final Clock clock) {
-    this.affiliatePersistencePort = affiliatePersistencePort;
-    this.affiliateMapper = affiliateMapper;
-    this.authenticatedUserPort = authenticatedUserPort;
-    this.affiliateQueryUseCase = affiliateQueryUseCase;
-    this.auditEventPort = auditEventPort;
-    this.outboxPort = outboxPort;
-    this.clock = clock;
-  }
 
   /**
    * Persists a new affiliate owned by the currently authenticated user, then records an

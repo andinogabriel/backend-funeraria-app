@@ -47,6 +47,7 @@ import disenodesistemas.backendfunerariaapp.web.dto.request.RolRequestDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.AffiliateResponseDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.DeceasedResponseDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.FuneralResponseDto;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
@@ -80,7 +81,8 @@ class PeopleUseCasesTest {
             authenticatedUserPort,
             affiliateQueryUseCase,
             auditEventPort,
-            outboxPort);
+            outboxPort,
+            Clock.systemUTC());
     final AffiliateRequestDto request =
         AffiliateRequestDto.builder()
             .id(1L)
@@ -134,7 +136,8 @@ class PeopleUseCasesTest {
             mock(AuthenticatedUserPort.class),
             affiliateQueryUseCase,
             mock(AuditEventPort.class),
-            mock(OutboxPort.class));
+            mock(OutboxPort.class),
+            Clock.systemUTC());
     final AffiliateEntity existing = AffiliateEntity.builder().dni(30111222).build();
     final AffiliateRequestDto request =
         AffiliateRequestDto.builder()
