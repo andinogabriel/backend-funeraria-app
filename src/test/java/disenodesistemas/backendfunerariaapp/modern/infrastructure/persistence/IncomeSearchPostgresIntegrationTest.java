@@ -64,7 +64,7 @@ class IncomeSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTes
       "Given a `receiptNumber` substring when the search runs then only incomes whose receipt contains the value are returned (including those without a supplier)")
   void receiptNumberMatchesSubstring() {
     final Page<IncomeEntity> result =
-        port.search(false, "9900", "", null, null, defaultPageable());
+        port.search(disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus.ACTIVE, "9900", "", null, null, defaultPageable());
     assertThat(result.getContent())
         .extracting(IncomeEntity::getReceiptNumber)
         .containsOnly(99001L);
@@ -75,7 +75,7 @@ class IncomeSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTes
       "Given a `receiptNumber` substring that matches more than one row when the search runs then every match is returned")
   void receiptNumberMatchesMultiple() {
     final Page<IncomeEntity> result =
-        port.search(false, "100", "", null, null, defaultPageable());
+        port.search(disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus.ACTIVE, "100", "", null, null, defaultPageable());
     assertThat(result.getContent())
         .extracting(IncomeEntity::getReceiptNumber)
         .containsOnly(1001L, 1002L, 1003L);
@@ -89,7 +89,7 @@ class IncomeSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTes
     // receiptNumber filter is column-scoped, so a substring that matches a supplier name
     // but not any receipt must return nothing.
     final Page<IncomeEntity> result =
-        port.search(false, "acme", "", null, null, defaultPageable());
+        port.search(disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus.ACTIVE, "acme", "", null, null, defaultPageable());
     assertThat(result.getContent()).isEmpty();
   }
 
@@ -98,7 +98,7 @@ class IncomeSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTes
       "Given an exact `supplierNif` filter when the search runs then only incomes for that supplier come back")
   void supplierNifFiltersExact() {
     final Page<IncomeEntity> result =
-        port.search(false, "", "30-11111111-1", null, null, defaultPageable());
+        port.search(disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus.ACTIVE, "", "30-11111111-1", null, null, defaultPageable());
     assertThat(result.getContent())
         .extracting(IncomeEntity::getReceiptNumber)
         .containsOnly(1001L, 1003L);
@@ -110,7 +110,7 @@ class IncomeSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTes
   void fromToWindowsTheIncomeDateRange() {
     final Page<IncomeEntity> result =
         port.search(
-            false,
+            disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus.ACTIVE,
             "",
             "",
             Instant.parse("2026-05-10T00:00:00Z"),
@@ -129,7 +129,7 @@ class IncomeSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTes
     // out 1001 (May 1) and leaves 1003 (Jun 3).
     final Page<IncomeEntity> result =
         port.search(
-            false,
+            disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus.ACTIVE,
             "100",
             "30-11111111-1",
             Instant.parse("2026-06-01T00:00:00Z"),
@@ -144,7 +144,7 @@ class IncomeSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTes
   @DisplayName(
       "Given empty strings on every text filter and null bounds when the search runs then every non-deleted income comes back")
   void noFiltersReturnsEverything() {
-    final Page<IncomeEntity> result = port.search(false, "", "", null, null, defaultPageable());
+    final Page<IncomeEntity> result = port.search(disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus.ACTIVE, "", "", null, null, defaultPageable());
     assertThat(result.getTotalElements()).isEqualTo(4);
   }
 

@@ -1,10 +1,11 @@
 package disenodesistemas.backendfunerariaapp.web.controller;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
+import disenodesistemas.backendfunerariaapp.application.usecase.income.AnnulIncomeUseCase;
 import disenodesistemas.backendfunerariaapp.application.usecase.income.IncomeCommandUseCase;
 import disenodesistemas.backendfunerariaapp.application.usecase.income.IncomeQueryUseCase;
+import disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus;
 import disenodesistemas.backendfunerariaapp.mapping.UserMapper;
-import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.web.dto.request.IncomeRequestDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.IncomeResponseDto;
 import jakarta.validation.Valid;
@@ -16,7 +17,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class IncomeController {
 
   private final IncomeCommandUseCase incomeCommandUseCase;
+  private final AnnulIncomeUseCase annulIncomeUseCase;
   private final IncomeQueryUseCase incomeQueryUseCase;
   private final AuthenticatedUserPort authenticatedUserPort;
   private final UserMapper userMapper;
@@ -48,11 +49,16 @@ public class IncomeController {
     return ResponseEntity.ok(incomeQueryUseCase.findByReceiptNumber(receiptNumber));
   }
 
+  /**
+   * Server-side paginated read. {@code status} replaces the legacy {@code isDeleted}
+   * boolean — {@code ACTIVE} for the regular operator view, {@code ANNULLED} for the
+   * cancelled-receipts audit view, omitted ({@code null}) for the "Todas" filter that
+   * shows both lifecycle states together (originals + their reversal counter-entries).
+   */
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping("/paginated")
   public Page<IncomeResponseDto> getIncomesPaginated(
-      @RequestParam(value = "isDeleted", required = false, defaultValue = "false")
-          final boolean isDeleted,
+      @RequestParam(value = "status", required = false) final IncomeStatus status,
       @RequestParam(value = "page", defaultValue = "0") final int page,
       @RequestParam(value = "limit", defaultValue = "5") final int limit,
       @RequestParam(value = "sortBy", defaultValue = "incomeDate") final String sortBy,
@@ -66,7 +72,7 @@ public class IncomeController {
           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
           final LocalDate to) {
     return incomeQueryUseCase.getIncomesPaginated(
-        isDeleted, page, limit, sortBy, sortDir, receiptNumber, supplierNif, from, to);
+        status, page, limit, sortBy, sortDir, receiptNumber, supplierNif, from, to);
   }
 
   @PreAuthorize("hasRole('ADMIN')")
@@ -86,12 +92,20 @@ public class IncomeController {
         incomeCommandUseCase.update(receiptNumber, withAuthenticatedUser(incomeRequest)));
   }
 
+  /**
+   * Annuls the income identified by {@code id} and returns the freshly-minted reversal
+   * counter-entry so the operator UI can render it alongside the (now {@code ANNULLED})
+   * original immediately. Three 409 guards cover already-annulled / target-is-reversal /
+   * insufficient-stock paths — see {@code AnnulIncomeUseCase} for the full message map.
+   *
+   * <p>The path variable is the income's id (not its receipt number) and is constrained to
+   * digits so Spring's path matcher routes correctly even if a future legacy endpoint
+   * shares the {@code /{anything}} prefix.
+   */
   @PreAuthorize("hasRole('ADMIN')")
-  @DeleteMapping(path = "/{receiptNumber}")
-  public ResponseEntity<OperationStatusModel> delete(@PathVariable final Long receiptNumber) {
-    incomeCommandUseCase.delete(receiptNumber);
-    return ResponseEntity.ok(
-        new OperationStatusModel("DELETE INCOME", "SUCCESSFUL"));
+  @PostMapping(path = "/{id:\\d+}/annul")
+  public ResponseEntity<IncomeResponseDto> annul(@PathVariable final Long id) {
+    return ResponseEntity.ok(annulIncomeUseCase.annul(id));
   }
 
   private IncomeRequestDto withAuthenticatedUser(final IncomeRequestDto incomeRequest) {

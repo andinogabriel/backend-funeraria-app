@@ -1594,28 +1594,61 @@ paths:
           $ref: '#/components/responses/NotFoundResponse'
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
-    delete:
+  /api/v1/incomes/{id}/annul:
+    post:
       tags: [Incomes]
-      summary: Eliminar ingreso
-      description: Solo ADMIN.
+      summary: Anular ingreso (asiento de reversion, solo ADMIN)
+      description: |
+        Anula el ingreso identificado por `id` y devuelve el asiento de reversion
+        recien generado (cantidades negativas, mismas precios + items, nuevo recibo +
+        serie, `reversalOfId` apuntando al original).
+
+        Comportamiento atomico dentro de una sola transaccion: por cada detalle del
+        original se decrementa el stock del item correspondiente, el original pasa a
+        `status = ANNULLED`, y se persiste el asiento de reversion como una entrada
+        contable independiente. Audit log: `INCOME_ANNULLED`. Outbox: `IncomeAnnulled`.
+
+        Tres guardas devuelven 409:
+        - El ingreso ya esta anulado (`income.error.annul.already.annulled`). La
+          idempotencia es estricta — un segundo annul sobre el mismo id es un bug
+          del cliente.
+        - El target es un asiento de reversion
+          (`income.error.annul.is.reversal`). Los reversiones son inmutables por
+          contrato contable.
+        - El stock disponible de algun item es menor a la cantidad recibida
+          originalmente (`income.error.annul.insufficient.stock`). Anular una
+          compra deshace un incremento pasado de stock; ir a negativo implicaria
+          consumo fantasma que el flujo busca prevenir.
+
+        El endpoint reemplaza al antiguo `DELETE /api/v1/incomes/{receiptNumber}`,
+        que dejo de existir — ver el cambio en `IncomeCommandUseCase`.
       security:
         - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/XDeviceId'
-        - $ref: '#/components/parameters/ReceiptNumberPath'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+          description: Identificador del ingreso a anular (PK, no el numero de recibo).
       responses:
         '200':
-          description: Operacion completada.
+          description: Asiento de reversion recien generado.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationStatusModel'
+                $ref: '#/components/schemas/IncomeResponseDto'
         '401':
           $ref: '#/components/responses/UnauthorizedResponse'
         '403':
           $ref: '#/components/responses/ForbiddenResponse'
         '404':
           $ref: '#/components/responses/NotFoundResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
 
@@ -2539,13 +2572,16 @@ components:
         type: string
         example: 30-12345678-9
     IsDeletedQuery:
-      name: isDeleted
+      name: status
       in: query
       required: false
-      description: Filtra ingresos borrados logicamente.
+      description: |
+        Filtra el listado de ingresos por estado de ciclo de vida. Omitir el parametro
+        equivale a la vista "Todas" — ingresos activos + anulados + reversiones.
+        ACTIVE incluye originales no anulados Y los asientos de reversion (`reversalOfId` no nulo).
+        ANNULLED solo expone originales cancelados.
       schema:
-        type: boolean
-        default: false
+        $ref: '#/components/schemas/IncomeStatus'
     PageQuery:
       name: page
       in: query
@@ -3719,21 +3755,30 @@ components:
           items:
             $ref: '#/components/schemas/IncomeDetailRequestDto'
       required: [tax, incomeDetails]
+    IncomeStatus:
+      type: string
+      enum: [ACTIVE, ANNULLED]
+      description: |
+        Estado de ciclo de vida de un ingreso (compra). `ACTIVE` cubre originales en
+        uso y los asientos de reversion (que tambien son `ACTIVE` con `reversalOfId`
+        no nulo); `ANNULLED` solo aplica a originales cancelados.
     IncomeResponseDto:
       type: object
       properties:
+        id:
+          type: integer
+          format: int64
+          description: PK del registro. Usado por el endpoint annul (`POST /{id}/annul`).
         receiptNumber:
           type: string
         receiptSeries:
           type: string
         incomeDate:
           type: string
-          description: Fecha y hora con formato `dd-MM-yyyy HH:mm`.
-          example: 17-04-2026 14:10
+          format: date-time
         lastModifiedDate:
           type: string
-          description: Fecha y hora con formato `dd-MM-yyyy HH:mm`.
-          example: 17-04-2026 15:05
+          format: date-time
         tax:
           type: number
         totalAmount:
@@ -3750,6 +3795,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/IncomeDetailResponseDto'
+        status:
+          $ref: '#/components/schemas/IncomeStatus'
+        reversalOfId:
+          type: integer
+          format: int64
+          description: |
+            Cuando el registro es un asiento de reversion, id del ingreso original que
+            cancela. `null` en originales activos y en originales anulados.
     IncomePageResponse:
       type: object
       description: Serializacion del `Page<IncomeResponseDto>` devuelto por Spring Data.

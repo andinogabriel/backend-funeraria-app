@@ -529,14 +529,28 @@ class InventoryUseCasesTest {
     final IncomeQueryUseCase incomeQueryUseCase = new IncomeQueryUseCase(incomePersistencePort, incomeMapper);
     final IncomeEntity incomeEntity = new IncomeEntity();
     final IncomeResponseDto response =
-        new IncomeResponseDto("7002", "1001", null, null, BigDecimal.ZERO, BigDecimal.ZERO, null, null, null, null, List.of());
+        new IncomeResponseDto(
+            1L,
+            "7002",
+            "1001",
+            null,
+            null,
+            BigDecimal.ZERO,
+            BigDecimal.ZERO,
+            null,
+            null,
+            null,
+            null,
+            List.of(),
+            disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus.ACTIVE,
+            null);
     final ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
 
     // The paginated path routes through `search(...)` with empty-string sentinels for the
     // text filters and null bounds for the date window — the use case normalises null/blank
     // `receiptNumber` and `supplierNif` to empty strings before delegating.
     when(incomePersistencePort.search(
-            any(Boolean.class),
+            any(disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus.class),
             org.mockito.Mockito.anyString(),
             org.mockito.Mockito.anyString(),
             org.mockito.Mockito.isNull(),
@@ -546,11 +560,19 @@ class InventoryUseCasesTest {
     when(incomeMapper.toDto(incomeEntity)).thenReturn(response);
 
     // 0-indexed pagination (Spring Data + Material paginator). page=0 = first page.
-    assertThat(incomeQueryUseCase.getIncomesPaginated(false, 0, 10, "receiptNumber", "desc").getContent())
+    assertThat(
+            incomeQueryUseCase
+                .getIncomesPaginated(
+                    disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus.ACTIVE,
+                    0,
+                    10,
+                    "receiptNumber",
+                    "desc")
+                .getContent())
         .containsExactly(response);
     verify(incomePersistencePort)
         .search(
-            any(Boolean.class),
+            any(disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus.class),
             org.mockito.Mockito.anyString(),
             org.mockito.Mockito.anyString(),
             org.mockito.Mockito.isNull(),
