@@ -41,5 +41,12 @@ public enum AuditAction {
   ITEM_CREATED,
 
   /** An existing item record was deleted. */
-  ITEM_DELETED
+  ITEM_DELETED,
+
+  /**
+   * An existing income (compra) was annulled by an admin. The payload carries the
+   * {@code originalId} and {@code reversalId} so audit consumers can join the pair
+   * without an extra lookup.
+   */
+  INCOME_ANNULLED
 }

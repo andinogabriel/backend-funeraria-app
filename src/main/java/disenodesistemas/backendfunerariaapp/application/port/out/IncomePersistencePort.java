@@ -1,6 +1,7 @@
 package disenodesistemas.backendfunerariaapp.application.port.out;
 
 import disenodesistemas.backendfunerariaapp.domain.entity.IncomeEntity;
+import disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -9,22 +10,23 @@ import org.springframework.data.domain.Pageable;
 
 public interface IncomePersistencePort {
 
+  /** Primary-key lookup used by the annul flow to load the original receipt by id. */
+  Optional<IncomeEntity> findById(Long id);
+
   Optional<IncomeEntity> findByReceiptNumber(Long receiptNumber);
 
-  List<IncomeEntity> findAllByDeletedFalseOrderByIdDesc();
-
-  Page<IncomeEntity> findAllByDeleted(boolean deleted, Pageable pageable);
+  /** Lists every {@code ACTIVE} income, most-recent first. Excludes annulled rows. */
+  List<IncomeEntity> findAllActiveOrderByIdDesc();
 
   /**
    * Server-side filtered read with per-column predicates. Empty strings on
    * {@code receiptNumber} / {@code supplierNif} signal "no filter" so the adapter can use
    * the ADR-0010-compatible JPQL idiom; {@code null} on the {@code from} / {@code to}
-   * bounds signal "open-ended". {@code receiptNumber} is matched case-insensitively as a
-   * substring; {@code supplierNif} is matched exactly (the frontend feeds it from an
-   * autocomplete-selected supplier).
+   * bounds signal "open-ended". A {@code null} {@code status} returns every row regardless
+   * of lifecycle state (used by the "Todas" filter on the operator UI).
    */
   Page<IncomeEntity> search(
-      boolean deleted,
+      IncomeStatus status,
       String receiptNumber,
       String supplierNif,
       Instant from,

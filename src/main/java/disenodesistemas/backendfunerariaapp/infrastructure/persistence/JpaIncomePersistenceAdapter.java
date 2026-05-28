@@ -2,6 +2,7 @@ package disenodesistemas.backendfunerariaapp.infrastructure.persistence;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.IncomePersistencePort;
 import disenodesistemas.backendfunerariaapp.domain.entity.IncomeEntity;
+import disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus;
 import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.IncomeRepository;
 import java.time.Instant;
 import java.util.List;
@@ -20,29 +21,29 @@ public class JpaIncomePersistenceAdapter implements IncomePersistencePort {
   private final IncomeRepository incomeRepository;
 
   @Override
+  public Optional<IncomeEntity> findById(final Long id) {
+    return incomeRepository.findById(id);
+  }
+
+  @Override
   public Optional<IncomeEntity> findByReceiptNumber(final Long receiptNumber) {
     return incomeRepository.findByReceiptNumber(receiptNumber);
   }
 
   @Override
-  public List<IncomeEntity> findAllByDeletedFalseOrderByIdDesc() {
-    return incomeRepository.findAllByDeletedFalseOrderByIdDesc();
-  }
-
-  @Override
-  public Page<IncomeEntity> findAllByDeleted(final boolean deleted, final Pageable pageable) {
-    return incomeRepository.findAllByDeleted(deleted, pageable);
+  public List<IncomeEntity> findAllActiveOrderByIdDesc() {
+    return incomeRepository.findAllActiveOrderByIdDesc();
   }
 
   @Override
   public Page<IncomeEntity> search(
-      final boolean deleted,
+      final IncomeStatus status,
       final String receiptNumber,
       final String supplierNif,
       final Instant from,
       final Instant to,
       final Pageable pageable) {
-    return incomeRepository.search(deleted, receiptNumber, supplierNif, from, to, pageable);
+    return incomeRepository.search(status, receiptNumber, supplierNif, from, to, pageable);
   }
 
   @Override

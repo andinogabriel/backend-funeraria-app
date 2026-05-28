@@ -9,10 +9,13 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -75,6 +78,27 @@ public class IncomeEntity implements Serializable {
 
   private boolean deleted;
 
+  /**
+   * Lifecycle state introduced by the annul flow (PR4). Defaults to {@code ACTIVE}
+   * on create; transitions to {@code ANNULLED} when an admin cancels the receipt.
+   * The legacy {@link #deleted} boolean is kept in place during the transition cycle
+   * and is no longer written to — every read switched to filter on {@code status}.
+   */
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 20)
+  private IncomeStatus status = IncomeStatus.ACTIVE;
+
+  /**
+   * Back-pointer from a reversal income to the original receipt it cancels. Null on
+   * every {@code ACTIVE} non-reversal entry and on every {@code ANNULLED} original;
+   * populated only on the reversal counter-entry the annul use case creates. The
+   * relationship is read-only domain-side — operators never edit the linkage; the
+   * annul use case is the only writer.
+   */
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "reversal_of_id")
+  private IncomeEntity reversalOf;
+
   @ManyToOne
   @JoinColumn(name = "user_modified_id")
   private UserEntity lastModifiedBy;
@@ -104,6 +128,7 @@ public class IncomeEntity implements Serializable {
     this.supplier = incomeSupplier;
     this.incomeUser = incomeUser;
     this.deleted = Boolean.FALSE;
+    this.status = IncomeStatus.ACTIVE;
     this.incomeDetails = new ArrayList<>();
   }
 

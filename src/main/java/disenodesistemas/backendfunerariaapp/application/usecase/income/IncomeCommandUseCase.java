@@ -7,7 +7,6 @@ import disenodesistemas.backendfunerariaapp.application.usecase.supplier.Supplie
 import disenodesistemas.backendfunerariaapp.application.usecase.user.UserQueryUseCase;
 import disenodesistemas.backendfunerariaapp.domain.entity.IncomeDetailEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.IncomeEntity;
-import disenodesistemas.backendfunerariaapp.exception.ConflictException;
 import disenodesistemas.backendfunerariaapp.mapping.IncomeMapper;
 import disenodesistemas.backendfunerariaapp.mapping.ReceiptTypeMapper;
 import disenodesistemas.backendfunerariaapp.web.dto.request.IncomeRequestDto;
@@ -71,18 +70,12 @@ public class IncomeCommandUseCase {
     return updatedIncome;
   }
 
-  @Transactional
-  public void delete(final Long receiptNumber) {
-    final IncomeEntity incomeEntity = incomeQueryUseCase.findEntityByReceiptNumber(receiptNumber);
-    if (incomeEntity.isDeleted()) {
-      logIncomeRejected(receiptNumber, "already_deleted");
-      throw new ConflictException("income.error.already.deleted");
-    }
-
-    incomeEntity.setDeleted(Boolean.TRUE);
-    incomePersistencePort.save(incomeEntity);
-    logIncomeDeleted(receiptNumber);
-  }
+  // NOTE: the legacy `delete(receiptNumber)` method was replaced by the annul flow.
+  // See `AnnulIncomeUseCase` + `POST /api/v1/incomes/{id}/annul`. Hard-removing or
+  // soft-flagging an income did not produce the contabilidad-grade audit trail the
+  // domain expects — an annul keeps the original visible with `status = ANNULLED`
+  // and creates a reversal counter-entry so the cancellation is explicit and
+  // reconstructible from the income table alone.
 
   private void saveIncomeDetails(final IncomeRequestDto incomeRequestDto, final IncomeEntity incomeEntity) {
     if (CollectionUtils.isEmpty(incomeRequestDto.incomeDetails())) {
@@ -122,18 +115,4 @@ public class IncomeCommandUseCase {
         .log(event);
   }
 
-  private void logIncomeRejected(final Long receiptNumber, final String reason) {
-    log.atWarn()
-        .addKeyValue("event", "income.delete.rejected")
-        .addKeyValue("receiptNumber", receiptNumber)
-        .addKeyValue("reason", reason)
-        .log("income.delete.rejected");
-  }
-
-  private void logIncomeDeleted(final Long receiptNumber) {
-    log.atInfo()
-        .addKeyValue("event", "income.delete.completed")
-        .addKeyValue("receiptNumber", receiptNumber)
-        .log("income.delete.completed");
-  }
 }

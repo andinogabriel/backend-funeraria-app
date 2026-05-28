@@ -1,7 +1,6 @@
 package disenodesistemas.backendfunerariaapp.modern.application.usecase.income;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,7 +17,6 @@ import disenodesistemas.backendfunerariaapp.domain.entity.IncomeEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.ReceiptTypeEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.SupplierEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
-import disenodesistemas.backendfunerariaapp.exception.ConflictException;
 import disenodesistemas.backendfunerariaapp.mapping.IncomeMapper;
 import disenodesistemas.backendfunerariaapp.mapping.ReceiptTypeMapper;
 import disenodesistemas.backendfunerariaapp.modern.support.SecurityTestDataFactory;
@@ -69,6 +67,7 @@ class IncomeCommandUseCaseTest {
     final IncomeDetailEntity detailEntity = new IncomeDetailEntity();
     final IncomeResponseDto expectedResponse =
         new IncomeResponseDto(
+            1L,
             "7002",
             "1001",
             null,
@@ -79,7 +78,9 @@ class IncomeCommandUseCaseTest {
             null,
             null,
             null,
-            List.of());
+            List.of(),
+            disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus.ACTIVE,
+            null);
 
     when(incomeMapper.toEntity(request)).thenReturn(incomeEntity);
     when(receiptNumberGeneratorPort.nextSerialNumber()).thenReturn(1001L);
@@ -127,6 +128,7 @@ class IncomeCommandUseCaseTest {
     when(incomeMapper.toDto(incomeEntity))
         .thenReturn(
             new IncomeResponseDto(
+                1L,
                 "7002",
                 "1001",
                 null,
@@ -137,7 +139,9 @@ class IncomeCommandUseCaseTest {
                 null,
                 null,
                 null,
-                List.of()));
+                List.of(),
+                disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus.ACTIVE,
+                null));
 
     incomeCommandUseCase.create(request);
 
@@ -146,35 +150,9 @@ class IncomeCommandUseCaseTest {
     verify(incomeDetailService, never()).applyStockAndRefreshPrices(List.of());
   }
 
-  @Test
-  @DisplayName(
-      "Given an income already marked as deleted when the delete use case is executed then it rejects the duplicate delete")
-  void givenAnIncomeAlreadyMarkedAsDeletedWhenTheDeleteUseCaseIsExecutedThenItRejectsTheDuplicateDelete() {
-    final IncomeEntity deletedIncome = new IncomeEntity();
-    deletedIncome.setDeleted(true);
-
-    when(incomeQueryUseCase.findEntityByReceiptNumber(7002L)).thenReturn(deletedIncome);
-
-    assertThatThrownBy(() -> incomeCommandUseCase.delete(7002L))
-        .isInstanceOf(ConflictException.class)
-        .extracting("message")
-        .isEqualTo("income.error.already.deleted");
-  }
-
-  @Test
-  @DisplayName(
-      "Given an active income when the delete use case is executed then it marks the aggregate as deleted and persists the change")
-  void givenAnActiveIncomeWhenTheDeleteUseCaseIsExecutedThenItMarksTheAggregateAsDeletedAndPersistsTheChange() {
-    final IncomeEntity incomeEntity = new IncomeEntity();
-    incomeEntity.setDeleted(false);
-
-    when(incomeQueryUseCase.findEntityByReceiptNumber(7002L)).thenReturn(incomeEntity);
-
-    incomeCommandUseCase.delete(7002L);
-
-    assertThat(incomeEntity.isDeleted()).isTrue();
-    verify(incomePersistencePort).save(incomeEntity);
-  }
+  // The legacy `delete` flow was removed (replaced by AnnulIncomeUseCase). Its tests
+  // were removed alongside; the annul flow has its own coverage in
+  // AnnulIncomeUseCaseTest.
 
   private IncomeRequestDto incomeRequestDto(final List<IncomeDetailRequestDto> details) {
     return IncomeRequestDto.builder()

@@ -250,13 +250,32 @@ class JpaPersistenceAdaptersTest {
     final PageImpl<IncomeEntity> page = new PageImpl<>(List.of(income));
 
     when(repository.findByReceiptNumber(7002L)).thenReturn(Optional.of(income));
-    when(repository.findAllByDeletedFalseOrderByIdDesc()).thenReturn(List.of(income));
-    when(repository.findAllByDeleted(false, pageable)).thenReturn(page);
+    when(repository.findById(income.getId())).thenReturn(Optional.of(income));
+    when(repository.findAllActiveOrderByIdDesc()).thenReturn(List.of(income));
+    when(repository.search(
+            disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus.ACTIVE,
+            "",
+            "",
+            null,
+            null,
+            pageable))
+        .thenReturn(page);
     when(repository.save(income)).thenReturn(income);
 
     assertThat(adapter.findByReceiptNumber(7002L)).contains(income);
-    assertThat(adapter.findAllByDeletedFalseOrderByIdDesc()).containsExactly(income);
-    assertThat(adapter.findAllByDeleted(false, pageable)).isEqualTo(page);
+    assertThat(adapter.findById(income.getId())).contains(income);
+    assertThat(adapter.findAllActiveOrderByIdDesc()).containsExactly(income);
+    assertThat(
+            adapter
+                .search(
+                    disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus.ACTIVE,
+                    "",
+                    "",
+                    null,
+                    null,
+                    pageable)
+                .getContent())
+        .containsExactly(income);
     assertThat(adapter.save(income)).isEqualTo(income);
   }
 

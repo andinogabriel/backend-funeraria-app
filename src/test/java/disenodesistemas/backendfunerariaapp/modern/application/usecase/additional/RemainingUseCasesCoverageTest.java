@@ -69,15 +69,30 @@ class RemainingUseCasesCoverageTest {
     final IncomeQueryUseCase incomeQueryUseCase = new IncomeQueryUseCase(incomePersistencePort, incomeMapper);
     final IncomeEntity income = new IncomeEntity();
     final IncomeResponseDto response =
-        new IncomeResponseDto("7002", "1001", null, null, null, null, null, null, null, null, null);
+        new IncomeResponseDto(
+            1L,
+            "7002",
+            "1001",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus.ACTIVE,
+            null);
 
-    when(incomePersistencePort.findAllByDeletedFalseOrderByIdDesc()).thenReturn(List.of(income));
+    when(incomePersistencePort.findAllActiveOrderByIdDesc()).thenReturn(List.of(income));
     when(incomePersistencePort.findByReceiptNumber(7002L)).thenReturn(Optional.of(income));
     // The paginated path goes through `search(...)` with empty-string sentinels for the
     // text filters and null bounds for the date window — the use case normalises null/blank
     // `receiptNumber` and `supplierNif` to empty strings before delegating.
     when(incomePersistencePort.search(
-            org.mockito.Mockito.eq(false),
+            org.mockito.Mockito.eq(
+                disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus.ACTIVE),
             org.mockito.Mockito.eq(""),
             org.mockito.Mockito.eq(""),
             org.mockito.Mockito.isNull(),
@@ -90,7 +105,15 @@ class RemainingUseCasesCoverageTest {
     assertThat(incomeQueryUseCase.findById(7002L)).isEqualTo(response);
     assertThat(incomeQueryUseCase.findByReceiptNumber(7002L)).isEqualTo(response);
     // 0-indexed pagination (Spring Data + Material paginator). page=0 = first page.
-    assertThat(incomeQueryUseCase.getIncomesPaginated(false, 0, 10, "receiptNumber", "desc").getContent())
+    assertThat(
+            incomeQueryUseCase
+                .getIncomesPaginated(
+                    disenodesistemas.backendfunerariaapp.domain.enums.IncomeStatus.ACTIVE,
+                    0,
+                    10,
+                    "receiptNumber",
+                    "desc")
+                .getContent())
         .containsExactly(response);
   }
 

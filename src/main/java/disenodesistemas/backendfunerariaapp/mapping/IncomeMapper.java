@@ -12,6 +12,7 @@ import org.mapstruct.MappingTarget;
 @Mapper(config = MapStructConfig.class)
 public interface IncomeMapper {
 
+  @Mapping(target = "reversalOfId", source = "reversalOf.id")
   IncomeResponseDto toDto(IncomeEntity entity);
 
   @BeanMapping(builder = @Builder(disableBuilder = true))
@@ -24,6 +25,8 @@ public interface IncomeMapper {
   @Mapping(target = "supplier", ignore = true)
   @Mapping(target = "incomeUser", ignore = true)
   @Mapping(target = "deleted", ignore = true)
+  @Mapping(target = "status", ignore = true)
+  @Mapping(target = "reversalOf", ignore = true)
   @Mapping(target = "lastModifiedBy", ignore = true)
   @Mapping(target = "lastModifiedDate", ignore = true)
   @Mapping(target = "incomeDetails", ignore = true)
@@ -39,6 +42,8 @@ public interface IncomeMapper {
   @Mapping(target = "supplier", ignore = true)
   @Mapping(target = "incomeUser", ignore = true)
   @Mapping(target = "deleted", ignore = true)
+  @Mapping(target = "status", ignore = true)
+  @Mapping(target = "reversalOf", ignore = true)
   @Mapping(target = "lastModifiedBy", ignore = true)
   @Mapping(target = "lastModifiedDate", ignore = true)
   @Mapping(target = "incomeDetails", ignore = true)
