@@ -19,12 +19,13 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 @Service
+@RequiredArgsConstructor
 public class PlanCommandUseCase {
 
   private static final String AUDIT_TARGET_TYPE = "PLAN";
@@ -35,57 +36,15 @@ public class PlanCommandUseCase {
   private final PlanPricingService planPricingService;
   private final PlanQueryUseCase planQueryUseCase;
   private final AuthenticatedUserPort authenticatedUserPort;
-  private final Clock clock;
   private final AuditEventPort auditEventPort;
   private final OutboxPort outboxPort;
-
-  /** Production-time constructor wired by Spring; defaults the clock to {@link Clock#systemUTC()}. */
-  @Autowired
-  public PlanCommandUseCase(
-      final PlanPersistencePort planPersistencePort,
-      final PlanMapper planMapper,
-      final PlanItemService planItemService,
-      final PlanPricingService planPricingService,
-      final PlanQueryUseCase planQueryUseCase,
-      final AuthenticatedUserPort authenticatedUserPort,
-      final AuditEventPort auditEventPort,
-      final OutboxPort outboxPort) {
-    this(
-        planPersistencePort,
-        planMapper,
-        planItemService,
-        planPricingService,
-        planQueryUseCase,
-        authenticatedUserPort,
-        auditEventPort,
-        outboxPort,
-        Clock.systemUTC());
-  }
-
   /**
-   * Test-friendly overload that lets a deterministic clock drive the {@code deletedAt}
-   * tombstone so the soft-delete contract is verifiable without freezing system time.
+   * Wall-clock read used for soft-delete tombstones. Wired from the shared
+   * {@code TimeConfig} bean ({@link Clock#systemUTC()} in production, fixed at a
+   * known instant in tests). Centralizing the clock in one bean avoids the
+   * dual-constructor boilerplate the older use cases carry.
    */
-  public PlanCommandUseCase(
-      final PlanPersistencePort planPersistencePort,
-      final PlanMapper planMapper,
-      final PlanItemService planItemService,
-      final PlanPricingService planPricingService,
-      final PlanQueryUseCase planQueryUseCase,
-      final AuthenticatedUserPort authenticatedUserPort,
-      final AuditEventPort auditEventPort,
-      final OutboxPort outboxPort,
-      final Clock clock) {
-    this.planPersistencePort = planPersistencePort;
-    this.planMapper = planMapper;
-    this.planItemService = planItemService;
-    this.planPricingService = planPricingService;
-    this.planQueryUseCase = planQueryUseCase;
-    this.authenticatedUserPort = authenticatedUserPort;
-    this.clock = clock;
-    this.auditEventPort = auditEventPort;
-    this.outboxPort = outboxPort;
-  }
+  private final Clock clock;
 
   @Transactional
   public PlanResponseDto create(final PlanRequestDto planRequestDto) {

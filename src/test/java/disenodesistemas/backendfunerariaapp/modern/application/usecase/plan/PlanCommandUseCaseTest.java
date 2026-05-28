@@ -37,9 +37,7 @@ import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -60,14 +58,27 @@ class PlanCommandUseCaseTest {
   @Mock private AuditEventPort auditEventPort;
   @Mock private OutboxPort outboxPort;
 
-  // A Spy on a fixed Clock so the soft-delete tombstone is deterministic. Mockito's
-  // @InjectMocks picks the constructor that accepts the most matchable arguments,
-  // which includes the Clock; spying a real frozen instance avoids the need to stub
-  // every Clock method that Instant.now(Clock) ends up calling.
-  @Spy
-  private Clock clock = Clock.fixed(FROZEN_NOW, ZoneOffset.UTC);
+  // Concrete fixed Clock so the soft-delete tombstone is deterministic.
+  // Production wires the shared TimeConfig#systemClock bean; here we pass an
+  // explicit frozen instance through the single Lombok-generated constructor.
+  private final Clock clock = Clock.fixed(FROZEN_NOW, ZoneOffset.UTC);
 
-  @InjectMocks private PlanCommandUseCase planCommandUseCase;
+  private PlanCommandUseCase planCommandUseCase;
+
+  @org.junit.jupiter.api.BeforeEach
+  void initUseCase() {
+    planCommandUseCase =
+        new PlanCommandUseCase(
+            planPersistencePort,
+            planMapper,
+            planItemService,
+            planPricingService,
+            planQueryUseCase,
+            authenticatedUserPort,
+            auditEventPort,
+            outboxPort,
+            clock);
+  }
 
   @Test
   @DisplayName(
