@@ -85,7 +85,9 @@ class PlanCommandUseCaseTest {
             null,
             new BigDecimal("1500.00"),
             new BigDecimal("25.00"),
-            Set.of());
+            Set.of(),
+            null,
+            null);
     final UserEntity actor = SecurityTestDataFactory.userEntity();
 
     when(planMapper.toEntity(request)).thenReturn(planEntity);
@@ -133,7 +135,9 @@ class PlanCommandUseCaseTest {
             null,
             new BigDecimal("1750.00"),
             new BigDecimal("25.00"),
-            Set.of());
+            Set.of(),
+            null,
+            null);
 
     when(planQueryUseCase.findPlanById(1L)).thenReturn(persistedPlan);
     when(planItemService.getDeletedItemsPlanEntities(persistedPlan, request.itemsPlan()))
@@ -199,7 +203,15 @@ class PlanCommandUseCaseTest {
     planEntity.setId(7L);
     final PlanResponseDto expectedResponse =
         new PlanResponseDto(
-            7L, request.name(), "desc", null, BigDecimal.ZERO, new BigDecimal("10.00"), Set.of());
+            7L,
+            request.name(),
+            "desc",
+            null,
+            BigDecimal.ZERO,
+            new BigDecimal("10.00"),
+            Set.of(),
+            null,
+            null);
     final UserEntity actor = SecurityTestDataFactory.userEntity();
 
     when(planMapper.toEntity(request)).thenReturn(planEntity);

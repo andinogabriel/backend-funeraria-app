@@ -2031,8 +2031,13 @@ paths:
           $ref: '#/components/responses/InternalServerErrorResponse'
     delete:
       tags: [Plans]
-      summary: Eliminar plan
-      description: Solo ADMIN.
+      summary: Eliminar plan (soft-delete)
+      description: |
+        Solo ADMIN. Marca el plan como eliminado (`deletedAt` + `deletedBy`) sin
+        removerlo físicamente — los funerales históricos que lo referencian
+        siguen llevando el snapshot frozen al momento de la venta. La papelera
+        (`GET /api/v1/plans/deleted`) sigue mostrando el registro para auditoría
+        / consulta. Audit log: `PLAN_DELETED`. Outbox: `PlanDeleted`.
       security:
         - bearerAuth: []
       parameters:
@@ -2051,6 +2056,72 @@ paths:
           $ref: '#/components/responses/ForbiddenResponse'
         '404':
           $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/plans/deleted:
+    get:
+      tags: [Plans]
+      summary: Listar planes soft-deleted (papelera, solo ADMIN)
+      description: |
+        Devuelve los planes marcados como eliminados (`deletedAt is not null`)
+        ordenados por fecha de borrado descendente. Surface de solo lectura —
+        no existen acciones de restore ni purga en esta versión. Cada item
+        incluye los campos `deletedAt` (ISO-8601 UTC) y `deletedBy` (email del
+        admin que ejecutó el borrado).
+
+        Filtros opcionales (combinación AND): `name` / `deletedBy` como
+        substring case-insensitive; `deletedFrom` / `deletedTo` como instantes
+        UTC inclusivos sobre `deletedAt`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+        - name: name
+          in: query
+          required: false
+          schema: { type: string }
+          description: Substring case-insensitive contra el nombre del plan.
+        - name: deletedBy
+          in: query
+          required: false
+          schema: { type: string }
+          description: Substring contra el email del admin que ejecutó el borrado.
+        - name: deletedFrom
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+          description: Instante ISO-8601 UTC inclusivo (cota inferior de `deletedAt`).
+        - name: deletedTo
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+          description: Instante ISO-8601 UTC inclusivo (cota superior de `deletedAt`).
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Página de planes eliminados.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanPage'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
 
@@ -3315,6 +3386,47 @@ components:
           uniqueItems: true
           items:
             $ref: '#/components/schemas/ItemPlanResponseDto'
+        deletedAt:
+          type: string
+          format: date-time
+          description: |
+            Instante UTC en que el plan fue soft-deleted. Solo presente en la papelera
+            (`GET /api/v1/plans/deleted`); omitido del payload para planes activos por
+            `@JsonInclude(NON_NULL)`.
+        deletedBy:
+          type: string
+          description: |
+            Email del admin que ejecutó el borrado. Solo presente en la papelera; omitido
+            para planes activos.
+    PlanPage:
+      type: object
+      description: Serializacion del `Page<PlanResponseDto>` devuelto por Spring Data.
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanResponseDto'
+        pageable:
+          $ref: '#/components/schemas/PageableObject'
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        last:
+          type: boolean
+        size:
+          type: integer
+        number:
+          type: integer
+        sort:
+          $ref: '#/components/schemas/SortObject'
+        first:
+          type: boolean
+        numberOfElements:
+          type: integer
+        empty:
+          type: boolean
     ItemRequestDto:
       type: object
       properties:
