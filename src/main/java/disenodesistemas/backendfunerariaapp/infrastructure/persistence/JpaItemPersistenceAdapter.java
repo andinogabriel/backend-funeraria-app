@@ -4,6 +4,7 @@ import disenodesistemas.backendfunerariaapp.application.port.out.ItemPersistence
 import disenodesistemas.backendfunerariaapp.domain.entity.CategoryEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.ItemEntity;
 import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.ItemRepository;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,11 @@ public class JpaItemPersistenceAdapter implements ItemPersistencePort {
   }
 
   @Override
+  public boolean existsByCode(final String code) {
+    return itemRepository.existsByCode(code);
+  }
+
+  @Override
   public Page<ItemEntity> search(
       final String code,
       final String name,
@@ -62,8 +68,16 @@ public class JpaItemPersistenceAdapter implements ItemPersistencePort {
   }
 
   @Override
-  @Transactional
-  public void delete(final ItemEntity item) {
-    itemRepository.delete(item);
+  public Page<ItemEntity> findAllDeleted(
+      final String code,
+      final String name,
+      final String categoryName,
+      final String brandName,
+      final String deletedBy,
+      final Instant deletedFrom,
+      final Instant deletedTo,
+      final Pageable pageable) {
+    return itemRepository.findAllDeleted(
+        code, name, categoryName, brandName, deletedBy, deletedFrom, deletedTo, pageable);
   }
 }

@@ -6,6 +6,7 @@ import disenodesistemas.backendfunerariaapp.domain.entity.ItemEntity;
 import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
 import disenodesistemas.backendfunerariaapp.mapping.ItemMapper;
 import disenodesistemas.backendfunerariaapp.web.dto.response.ItemResponseDto;
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.Strings;
@@ -95,7 +96,41 @@ public class ItemQueryUseCase {
         entities.getTotalElements());
   }
 
+  /**
+   * Admin-only papelera read. Empty-string sentinels on the text filters per ADR-0010
+   * so PostgreSQL never has to infer the bind type from a {@code null} literal. The
+   * page size is clamped to {@link #MAX_PAPELERA_PAGE_SIZE} so a misbehaving caller
+   * cannot pull thousands of rows in a single request.
+   */
+  @Transactional(readOnly = true)
+  public Page<ItemResponseDto> findAllDeleted(
+      final int page,
+      final int limit,
+      final String code,
+      final String name,
+      final String categoryName,
+      final String brandName,
+      final String deletedBy,
+      final Instant deletedFrom,
+      final Instant deletedTo) {
+    final int safeLimit = Math.min(Math.max(limit, 1), MAX_PAPELERA_PAGE_SIZE);
+    final Pageable pageable = PageRequest.of(Math.max(page, 0), safeLimit);
+    return itemPersistencePort
+        .findAllDeleted(
+            blankToEmpty(code),
+            blankToEmpty(name),
+            blankToEmpty(categoryName),
+            blankToEmpty(brandName),
+            blankToEmpty(deletedBy),
+            deletedFrom,
+            deletedTo,
+            pageable)
+        .map(itemMapper::toDto);
+  }
+
   private static String blankToEmpty(final String value) {
     return value == null ? "" : value.trim();
   }
+
+  private static final int MAX_PAPELERA_PAGE_SIZE = 200;
 }

@@ -28,4 +28,14 @@ public record ItemResponseDto(
     @JsonFormat(shape = JsonFormat.Shape.STRING) Instant createdAt,
     String createdBy,
     @JsonFormat(shape = JsonFormat.Shape.STRING) Instant updatedAt,
-    String updatedBy) {}
+    String updatedBy,
+    /**
+     * UTC instant the item was soft-deleted. Only populated by the admin-only papelera
+     * endpoint (`GET /api/v1/items/deleted`); active items omit it via the
+     * {@code @JsonInclude(NON_DEFAULT)} on the record.
+     */
+    @JsonFormat(shape = JsonFormat.Shape.STRING) Instant deletedAt,
+    /**
+     * Email of the admin that requested the soft-delete. Same scope as {@link #deletedAt}.
+     */
+    String deletedBy) {}

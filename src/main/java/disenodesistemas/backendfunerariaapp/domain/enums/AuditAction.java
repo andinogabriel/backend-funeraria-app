@@ -35,5 +35,11 @@ public enum AuditAction {
   PLAN_CREATED,
 
   /** An existing plan record was deleted. */
-  PLAN_DELETED
+  PLAN_DELETED,
+
+  /** A new item record was created. */
+  ITEM_CREATED,
+
+  /** An existing item record was deleted. */
+  ITEM_DELETED
 }

@@ -3,12 +3,24 @@ package disenodesistemas.backendfunerariaapp.application.usecase.item;
 import static java.util.Objects.nonNull;
 
 import disenodesistemas.backendfunerariaapp.application.model.FilePayload;
+import disenodesistemas.backendfunerariaapp.application.port.out.AuditEventPort;
+import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.FileStoragePort;
 import disenodesistemas.backendfunerariaapp.application.port.out.ItemPersistencePort;
+import disenodesistemas.backendfunerariaapp.application.port.out.OutboxPort;
+import disenodesistemas.backendfunerariaapp.application.port.out.PlanPersistencePort;
 import disenodesistemas.backendfunerariaapp.domain.entity.ItemEntity;
+import disenodesistemas.backendfunerariaapp.domain.entity.Plan;
+import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
+import disenodesistemas.backendfunerariaapp.domain.enums.AuditAction;
+import disenodesistemas.backendfunerariaapp.domain.event.ItemDeleted;
+import disenodesistemas.backendfunerariaapp.exception.ConflictException;
 import disenodesistemas.backendfunerariaapp.mapping.ItemMapper;
 import disenodesistemas.backendfunerariaapp.web.dto.request.ItemRequestDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.ItemResponseDto;
+import java.time.Clock;
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -21,10 +33,22 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class ItemCommandUseCase {
 
+  private static final String AUDIT_TARGET_TYPE = "ITEM";
+
   private final ItemPersistencePort itemPersistencePort;
+  private final PlanPersistencePort planPersistencePort;
   private final ItemMapper itemMapper;
   private final FileStoragePort fileStoragePort;
   private final ItemQueryUseCase itemQueryUseCase;
+  private final AuthenticatedUserPort authenticatedUserPort;
+  private final AuditEventPort auditEventPort;
+  private final OutboxPort outboxPort;
+  /**
+   * Wall-clock read used for soft-delete tombstones. Wired from the shared
+   * {@code TimeConfig} bean ({@link Clock#systemUTC()} in production, fixed at
+   * a known instant in tests).
+   */
+  private final Clock clock;
 
   @Transactional
   public ItemResponseDto create(final ItemRequestDto itemRequestDto) {
@@ -32,6 +56,7 @@ public class ItemCommandUseCase {
     final ItemEntity itemEntity = itemMapper.toEntity(itemRequestDto);
     itemEntity.setCode(UUID.randomUUID().toString());
     final ItemResponseDto createdItem = itemMapper.toDto(itemPersistencePort.save(itemEntity));
+    recordItemCreated(createdItem);
     logItemCompleted("item.create.completed", createdItem);
     return createdItem;
   }
@@ -46,14 +71,49 @@ public class ItemCommandUseCase {
     return updatedItem;
   }
 
+  /**
+   * Soft-deletes the item identified by {@code code}: stamps {@code deletedAt = now()}
+   * and {@code deletedBy = <actor email>}, then saves. Two guards fire <em>before</em>
+   * the write so the operator gets a clear {@code 409 Conflict} instead of a silent
+   * orphan:
+   *
+   * <ul>
+   *   <li>{@code stock > 0} — refusing the delete forces the operator to first regularise
+   *       the inventory (anular ingreso, ajuste, etc.) so the audit trail of the item
+   *       reaching zero stock stays explicit.</li>
+   *   <li>At least one <em>active</em> plan references this item — the plan list filters
+   *       out soft-deleted plans, so a deleted plan does not block the item delete.</li>
+   * </ul>
+   *
+   * <p>The attached image file (if any) is intentionally <b>not</b> removed from storage:
+   * the row stays alive in DB, the papelera UI may render the thumbnail, and a future
+   * retention sweep can purge orphaned files when (if ever) the row gets hard-deleted.
+   *
+   * <p>An {@link AuditAction#ITEM_DELETED} entry is recorded so the audit log carries
+   * the operator-readable trail, and an {@link ItemDeleted} outbox event ships for
+   * downstream consumers (notifications, analytical sinks).
+   */
   @Transactional
   public void delete(final String code) {
     final ItemEntity itemEntity = itemQueryUseCase.getItemByCode(code);
     logItemDeleteStarted(code, itemEntity);
-    if (nonNull(itemEntity.getItemImageLink())) {
-      fileStoragePort.deleteFiles(itemEntity);
-    }
-    itemPersistencePort.delete(itemEntity);
+    validateStockClearedForDelete(itemEntity);
+    validateNoActivePlanReferences(itemEntity);
+
+    final UserEntity actor = authenticatedUserPort.getAuthenticatedUser();
+    itemEntity.setDeletedAt(Instant.now(clock));
+    itemEntity.setDeletedBy(actor.getEmail());
+    itemPersistencePort.save(itemEntity);
+
+    auditEventPort.record(
+        AuditAction.ITEM_DELETED,
+        actor.getEmail(),
+        actor.getId(),
+        AUDIT_TARGET_TYPE,
+        String.valueOf(itemEntity.getId()),
+        "{\"code\":\"" + escape(itemEntity.getCode()) + "\"}");
+
+    outboxPort.publish(new ItemDeleted(itemEntity.getId(), itemEntity.getCode()));
     logItemStarted("item.delete.completed", code);
   }
 
@@ -69,6 +129,74 @@ public class ItemCommandUseCase {
               logItemStarted("item.image.upload.completed", code);
             },
             () -> logItemRejected(code, "item.image.upload.rejected", "null_payload"));
+  }
+
+  /**
+   * Refuses the delete with {@code 409} when the item still has stock on hand. The
+   * message keys live in {@code messages*.properties} alongside the other domain
+   * conflict messages.
+   */
+  private void validateStockClearedForDelete(final ItemEntity item) {
+    final Integer stock = item.getStock();
+    if (stock != null && stock > 0) {
+      log.atWarn()
+          .addKeyValue("event", "item.delete.rejected")
+          .addKeyValue("code", item.getCode())
+          .addKeyValue("reason", "stock_not_cleared")
+          .addKeyValue("stock", stock)
+          .log("item.delete.rejected");
+      throw new ConflictException("item.error.delete.stock.not.cleared");
+    }
+  }
+
+  /**
+   * Refuses the delete with {@code 409} when at least one active plan still references
+   * the item. The plan persistence port's lookup already filters out soft-deleted plans,
+   * so this guard only fires on genuinely live references — a plan that was deleted
+   * earlier in the day does not block the item delete.
+   */
+  private void validateNoActivePlanReferences(final ItemEntity item) {
+    final List<Plan> activePlans =
+        planPersistencePort.findPlansContainingAnyOfThisItems(List.of(item));
+    if (!activePlans.isEmpty()) {
+      log.atWarn()
+          .addKeyValue("event", "item.delete.rejected")
+          .addKeyValue("code", item.getCode())
+          .addKeyValue("reason", "active_plan_references")
+          .addKeyValue("planCount", activePlans.size())
+          .log("item.delete.rejected");
+      throw new ConflictException("item.error.delete.plan.references");
+    }
+  }
+
+  /**
+   * Emits the audit entry for a successful item creation. Payload carries the item
+   * name + code so audit consumers get a meaningful one-liner without joining back to
+   * the items table.
+   */
+  private void recordItemCreated(final ItemResponseDto created) {
+    final UserEntity actor = authenticatedUserPort.getAuthenticatedUser();
+    final String payload =
+        "{\"name\":\"" + escape(created.name()) + "\",\"code\":\"" + escape(created.code()) + "\"}";
+    auditEventPort.record(
+        AuditAction.ITEM_CREATED,
+        actor.getEmail(),
+        actor.getId(),
+        AUDIT_TARGET_TYPE,
+        created.code(),
+        payload);
+  }
+
+  /**
+   * Minimal JSON-string escape so item names / codes with embedded quotes or
+   * backslashes do not break the audit payload. Same helper pattern used by the
+   * plan command use case.
+   */
+  private static String escape(final String raw) {
+    if (raw == null) {
+      return "";
+    }
+    return raw.replace("\\", "\\\\").replace("\"", "\\\"");
   }
 
   private void logItemCreateStarted(final ItemRequestDto itemRequestDto) {

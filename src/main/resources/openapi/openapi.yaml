@@ -1794,8 +1794,21 @@ paths:
           $ref: '#/components/responses/InternalServerErrorResponse'
     delete:
       tags: [Items]
-      summary: Eliminar item
-      description: Solo ADMIN.
+      summary: Eliminar item (soft-delete con guards)
+      description: |
+        Solo ADMIN. Marca el item como eliminado (`deletedAt` + `deletedBy`) sin
+        removerlo físicamente: el codigo permanece reservado (sigue 409 contra
+        re-creación con el mismo codigo) y la imagen asociada se conserva en el
+        storage para que la papelera la muestre.
+
+        Dos guardas se ejecutan antes del soft-delete y producen `409 Conflict`:
+        - El item tiene `stock > 0`: el operador debe regularizar el inventario
+          (anular ingreso, ajuste) antes de poder eliminarlo.
+        - El item está referenciado por al menos un plan activo (los planes
+          eliminados no cuentan): el operador debe quitar la referencia o
+          eliminar el plan primero.
+
+        Audit log: `ITEM_DELETED`. Outbox: `ItemDeleted`.
       security:
         - bearerAuth: []
       parameters:
@@ -1814,6 +1827,90 @@ paths:
           $ref: '#/components/responses/ForbiddenResponse'
         '404':
           $ref: '#/components/responses/NotFoundResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/items/deleted:
+    get:
+      tags: [Items]
+      summary: Listar items soft-deleted (papelera, solo ADMIN)
+      description: |
+        Devuelve los items marcados como eliminados (`deletedAt is not null`)
+        ordenados por fecha de borrado descendente. Surface de solo lectura —
+        no existen acciones de restore ni purga en esta versión. Cada item
+        incluye los campos `deletedAt` (ISO-8601 UTC) y `deletedBy` (email del
+        admin que ejecutó el borrado).
+
+        Filtros opcionales (combinación AND): `code` / `name` / `deletedBy`
+        como substring case-insensitive; `categoryName` / `brandName` como
+        exact match; `deletedFrom` / `deletedTo` como instantes UTC inclusivos
+        sobre `deletedAt`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+        - name: code
+          in: query
+          required: false
+          schema: { type: string }
+          description: Substring case-insensitive contra el codigo del item.
+        - name: name
+          in: query
+          required: false
+          schema: { type: string }
+          description: Substring case-insensitive contra el nombre del item.
+        - name: categoryName
+          in: query
+          required: false
+          schema: { type: string }
+          description: Exact match contra el nombre de la categoria vinculada.
+        - name: brandName
+          in: query
+          required: false
+          schema: { type: string }
+          description: Exact match contra el nombre de la marca vinculada.
+        - name: deletedBy
+          in: query
+          required: false
+          schema: { type: string }
+          description: Substring contra el email del admin que ejecutó el borrado.
+        - name: deletedFrom
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+          description: Instante ISO-8601 UTC inclusivo (cota inferior de `deletedAt`).
+        - name: deletedTo
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+          description: Instante ISO-8601 UTC inclusivo (cota superior de `deletedAt`).
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Página de items eliminados.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemPage'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
 
@@ -3479,6 +3576,57 @@ components:
           $ref: '#/components/schemas/CategoryResponseDto'
         brand:
           $ref: '#/components/schemas/BrandResponseDto'
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        deletedAt:
+          type: string
+          format: date-time
+          description: |
+            Instante UTC en que el item fue soft-deleted. Solo presente en la papelera
+            (`GET /api/v1/items/deleted`); omitido del payload para items activos por
+            `@JsonInclude(NON_DEFAULT)`.
+        deletedBy:
+          type: string
+          description: |
+            Email del admin que ejecutó el borrado. Solo presente en la papelera; omitido
+            para items activos.
+    ItemPage:
+      type: object
+      description: Serializacion del `Page<ItemResponseDto>` devuelto por Spring Data.
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemResponseDto'
+        pageable:
+          $ref: '#/components/schemas/PageableObject'
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        last:
+          type: boolean
+        size:
+          type: integer
+        number:
+          type: integer
+        sort:
+          $ref: '#/components/schemas/SortObject'
+        first:
+          type: boolean
+        numberOfElements:
+          type: integer
+        empty:
+          type: boolean
     SupplierRequestDto:
       type: object
       properties:

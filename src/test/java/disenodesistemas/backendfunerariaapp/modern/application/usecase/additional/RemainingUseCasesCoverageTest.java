@@ -171,7 +171,7 @@ class RemainingUseCasesCoverageTest {
     final ItemResponseDto itemResponse =
         new ItemResponseDto(
             "Urna", null, "ITEM-001", null, null, null, null, null, null, null, null, null, null,
-            null, null);
+            null, null, null, null);
     final GenderResponseDto genderResponse = new GenderResponseDto(1L, "Masculino");
 
     when(planPersistencePort.findAllByOrderByIdDesc()).thenReturn(List.of(plan));
