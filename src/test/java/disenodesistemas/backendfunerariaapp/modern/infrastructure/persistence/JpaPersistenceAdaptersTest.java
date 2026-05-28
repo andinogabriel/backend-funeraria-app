@@ -302,27 +302,31 @@ class JpaPersistenceAdaptersTest {
 
   @Test
   @DisplayName(
-      "Given plan repository responses when the plan persistence adapter is invoked then it delegates reads and writes to the repository")
+      "Given plan repository responses when the plan persistence adapter is invoked then it delegates reads and writes to the repository, including the admin-only findAllDeleted papelera path")
   void givenPlanRepositoryResponsesWhenThePlanPersistenceAdapterIsInvokedThenItDelegatesReadsAndWritesToTheRepository() {
     final PlanRepository repository = mock(PlanRepository.class);
     final JpaPlanPersistenceAdapter adapter = new JpaPlanPersistenceAdapter(repository);
     final Plan plan = DomainTestDataFactory.plan();
     final ItemEntity item = DomainTestDataFactory.itemEntity();
+    final org.springframework.data.domain.Pageable pageable =
+        org.springframework.data.domain.PageRequest.of(0, 20);
+    final org.springframework.data.domain.Page<Plan> deletedPage =
+        new org.springframework.data.domain.PageImpl<>(List.of(plan));
 
     when(repository.findById(1L)).thenReturn(Optional.of(plan));
     when(repository.findAllByOrderByIdDesc()).thenReturn(List.of(plan));
     when(repository.findPlansContainingAnyOfThisItems(List.of(item))).thenReturn(List.of(plan));
     when(repository.save(plan)).thenReturn(plan);
     when(repository.saveAll(List.of(plan))).thenReturn(List.of(plan));
+    when(repository.findAllDeleted("", "", null, null, pageable)).thenReturn(deletedPage);
 
     assertThat(adapter.findById(1L)).contains(plan);
     assertThat(adapter.findAllByOrderByIdDesc()).containsExactly(plan);
     assertThat(adapter.findPlansContainingAnyOfThisItems(List.of(item))).containsExactly(plan);
     assertThat(adapter.save(plan)).isEqualTo(plan);
     assertThat(adapter.saveAll(List.of(plan))).containsExactly(plan);
-    adapter.delete(plan);
-
-    verify(repository).delete(plan);
+    assertThat(adapter.findAllDeleted("", "", null, null, pageable).getContent())
+        .containsExactly(plan);
   }
 
   @Test

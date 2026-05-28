@@ -167,7 +167,7 @@ class RemainingUseCasesCoverageTest {
     item.setCode("ITEM-001");
     final CategoryEntity category = new CategoryEntity("Urnas", "Productos");
     final GenderEntity gender = new GenderEntity("Masculino");
-    final PlanResponseDto planResponse = new PlanResponseDto(1L, "Plan Basico", null, null, null, null, java.util.Set.of());
+    final PlanResponseDto planResponse = new PlanResponseDto(1L, "Plan Basico", null, null, null, null, java.util.Set.of(), null, null);
     final ItemResponseDto itemResponse =
         new ItemResponseDto(
             "Urna", null, "ITEM-001", null, null, null, null, null, null, null, null, null, null,

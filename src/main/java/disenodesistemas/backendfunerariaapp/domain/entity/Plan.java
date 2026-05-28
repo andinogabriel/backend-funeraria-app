@@ -2,6 +2,7 @@ package disenodesistemas.backendfunerariaapp.domain.entity;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -57,6 +58,24 @@ public class Plan implements Serializable {
   @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL)
   @ToString.Exclude
   private List<Funeral> funeral;
+
+  /**
+   * Soft-delete tombstone. Populated by {@code PlanCommandUseCase.delete} with the UTC
+   * moment the record was removed; {@code null} for active plans. Every operational read
+   * filters on {@code deletedAt is null} so soft-deleted rows stay invisible to the
+   * regular catalog the operator picks from on the funeral form. The admin-only papelera
+   * endpoint queries the inverse.
+   */
+  @Column(name = "deleted_at")
+  private Instant deletedAt;
+
+  /**
+   * Email of the admin that requested the soft delete. Captured from
+   * {@code AuthenticatedUserPort} at delete time so the papelera can show "borrado por"
+   * without joining the audit log. {@code null} for active plans.
+   */
+  @Column(name = "deleted_by", length = 255)
+  private String deletedBy;
 
   public Plan(final String name, final String description, final BigDecimal profitPercentage) {
     this.name = name;

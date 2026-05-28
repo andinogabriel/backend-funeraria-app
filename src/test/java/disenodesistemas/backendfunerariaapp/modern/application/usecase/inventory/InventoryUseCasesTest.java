@@ -414,7 +414,7 @@ class InventoryUseCasesTest {
     final PlanQueryUseCase planQueryUseCase = new PlanQueryUseCase(planPersistencePort, planMapper);
     final Plan plan = new Plan("Plan Oro", "Cobertura completa", new BigDecimal("25.00"));
     final PlanResponseDto response =
-        new PlanResponseDto(1L, "Plan Oro", "Cobertura completa", null, null, new BigDecimal("25.00"), java.util.Set.of());
+        new PlanResponseDto(1L, "Plan Oro", "Cobertura completa", null, null, new BigDecimal("25.00"), java.util.Set.of(), null, null);
 
     when(planPersistencePort.findAllByOrderByIdDesc()).thenReturn(List.of(plan));
     when(planMapper.toDto(plan)).thenReturn(response);

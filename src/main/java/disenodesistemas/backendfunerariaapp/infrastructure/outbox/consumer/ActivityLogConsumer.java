@@ -11,6 +11,7 @@ import disenodesistemas.backendfunerariaapp.domain.event.DomainEvent;
 import disenodesistemas.backendfunerariaapp.domain.event.FuneralCreated;
 import disenodesistemas.backendfunerariaapp.domain.event.FuneralDeleted;
 import disenodesistemas.backendfunerariaapp.domain.event.FuneralUpdated;
+import disenodesistemas.backendfunerariaapp.domain.event.PlanDeleted;
 import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.ActivityLogRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -117,6 +118,7 @@ public class ActivityLogConsumer implements DomainEventConsumer {
                   .formatted(e.firstName(), e.lastName(), e.dni());
           case AffiliateMarkedDeceased e -> "Afiliado marcado como fallecido (DNI %d)".formatted(e.dni());
           case AffiliateDeleted e -> "Afiliado eliminado (DNI %d)".formatted(e.dni());
+          case PlanDeleted e -> "Plan eliminado (#%d)".formatted(e.planId());
         };
     return raw.length() <= ActivityLogEntry.SUMMARY_MAX_LENGTH
         ? raw

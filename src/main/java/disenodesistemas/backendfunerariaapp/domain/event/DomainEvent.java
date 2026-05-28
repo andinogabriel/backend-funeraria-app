@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
   @JsonSubTypes.Type(value = AffiliateUpdated.class, name = "AffiliateUpdated"),
   @JsonSubTypes.Type(value = AffiliateMarkedDeceased.class, name = "AffiliateMarkedDeceased"),
   @JsonSubTypes.Type(value = AffiliateDeleted.class, name = "AffiliateDeleted"),
+  @JsonSubTypes.Type(value = PlanDeleted.class, name = "PlanDeleted"),
 })
 public sealed interface DomainEvent
     permits FuneralCreated,
@@ -37,7 +38,8 @@ public sealed interface DomainEvent
         AffiliateCreated,
         AffiliateUpdated,
         AffiliateMarkedDeceased,
-        AffiliateDeleted {
+        AffiliateDeleted,
+        PlanDeleted {
 
   /** Aggregate type the event applies to ({@code FUNERAL}, {@code AFFILIATE}). */
   String aggregateType();
