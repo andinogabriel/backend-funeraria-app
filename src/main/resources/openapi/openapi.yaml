@@ -3585,6 +3585,14 @@ components:
           $ref: '#/components/schemas/BrandDto'
         category:
           $ref: '#/components/schemas/CategoryDto'
+        lowStockThreshold:
+          type: integer
+          minimum: 0
+          description: |
+            Umbral para el alerta de stock bajo (PR5a / PR5b). Opcional en el wire — null
+            o ausente significa "no cambiar" en update, y "usar el default 10" en create
+            (mirroring `items.low_stock_threshold NOT NULL DEFAULT 10`). Una modificacion
+            explicita audita un `ITEM_THRESHOLD_UPDATED` con `previous` y `next`.
       required: [name, price]
     ItemResponseDto:
       type: object
@@ -3622,6 +3630,12 @@ components:
           format: date-time
         updatedBy:
           type: string
+        lowStockThreshold:
+          type: integer
+          minimum: 0
+          description: |
+            Umbral para el alerta de stock bajo. Siempre presente en el wire (NOT NULL en
+            la columna); default 10 para items recien creados.
         deletedAt:
           type: string
           format: date-time

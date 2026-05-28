@@ -30,6 +30,11 @@ public record ItemResponseDto(
     @JsonFormat(shape = JsonFormat.Shape.STRING) Instant updatedAt,
     String updatedBy,
     /**
+     * Stock floor for the low-stock alert. Always present on the wire (NOT NULL on
+     * the column); defaults to 10 for newly created items via the V14 migration.
+     */
+    Integer lowStockThreshold,
+    /**
      * UTC instant the item was soft-deleted. Only populated by the admin-only papelera
      * endpoint (`GET /api/v1/items/deleted`); active items omit it via the
      * {@code @JsonInclude(NON_DEFAULT)} on the record.

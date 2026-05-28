@@ -71,6 +71,15 @@ public class ItemEntity implements Serializable {
 
   private Integer stock;
 
+  /**
+   * Stock floor used by the future {@code LOW_STOCK_REACHED} notification (PR5b). Set
+   * per item by the admin on the Item form or inline on an Income line. Defaults to 10
+   * via the V14 migration; never {@code null} thanks to the {@code NOT NULL DEFAULT 10}
+   * column constraint so every consumer can compare straight without coalescing.
+   */
+  @Column(name = "low_stock_threshold", nullable = false)
+  private Integer lowStockThreshold;
+
   @ManyToOne
   @JoinColumn(name = "category_id")
   private CategoryEntity category;

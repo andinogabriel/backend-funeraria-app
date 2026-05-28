@@ -64,6 +64,7 @@ class ItemQueryUseCasePaginatedTest {
             null,
             null,
             null,
+            null, // lowStockThreshold
             null,
             null);
     when(port.search(eq(""), eq(""), eq(""), eq(""), any(Pageable.class)))
