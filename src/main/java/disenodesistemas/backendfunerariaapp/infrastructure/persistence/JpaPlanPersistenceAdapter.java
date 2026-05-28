@@ -4,9 +4,12 @@ import disenodesistemas.backendfunerariaapp.application.port.out.PlanPersistence
 import disenodesistemas.backendfunerariaapp.domain.entity.ItemEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.Plan;
 import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.PlanRepository;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,8 +48,12 @@ public class JpaPlanPersistenceAdapter implements PlanPersistencePort {
   }
 
   @Override
-  @Transactional
-  public void delete(final Plan plan) {
-    planRepository.delete(plan);
+  public Page<Plan> findAllDeleted(
+      final String name,
+      final String deletedBy,
+      final Instant deletedFrom,
+      final Instant deletedTo,
+      final Pageable pageable) {
+    return planRepository.findAllDeleted(name, deletedBy, deletedFrom, deletedTo, pageable);
   }
 }

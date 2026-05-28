@@ -29,5 +29,11 @@ public enum AuditAction {
   FUNERAL_DELETED,
 
   /** A funeral transitioned to a new business state. The payload carries the previous and new state. */
-  FUNERAL_STATE_CHANGED
+  FUNERAL_STATE_CHANGED,
+
+  /** A new plan record was created. */
+  PLAN_CREATED,
+
+  /** An existing plan record was deleted. */
+  PLAN_DELETED
 }
