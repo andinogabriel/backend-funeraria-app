@@ -113,3 +113,12 @@ came from.
 - Don't skip a CI check by widening an ArchUnit rule when it surfaces a real boundary
   break — fix the violation in the same PR. (See `feedback_architecture_violations.md`
   in project memory.)
+- Don't try to `git push origin master` directly. Branch protection on `master`
+  rejects direct pushes — every change goes through `chore/<slug>` /
+  `feat/<slug>` / `fix/<slug>` and a PR with squash-merge + auto-merge. The rule
+  applies to the repo owner too (`enforce_admins: true`) so the agent cannot
+  bypass it even running with the owner's token. Required status checks before
+  merge: `Verify` + `Docker Build`. Required reviews: 0 (solo dev — the PR path
+  itself is the friction, not a human approver). If a push to master returns
+  "protected branch hook declined", branch off (`git checkout -b chore/<slug>`)
+  and open a PR via `gh pr create`.
