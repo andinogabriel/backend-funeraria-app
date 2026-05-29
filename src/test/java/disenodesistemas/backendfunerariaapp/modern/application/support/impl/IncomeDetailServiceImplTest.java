@@ -34,6 +34,10 @@ class IncomeDetailServiceImplTest {
   @Mock private PlanPriceUpdaterUseCase planPriceUpdaterUseCase;
   @Mock private IncomeDetailMapper incomeDetailMapper;
 
+  @Mock
+  private disenodesistemas.backendfunerariaapp.application.support.LowStockDetectionService
+      lowStockDetectionService;
+
   @InjectMocks private IncomeDetailServiceImpl service;
 
   @Test

@@ -2,6 +2,7 @@ package disenodesistemas.backendfunerariaapp.application.support.impl;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.ItemPersistencePort;
 import disenodesistemas.backendfunerariaapp.application.support.IncomeDetailService;
+import disenodesistemas.backendfunerariaapp.application.support.LowStockDetectionService;
 import disenodesistemas.backendfunerariaapp.application.usecase.plan.PlanPriceUpdaterUseCase;
 import disenodesistemas.backendfunerariaapp.domain.entity.IncomeDetailEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.ItemEntity;
@@ -25,6 +26,7 @@ public class IncomeDetailServiceImpl implements IncomeDetailService {
   private final ItemPersistencePort itemPersistencePort;
   private final PlanPriceUpdaterUseCase planPriceUpdaterUseCase;
   private final IncomeDetailMapper incomeDetailMapper;
+  private final LowStockDetectionService lowStockDetectionService;
 
   @Override
   public List<IncomeDetailEntity> mapDetails(final List<IncomeDetailRequestDto> detailDtos) {
@@ -84,7 +86,13 @@ public class IncomeDetailServiceImpl implements IncomeDetailService {
             .map(
                 incomeDetail -> {
                   final ItemEntity item = incomeDetail.getItem();
-                  item.setStock(item.getStock() - incomeDetail.getQuantity());
+                  final int current = item.getStock() == null ? 0 : item.getStock();
+                  final int after = current - incomeDetail.getQuantity();
+                  item.setStock(after);
+                  // Notify on threshold crossing — this path is hit by anular ingreso and
+                  // by the rebuild branch of income update, both of which can drag the
+                  // stock back down below the configured floor.
+                  lowStockDetectionService.detectAndPublish(item, current, after);
                   return item;
                 })
             .toList();

@@ -2,6 +2,7 @@ package disenodesistemas.backendfunerariaapp.application.support.impl;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.ItemPersistencePort;
 import disenodesistemas.backendfunerariaapp.application.support.FuneralStockService;
+import disenodesistemas.backendfunerariaapp.application.support.LowStockDetectionService;
 import disenodesistemas.backendfunerariaapp.domain.entity.ItemEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.ItemPlanEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.Plan;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 public class FuneralStockServiceImpl implements FuneralStockService {
 
   private final ItemPersistencePort itemPersistencePort;
+  private final LowStockDetectionService lowStockDetectionService;
 
   @Override
   public void applyStockForFuneral(final Plan plan) {
@@ -41,6 +43,9 @@ public class FuneralStockServiceImpl implements FuneralStockService {
                       .addKeyValue("delta", -row.getQuantity())
                       .addKeyValue("stockAfter", after)
                       .log("funeral.stock.applied");
+                  // Notify on threshold crossing — funeral consumption is the most
+                  // common path that drives an item below its alert floor.
+                  lowStockDetectionService.detectAndPublish(item, current, after);
                   return item;
                 })
             .toList();

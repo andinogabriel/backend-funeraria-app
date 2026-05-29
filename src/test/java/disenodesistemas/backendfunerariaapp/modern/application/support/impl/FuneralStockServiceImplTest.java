@@ -31,6 +31,10 @@ class FuneralStockServiceImplTest {
 
   @Mock private ItemPersistencePort itemPersistencePort;
 
+  @Mock
+  private disenodesistemas.backendfunerariaapp.application.support.LowStockDetectionService
+      lowStockDetectionService;
+
   @InjectMocks private FuneralStockServiceImpl service;
 
   @Test
