@@ -73,7 +73,15 @@ begin;
 -- 1. CLEANUP (idempotency). Order respects FK direction: children first.
 -- ---------------------------------------------------------------------------
 
--- income_details → incomes
+-- notifications — seed-only rows carry the TEST- item code embedded in the JSON
+-- payload so we match on it and leave operational alerts (if any) intact.
+delete from notifications
+where payload like '%TEST-%';
+
+-- income_details → incomes. Reversal counter-entries (PR4) are linked through
+-- `reversal_of_id` so we wipe them along with the originals — the same receipt
+-- range catches both because the seed assigns reversals receipt numbers in
+-- 99201..99999 which is inside the cleanup range below.
 delete from income_details
 where income_id in (
     select id from incomes where receipt_number between 99001 and 99999
@@ -785,6 +793,230 @@ select setval('income_details_seq', coalesce((select max(id) from income_details
 -- automatically when you supply an explicit id; the `nextval('...')` calls
 -- above already advance the regular sequences for the manually-id'd tables.
 
+-- ---------------------------------------------------------------------------
+-- 14. LOW-STOCK THRESHOLDS (PR5a). V14 added items.low_stock_threshold with a
+-- default of 10. We vary it per category so the bell drop-down (PR5b/PR5c)
+-- exercises several shapes:
+--   * Cofres y urnas      -> threshold 5   (slow-moving, expensive)
+--   * Velas / cirios      -> threshold 40  (high turnover, cheap)
+--   * Arreglos florales   -> threshold 12
+--   * Textiles            -> threshold 8
+--   * Recordatorios       -> threshold 25
+--   * Accesorios capilla  -> threshold 4
+-- ---------------------------------------------------------------------------
+
+update items set low_stock_threshold = 5
+where code in ('TEST-COF-001', 'TEST-COF-002', 'TEST-COF-003', 'TEST-URN-001');
+
+update items set low_stock_threshold = 40
+where code in ('TEST-CIR-001', 'TEST-VEL-001', 'TEST-VEL-002');
+
+update items set low_stock_threshold = 12
+where code in ('TEST-FLO-001', 'TEST-FLO-002', 'TEST-FLO-003');
+
+update items set low_stock_threshold = 8
+where code in ('TEST-TEX-001', 'TEST-TEX-002');
+
+update items set low_stock_threshold = 25
+where code in ('TEST-REC-001', 'TEST-REC-002', 'TEST-REC-003');
+
+update items set low_stock_threshold = 4
+where code in ('TEST-ACC-001', 'TEST-ACC-002', 'TEST-ACC-003');
+
+-- Force a handful of items to currently sit BELOW threshold so the operator
+-- sees the red stock chip on the listing right after the seed runs. These
+-- mirror what would have happened if PR3 (funeral consume stock) had been
+-- exercised heavily — slow-movers are at or below their floor.
+update items set stock = 3   where code = 'TEST-COF-001';   -- threshold 5
+update items set stock = 2   where code = 'TEST-URN-001';   -- threshold 5
+update items set stock = 35  where code = 'TEST-VEL-001';   -- threshold 40
+update items set stock = 9   where code = 'TEST-FLO-002';   -- threshold 12
+update items set stock = 3   where code = 'TEST-ACC-001';   -- threshold 4
+
+-- ---------------------------------------------------------------------------
+-- 15. PAPELERA — soft-deleted plans (V11) + items (V12). These rows let the
+-- admin exercise GET /plans/deleted and GET /items/deleted plus the restore
+-- endpoints right after the seed runs.
+--
+-- IMPORTANT: the cleanup at the top of the file already covers these by their
+-- TEST- / [TEST] prefixes, so no extra cleanup wiring is needed.
+-- ---------------------------------------------------------------------------
+
+-- Two soft-deleted plans. NOT referenced by any funeral (the bulk funeral
+-- block above only picks plans whose name does not include the [PAPELERA]
+-- marker), so the restore call won't surface ordering surprises.
+insert into plans (name, description, price, profit_percentage, image_url, deleted_at, deleted_by) values
+    ('[TEST] Plan Discontinuado 2024', 'Plan retirado del catálogo en 2024. Conservado en papelera para auditoría.', 410000.00, 20.00, null, now() - interval '21 days', 'admin@example.com'),
+    ('[TEST] Plan Piloto Norte',       'Plan piloto para sucursal norte. Quedó en papelera tras revisión comercial.', 690000.00, 24.00, null, now() - interval '5 days',  'admin@example.com');
+
+-- Five soft-deleted items. Codes use the TEST-DEL- sub-prefix so it is obvious
+-- at a glance which catalog rows are tombstones vs. active. Stock is zeroed
+-- because the PR2 guard would have blocked the delete otherwise — leaving a
+-- positive stock here would misrepresent the real state of the system.
+with brand_lookup as (
+    select id, name from brands where name like '[TEST]%'
+),
+category_lookup as (
+    select id, name from categories where name like '[TEST]%'
+)
+insert into items (
+    name, code, description, price, stock, low_stock_threshold,
+    item_height, item_length, item_width, brand_id, category_id,
+    created_at, created_by, updated_at, updated_by,
+    deleted_at, deleted_by
+)
+select
+    seed.name, seed.code, seed.description, seed.price, 0, 10,
+    seed.height, seed.length, seed.width,
+    (select id from brand_lookup where name = seed.brand_name),
+    (select id from category_lookup where name = seed.category_name),
+    now() - interval '90 days', 'seed-test-data',
+    now() - interval '30 days', 'seed-test-data',
+    seed.deleted_at, 'admin@example.com'
+from (values
+    ('Cofre Vintage Caoba (descontinuado)', 'TEST-DEL-COF-001', 'Cofre de caoba retirado del catálogo en 2024 por escasez del proveedor.',     280000.00, 60.00, 200.00, 65.00, '[TEST] Maderera del Plata', '[TEST] Cofres y urnas', (now() - interval '60 days')),
+    ('Vela aromática lavanda (retirada)',   'TEST-DEL-VEL-001', 'Producto retirado por reporte de alergias en deudos.',                          1800.00, 22.00,  4.00,  4.00, '[TEST] Velas Litúrgicas SA', '[TEST] Velas y cirios', (now() - interval '45 days')),
+    ('Corona artificial (descontinuada)',   'TEST-DEL-FLO-001', 'Reemplazada por la corona de claveles natural.',                                8500.00, 70.00, 70.00, 12.00, '[TEST] Floral Andina', '[TEST] Arreglos florales', (now() - interval '30 days')),
+    ('Estampa devocional v1 (papelera)',    'TEST-DEL-REC-001', 'Versión inicial de las estampas, reemplazada por el pack actualizado.',         6500.00, 0.50,  10.00,  7.00, '[TEST] Memorial Gráfica', '[TEST] Recordatorios', (now() - interval '12 days')),
+    ('Atril económico (papelera)',          'TEST-DEL-ACC-001', 'Atril de melamina retirado tras feedback de calidad.',                         28000.00, 110.00, 45.00, 35.00, '[TEST] Maderera del Plata', '[TEST] Accesorios de capilla', (now() - interval '7 days'))
+) as seed(name, code, description, price, height, length, width, brand_name, category_name, deleted_at);
+
+-- ---------------------------------------------------------------------------
+-- 16. ANULACION DE INGRESOS (PR4). For five of the bulk incomes we flip the
+-- status to ANNULLED and insert a matching reversal counter-entry:
+--   * status = ACTIVE on the reversal (the reversal itself is a real income row)
+--   * reversal_of_id points back at the original income
+--   * receipt_number lives in 99201..99205 so the cleanup range still catches it
+--   * income_details on the reversal carry NEGATIVE quantities at the same
+--     prices, mirroring the contable convention: the reversal undoes the
+--     stock + amount that the original posted.
+-- We pick five spread across the bulk months so the listing shows them
+-- interleaved with active rows.
+-- ---------------------------------------------------------------------------
+
+-- Step 1: mark the originals as ANNULLED.
+update incomes
+set status = 'ANNULLED'
+where receipt_number in (99013, 99027, 99055, 99070, 99089);
+
+-- Step 2: insert the reversal incomes. Each reversal mirrors its source's
+-- supplier, tax rate and date (+ a few hours so the listing sort surfaces the
+-- reversal right after the original), but the amount is negated.
+with admin_user as (
+    select u.id from users u
+    join user_role ur on ur.user_id = u.id
+    join roles r on r.id = ur.role_id
+    where r.name = 'ROLE_ADMIN'
+    order by u.id
+    limit 1
+)
+insert into incomes (
+    id, deleted, tax, total_amount, income_date, last_modified_date,
+    receipt_number, receipt_series, receipt_type_id,
+    supplier_id, user_id, user_modified_id,
+    status, reversal_of_id
+)
+select
+    nextval('incomes_seq'),
+    false,
+    src.tax,
+    -src.total_amount,
+    src.income_date + interval '2 hours',
+    now(),
+    src_pair.reversal_receipt,
+    1001,
+    1,
+    src.supplier_id,
+    (select id from admin_user),
+    (select id from admin_user),
+    'ACTIVE',
+    src.id
+from (values
+    (99013, 99201),
+    (99027, 99202),
+    (99055, 99203),
+    (99070, 99204),
+    (99089, 99205)
+) as src_pair(source_receipt, reversal_receipt)
+join incomes src on src.receipt_number = src_pair.source_receipt;
+
+-- Step 3: replicate the original income_details with negative quantities. We
+-- collect the source details first then mirror them onto the new reversal
+-- income ids.
+with reversal_pairs as (
+    select
+        rev.id   as reversal_id,
+        orig.id  as original_id
+    from incomes rev
+    join incomes orig on orig.id = rev.reversal_of_id
+    where rev.receipt_number between 99201 and 99205
+)
+insert into income_details (id, income_id, item_id, quantity, purchase_price, sale_price)
+select
+    nextval('income_details_seq'),
+    rp.reversal_id,
+    src.item_id,
+    -src.quantity,
+    src.purchase_price,
+    src.sale_price
+from reversal_pairs rp
+join income_details src on src.income_id = rp.original_id;
+
+-- ---------------------------------------------------------------------------
+-- 17. NOTIFICATIONS (PR5b/PR5c). Ten LOW_STOCK_REACHED rows for ROLE_ADMIN.
+-- Five unread + five read so the bell badge shows a non-zero count AND the
+-- "marcar como leida" / "ver leidas" paths have data to exercise.
+--
+-- The payload references real TEST- items so a click-through from the bell
+-- drop-down can navigate to the items listing and find them. Each row's
+-- stockBefore/stockAfter matches what the LowStockDetectionService would
+-- have observed at the moment of the cross-down event.
+-- ---------------------------------------------------------------------------
+
+-- Payload shape mirrors what `NotificationConsumer.buildPayload` writes for a
+-- real LowStockReached event:
+--   {"itemId":42,"code":"TEST-...","name":"...","threshold":N,"stockBefore":N,"stockAfter":N}
+-- We resolve itemId via a join on the seed items so the JSON references real
+-- ids that survive a re-run (the cleanup wipes notifications by payload
+-- substring, items get re-inserted, and the seq alignment below keeps future
+-- inserts collision-free).
+with seed_notifications(code, threshold, stock_before, stock_after, created_offset, read_offset) as (
+    values
+        -- Unread (read_offset null) — these power the bell badge count.
+        ('TEST-COF-001', 5,  6,  3,  interval '2 hours',  null::interval),
+        ('TEST-URN-001', 5,  6,  2,  interval '5 hours',  null::interval),
+        ('TEST-VEL-001', 40, 41, 35, interval '1 day',    null::interval),
+        ('TEST-FLO-002', 12, 13, 9,  interval '2 days',   null::interval),
+        ('TEST-ACC-001', 4,  5,  3,  interval '3 days',   null::interval),
+        -- Read (read_offset populated) — historical rows for the "leidas" tab.
+        ('TEST-COF-003', 5,  7,  4,  interval '10 days', interval '9 days'),
+        ('TEST-TEX-001', 8,  10, 7,  interval '14 days', interval '13 days'),
+        ('TEST-REC-002', 25, 26, 18, interval '18 days', interval '17 days'),
+        ('TEST-CIR-001', 40, 42, 38, interval '25 days', interval '24 days'),
+        ('TEST-FLO-001', 12, 14, 8,  interval '30 days', interval '29 days')
+)
+insert into notifications (event_id, audience, type, payload, created_at, read_at)
+select
+    gen_random_uuid(),
+    'ROLE_ADMIN',
+    'LOW_STOCK_REACHED',
+    '{"itemId":' || i.id
+        || ',"code":"' || i.code
+        || '","name":"' || replace(i.name, '"', '\"')
+        || '","threshold":' || sn.threshold
+        || ',"stockBefore":' || sn.stock_before
+        || ',"stockAfter":' || sn.stock_after
+        || '}',
+    now() - sn.created_offset,
+    case when sn.read_offset is null then null else now() - sn.read_offset end
+from seed_notifications sn
+join items i on i.code = sn.code;
+
+-- bigserial keeps its own implicit sequence (notifications_id_seq). Re-align it
+-- with the highest id we just inserted so the app's next insert does not
+-- collide with our seed rows.
+select setval('notifications_id_seq', coalesce((select max(id) from notifications), 1));
+
 commit;
 
 -- ---------------------------------------------------------------------------
@@ -794,11 +1026,19 @@ commit;
 --   select count(*) from suppliers where nif like '30-99%';      -- expects 5
 --   select count(*) from brands     where name like '[TEST]%';   -- expects 8
 --   select count(*) from categories where name like '[TEST]%';   -- expects 6
---   select count(*) from items      where code like 'TEST-%';    -- expects 18
---   select count(*) from plans      where name like '[TEST]%';   -- expects 4
+--   select count(*) from items      where code like 'TEST-%';    -- expects 23 (18 active + 5 papelera)
+--   select count(*) from items      where code like 'TEST-%' and deleted_at is null;     -- expects 18
+--   select count(*) from items      where code like 'TEST-DEL-%' and deleted_at is not null; -- expects 5
+--   select count(*) from plans      where name like '[TEST]%';   -- expects 6 (4 active + 2 papelera)
+--   select count(*) from plans      where name like '[TEST]%' and deleted_at is not null; -- expects 2
 --   select count(*) from affiliates where dni between 35000001 and 35000999;   -- expects 150
 --   select count(*) from deceased   where dni between 38000001 and 38000999;   -- expects 120
 --   select count(*) from funeral    where receipt_number like 'F-99%';         -- expects 120
---   select count(*) from incomes    where receipt_number between 99001 and 99999; -- expects 100
+--   select count(*) from incomes    where receipt_number between 99001 and 99999; -- expects 105 (100 originals + 5 reversals)
+--   select count(*) from incomes    where receipt_number between 99001 and 99100 and status = 'ANNULLED'; -- expects 5
+--   select count(*) from incomes    where receipt_number between 99201 and 99205 and reversal_of_id is not null; -- expects 5
 --   select count(*) from income_details
---     where income_id in (select id from incomes where receipt_number between 99001 and 99999); -- expects ~198 (22 hand-crafted + 2 per bulk income)
+--     where income_id in (select id from incomes where receipt_number between 99001 and 99999); -- expects ~208 (198 originals + ~10 reversal lines)
+--   select count(*) from notifications where audience = 'ROLE_ADMIN' and payload like '%TEST-%';        -- expects 10
+--   select count(*) from notifications where audience = 'ROLE_ADMIN' and read_at is null;              -- expects 5
+--   select code, stock, low_stock_threshold from items where stock <= low_stock_threshold and deleted_at is null and code like 'TEST-%'; -- expects 5 rows
