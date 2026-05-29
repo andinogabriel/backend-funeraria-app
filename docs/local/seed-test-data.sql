@@ -24,8 +24,28 @@
 --
 -- Run it
 -- ------
+-- bash / zsh / git-bash:
 --   docker exec -i backend-funeraria-postgres psql -U postgres -d funerariadb \
 --     < docs/local/seed-test-data.sql
+--
+-- Windows PowerShell — DO NOT use `<` directly: PowerShell 5.1 does not honor
+-- shell-style stdin redirection AND re-encodes the byte stream through the
+-- pipe, which corrupts every UTF-8 multibyte character in the seed (every
+-- á / é / í / ó / ú / ñ becomes a literal `?`). Use ONE of:
+--
+--   * cmd /c "..."  — delegates to cmd's classic redirection, which is
+--     byte-faithful:
+--       cmd /c "docker exec -i backend-funeraria-postgres psql -U postgres -d funerariadb < docs/local/seed-test-data.sql"
+--
+--   * docker cp + psql -f  — copies the file into the container and reads it
+--     from the filesystem, no host pipe involved. This is the safest variant
+--     and works identically on every shell:
+--       docker cp docs/local/seed-test-data.sql backend-funeraria-postgres:/tmp/seed.sql
+--       docker exec backend-funeraria-postgres psql -U postgres -d funerariadb -f /tmp/seed.sql
+--
+-- If you ever see Spanish names rendering with `??` on the UI (eg. "Cofre
+-- Econ??mico Pino"), the seed was loaded through a re-encoding pipe — re-run
+-- it via the cmd /c or docker cp variant and the names will come back clean.
 --
 -- Idempotent
 -- ----------
@@ -43,21 +63,34 @@
 --   *   5 suppliers
 --   *   8 brands
 --   *   6 categories
---   *  18 items (each linked to a brand + category)
---   *   4 plans + items_plan rows for each
+--   *  18 active items + 5 soft-deleted items (TEST-DEL-* in the papelera)
+--   *   4 active plans + 2 soft-deleted plans (in the papelera)
 --   * 150 affiliates (18 hand-crafted with intentional family groupings +
 --                     132 synthetic via generate_series)
 --   * 120 deceased rows with linked funerals (4 hand-crafted with addresses +
 --                     116 synthetic; funerals spread across ~32 months)
 --   * 120 funerals (matching deceased 1:1, receipt types + plans cycled)
---   * 100 incomes (12 hand-crafted + 88 synthetic across ~28 months)
---   * ~200 income_details (2 lines per synthetic income on average)
+--   * 100 active incomes + 5 ANNULLED incomes paired with 5 reversal
+--           counter-entries (status=ACTIVE, reversal_of_id set, negative qty)
+--   * ~200 income_details (2 lines per synthetic income on average) plus the
+--           reversal lines mirroring the originals at negative quantity
+--   * varied low_stock_threshold across all items (PR5a); five active items
+--           sit below their threshold so the red chip + bell badge show up
+--           right after the seed runs
+--   *  10 LOW_STOCK_REACHED notifications for ROLE_ADMIN (5 unread + 5 read)
+--           with payloads referencing real TEST- items so the bell dropdown
+--           and `/notificaciones` center are exercised end-to-end
 --
 -- After running, the activity-feed + dashboard KPIs will NOT immediately reflect
 -- this data: those panels project events from the outbox, and direct SQL inserts
 -- do not fire the use-case path. To populate the activity feed, perform any
 -- update / delete through the UI (eg. edit an affiliate) — the use case will
 -- emit through the outbox and the relay will project it within ~5 s.
+--
+-- The bell badge + `/notificaciones` page DO show the seed rows immediately
+-- because the notifications table is the canonical store for that surface
+-- (no outbox projection needed) — the bell polls every 60 s and the center
+-- page fetches on navigation.
 --
 -- Maintainer notes
 -- ----------------
