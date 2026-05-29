@@ -33,6 +33,7 @@ class OutboxBoundaryGuardrailsTest {
           .that()
           .resideOutsideOfPackages(
               "..application.usecase..",
+              "..application.support..",
               "..application.port..",
               "..infrastructure.outbox..",
               "..infrastructure.persistence..")
@@ -42,7 +43,10 @@ class OutboxBoundaryGuardrailsTest {
           .because(
               "OutboxPort.publish must run inside a use case transaction so the event commits"
                   + " with the business write; web controllers or infrastructure adapters"
-                  + " bypassing the use case layer would write events without that envelope");
+                  + " bypassing the use case layer would write events without that envelope."
+                  + " application.support helpers (FuneralStockService, LowStockDetectionService)"
+                  + " stay in the allowlist because they are always invoked from a use case"
+                  + " transaction — the publish still rides on the surrounding @Transactional.");
 
   @ArchTest
   static final ArchRule domain_events_must_stay_pure =

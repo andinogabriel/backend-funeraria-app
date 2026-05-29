@@ -28,7 +28,7 @@ class FlywayPostgresIntegrationTest extends AbstractPostgresIntegrationTest {
     final Integer cityCount =
         jdbcTemplate.queryForObject("select count(*) from cities", Integer.class);
 
-    assertThat(successfulMigrations).isEqualTo(14);
+    assertThat(successfulMigrations).isEqualTo(15);
     assertThat(roleCount).isEqualTo(2);
     assertThat(provinceCount).isEqualTo(24);
     assertThat(cityCount).isGreaterThan(20);

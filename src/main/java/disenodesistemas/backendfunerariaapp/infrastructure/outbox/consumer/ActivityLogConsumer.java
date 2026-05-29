@@ -13,6 +13,7 @@ import disenodesistemas.backendfunerariaapp.domain.event.FuneralDeleted;
 import disenodesistemas.backendfunerariaapp.domain.event.FuneralUpdated;
 import disenodesistemas.backendfunerariaapp.domain.event.IncomeAnnulled;
 import disenodesistemas.backendfunerariaapp.domain.event.ItemDeleted;
+import disenodesistemas.backendfunerariaapp.domain.event.LowStockReached;
 import disenodesistemas.backendfunerariaapp.domain.event.PlanDeleted;
 import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.ActivityLogRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -124,6 +125,8 @@ public class ActivityLogConsumer implements DomainEventConsumer {
           case ItemDeleted e -> "Item eliminado: %s (#%d)".formatted(e.code(), e.itemId());
           case IncomeAnnulled e ->
               "Ingreso anulado (#%d) con reversion #%d".formatted(e.originalId(), e.reversalId());
+          case LowStockReached e ->
+              "Stock bajo: %s (%d / umbral %d)".formatted(e.code(), e.stockAfter(), e.threshold());
         };
     return raw.length() <= ActivityLogEntry.SUMMARY_MAX_LENGTH
         ? raw
