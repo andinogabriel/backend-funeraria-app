@@ -12,4 +12,6 @@ public record DashboardMetricsResponseDto(
     KpiMetricDto affiliatesActive,
     KpiMetricDto plansActive,
     KpiMetricDto funeralsThisMonth,
+    KpiMetricDto purchasesThisMonth,
+    KpiMetricDto criticalStock,
     KpiMetricDto auditedEvents24h) {}

@@ -49,6 +49,8 @@ class DashboardMetricsPostgresIntegrationTest extends AbstractPostgresIntegratio
     jdbcTemplate.update("delete from plans");
     jdbcTemplate.update("delete from affiliates");
     jdbcTemplate.update("delete from audit_events");
+    jdbcTemplate.update("delete from incomes");
+    jdbcTemplate.update("delete from items");
     useCase = new DashboardMetricsQueryUseCase(jdbcTemplate, FIXED_CLOCK);
   }
 
@@ -69,6 +71,14 @@ class DashboardMetricsPostgresIntegrationTest extends AbstractPostgresIntegratio
     assertThat(snapshot.funeralsThisMonth().value()).isZero();
     assertThat(snapshot.funeralsThisMonth().trendPercent()).isNull();
     assertThat(snapshot.funeralsThisMonth().sparkline()).hasSize(8).allMatch(v -> v == 0L);
+
+    assertThat(snapshot.purchasesThisMonth().value()).isZero();
+    assertThat(snapshot.purchasesThisMonth().trendPercent()).isNull();
+    assertThat(snapshot.purchasesThisMonth().sparkline()).hasSize(8).allMatch(v -> v == 0L);
+
+    assertThat(snapshot.criticalStock().value()).isZero();
+    assertThat(snapshot.criticalStock().trendPercent()).isNull();
+    assertThat(snapshot.criticalStock().sparkline()).isEmpty();
 
     assertThat(snapshot.auditedEvents24h().value()).isZero();
     assertThat(snapshot.auditedEvents24h().trendPercent()).isNull();
@@ -135,7 +145,71 @@ class DashboardMetricsPostgresIntegrationTest extends AbstractPostgresIntegratio
     assertThat(metric.sparkline().stream().mapToLong(Long::longValue).sum()).isEqualTo(3L);
   }
 
+  @Test
+  @DisplayName(
+      "Given incomes seeded across months and lifecycle states when the snapshot is built then purchasesThisMonth counts only ACTIVE non-deleted rows of the current month and reports the month-over-month trend")
+  void purchasesThisMonthCountsActiveCurrentMonth() {
+    final LocalDate today = LocalDate.now(FIXED_CLOCK);
+    // Current month: 3 ACTIVE, 1 ANNULLED (excluded), 1 soft-deleted (excluded) → value 3.
+    insertIncome(today.atTime(10, 0), "ACTIVE", false);
+    insertIncome(today.atTime(11, 0), "ACTIVE", false);
+    insertIncome(today.atTime(12, 0), "ACTIVE", false);
+    insertIncome(today.atTime(13, 0), "ANNULLED", false);
+    insertIncome(today.atTime(14, 0), "ACTIVE", true);
+    // Previous month: 1 ACTIVE → trend = (3-1)/1 = 200.0%.
+    insertIncome(today.minusMonths(1).atTime(9, 0), "ACTIVE", false);
+
+    final KpiMetricDto metric = useCase.buildSnapshot().purchasesThisMonth();
+    assertThat(metric.value()).isEqualTo(3L);
+    assertThat(metric.trendPercent()).isEqualTo(200.0);
+    assertThat(metric.sparkline()).hasSize(8);
+    // Three ACTIVE rows land on today's bucket (the last one); annulled + deleted are excluded.
+    assertThat(metric.sparkline().get(7)).isEqualTo(3L);
+  }
+
+  @Test
+  @DisplayName(
+      "Given items seeded around their low-stock threshold when the snapshot is built then criticalStock counts only non-deleted items at or below threshold with a non-null stock")
+  void criticalStockCountsItemsAtOrBelowThreshold() {
+    insertItem("Below", 2, 5, null); // 2 <= 5 → critical
+    insertItem("AtThreshold", 5, 5, null); // 5 <= 5 → critical
+    insertItem("Above", 9, 5, null); // 9 > 5 → not critical
+    insertItem("NullStock", null, 5, null); // null stock → excluded
+    insertItem("DeletedLow", 1, 5, Instant.parse("2026-05-01T00:00:00Z")); // soft-deleted → excluded
+
+    final KpiMetricDto metric = useCase.buildSnapshot().criticalStock();
+    assertThat(metric.value()).isEqualTo(2L);
+    assertThat(metric.trendPercent()).isNull();
+    assertThat(metric.sparkline()).isEmpty();
+  }
+
   /* ----------------------------------- helpers ---------------------------------- */
+
+  /** Inserts an income with only the columns relevant to the purchases metric. */
+  private void insertIncome(
+      final LocalDateTime incomeDate, final String status, final boolean deleted) {
+    jdbcTemplate.update(
+        "insert into incomes (id, deleted, tax, total_amount, income_date, receipt_number,"
+            + " receipt_series, status)"
+            + " values (nextval('incomes_seq'), ?, 21, 0, ?, ?, 1, ?)",
+        deleted,
+        incomeDate,
+        (long) (System.nanoTime() & 0x7fffffff),
+        status);
+  }
+
+  /** Inserts an item with only the columns relevant to the critical-stock metric. */
+  private void insertItem(
+      final String name, final Integer stock, final int threshold, final Instant deletedAt) {
+    jdbcTemplate.update(
+        "insert into items (name, stock, low_stock_threshold, created_at, deleted_at)"
+            + " values (?, ?, ?, ?, ?)",
+        name,
+        stock,
+        threshold,
+        Timestamp.from(NOW),
+        deletedAt == null ? null : Timestamp.from(deletedAt));
+  }
 
   /** Inserts an affiliate skipping the optional FKs we don't need for the metric. */
   private void insertAffiliate(
