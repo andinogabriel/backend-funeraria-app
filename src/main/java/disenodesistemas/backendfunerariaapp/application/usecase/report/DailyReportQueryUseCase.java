@@ -78,7 +78,7 @@ public class DailyReportQueryUseCase {
 
     final List<ServiceLine> lines =
         jdbcTemplate.query(
-            "select f.receipt_number, "
+            "select f.id, f.receipt_number, "
                 + "trim(d.first_name || ' ' || d.last_name) as deceased_name, "
                 + "p.name as plan_name, f.total_amount "
                 + "from funeral f "
@@ -131,6 +131,7 @@ public class DailyReportQueryUseCase {
   private static final RowMapper<ServiceLine> SERVICE_LINE =
       (rs, rowNum) ->
           new ServiceLine(
+              rs.getLong("id"),
               rs.getString("receipt_number"),
               rs.getString("deceased_name"),
               rs.getString("plan_name"),

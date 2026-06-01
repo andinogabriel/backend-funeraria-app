@@ -131,6 +131,7 @@ class DailyReportQueryUseCasePostgresIntegrationTest extends AbstractPostgresInt
     // Services detail: one funeral with the deceased's full name.
     assertThat(report.services().lines()).hasSize(1);
     final var service = report.services().lines().get(0);
+    assertThat(service.funeralId()).isPositive();
     assertThat(service.receiptNumber()).isEqualTo("F-DET-1");
     assertThat(service.deceasedName()).isEqualTo("Carlos Gómez");
     assertThat(service.amount()).isEqualByComparingTo("500000.00");
