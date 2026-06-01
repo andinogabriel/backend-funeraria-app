@@ -15,8 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Aggregates the four KPIs the operator dashboard surfaces (afiliados activos, planes
- * activos, servicios del mes, eventos auditados en 24 h) into a single
+ * Aggregates the KPIs the operator dashboard surfaces (afiliados activos, planes activos,
+ * servicios del mes, compras del mes, stock critico, eventos auditados en 24 h) into a single
  * {@link DashboardMetricsResponseDto}. The query is intentionally one-shot — consumers call
  * it on dashboard load and again on the refresh action; no caching layer is involved because
  * the underlying counts are cheap (small tables, hot indexes) and a real-time figure beats a
@@ -56,13 +56,15 @@ public class DashboardMetricsQueryUseCase {
    */
   private final Clock clock;
 
-  /** Builds the dashboard snapshot. Runs read-only so the four count queries share a tx. */
+  /** Builds the dashboard snapshot. Runs read-only so the count queries share a tx. */
   @Transactional(readOnly = true)
   public DashboardMetricsResponseDto buildSnapshot() {
     return new DashboardMetricsResponseDto(
         affiliatesActiveMetric(),
         plansActiveMetric(),
         funeralsThisMonthMetric(),
+        purchasesThisMonthMetric(),
+        criticalStockMetric(),
         auditedEvents24hMetric());
   }
 
@@ -127,6 +129,68 @@ public class DashboardMetricsQueryUseCase {
             Long.class,
             start,
             end));
+  }
+
+  /* -------------------------------- purchases (incomes) ---------------------------------- */
+
+  /**
+   * Supplier purchases (ACTIVE incomes) registered in the current calendar month — money out, the
+   * mirror of {@link #funeralsThisMonthMetric()} (money in). Counts ACTIVE rows only so annulled
+   * originals do not inflate the figure; the reversal counter-entries are ACTIVE but they cancel an
+   * earlier purchase, so the count is a deliberate "how many purchase events happened" rather than a
+   * net-of-reversals number (the arqueo report owns the monetary netting). Ships the 8-day daily
+   * sparkline + a month-over-month trend, same shape as funerals.
+   *
+   * <p>{@code income_date} is a UTC instant column; the dashboard already brackets every other
+   * window with {@link LocalDateTime} bounds built from the application clock, so we keep the same
+   * convention here for consistency across the bento (a few hours of UTC-vs-local skew at the month
+   * boundary is immaterial to a monthly headcount).
+   */
+  private KpiMetricDto purchasesThisMonthMetric() {
+    final LocalDate today = LocalDate.now(clock);
+    final LocalDateTime startOfMonth = today.withDayOfMonth(1).atStartOfDay();
+    final LocalDateTime startOfNextMonth = startOfMonth.plusMonths(1);
+    final LocalDateTime startOfPrevMonth = startOfMonth.minusMonths(1);
+
+    final long current = countPurchasesBetween(startOfMonth, startOfNextMonth);
+    final long previous = countPurchasesBetween(startOfPrevMonth, startOfMonth);
+    final Double trend = trendPercent(current, previous);
+    final List<Long> sparkline =
+        dailyBuckets(
+            "select count(*) from incomes "
+                + "where deleted = false and status = 'ACTIVE' "
+                + "and income_date >= ? and income_date < ?");
+    return new KpiMetricDto(current, trend, sparkline);
+  }
+
+  private long countPurchasesBetween(final LocalDateTime start, final LocalDateTime end) {
+    return firstLongOrZero(
+        jdbcTemplate.queryForList(
+            "select count(*) from incomes "
+                + "where deleted = false and status = 'ACTIVE' "
+                + "and income_date >= ? and income_date < ?",
+            Long.class,
+            start,
+            end));
+  }
+
+  /* -------------------------------- critical stock --------------------------------------- */
+
+  /**
+   * Items at or below their configured low-stock threshold (PR5a) — the operator's "what do I need
+   * to restock" headline. Excludes soft-deleted items (papelera) and items with a null stock
+   * (catalog entries without inventory, e.g. services, which cannot be "low"). A stock figure with
+   * no meaningful previous window, so trend + sparkline stay empty like {@link #plansActiveMetric()}.
+   */
+  private KpiMetricDto criticalStockMetric() {
+    final long critical =
+        firstLongOrZero(
+            jdbcTemplate.queryForList(
+                "select count(*) from items "
+                    + "where deleted_at is null and stock is not null "
+                    + "and stock <= low_stock_threshold",
+                Long.class));
+    return new KpiMetricDto(critical, null, List.of());
   }
 
   /* -------------------------------- audit events ----------------------------------------- */

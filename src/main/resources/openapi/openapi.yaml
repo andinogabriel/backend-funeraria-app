@@ -4232,9 +4232,13 @@ components:
           $ref: '#/components/schemas/KpiMetricDto'
         funeralsThisMonth:
           $ref: '#/components/schemas/KpiMetricDto'
+        purchasesThisMonth:
+          $ref: '#/components/schemas/KpiMetricDto'
+        criticalStock:
+          $ref: '#/components/schemas/KpiMetricDto'
         auditedEvents24h:
           $ref: '#/components/schemas/KpiMetricDto'
-      required: [affiliatesActive, plansActive, funeralsThisMonth, auditedEvents24h]
+      required: [affiliatesActive, plansActive, funeralsThisMonth, purchasesThisMonth, criticalStock, auditedEvents24h]
     DailyReportResponseDto:
       type: object
       description: |
