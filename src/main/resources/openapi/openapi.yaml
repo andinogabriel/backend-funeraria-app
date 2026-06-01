@@ -43,6 +43,8 @@ tags:
     description: Catalogos de apoyo para formularios y reglas de negocio.
   - name: Metrics
     description: Indicadores agregados para el dashboard operativo.
+  - name: Reports
+    description: Reportes financieros de solo lectura (arqueo de caja). Solo ADMIN.
 paths:
   /api/v1/users:
     get:
@@ -2198,6 +2200,51 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
 
+  /api/v1/reports/daily:
+    get:
+      tags: [Reports]
+      summary: Arqueo diario (conciliacion de caja)
+      description: |
+        Resume el movimiento de caja de un dia calendario para el cierre del operador:
+        - `services` (entra plata): servicios funebres no eliminados con fecha en el dia,
+          sumando `funeral.total_amount`.
+        - `purchases` (sale plata): ingresos `ACTIVE` con fecha en el dia, sumando
+          `incomes.total_amount`. Los asientos de reversion (anulacion, PR4) son filas
+          `ACTIVE` con monto negativo, asi una compra anulada-y-revertida netea a cero en
+          el total sin doble conteo; `annulledCount` informa cuantos originales se anularon
+          ese dia sin distorsionar la cifra.
+        - `net` = `services.total - purchases.total`.
+
+        El dia de los servicios se bracketea en hora local; el de los ingresos en zona
+        Argentina (UTC-3) convertida a instantes, igual que el filtro de fechas de Ingresos.
+        Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - name: date
+          in: query
+          required: true
+          description: Dia a conciliar en formato ISO-8601 (`yyyy-MM-dd`).
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Resumen del dia.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyReportResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/plans:
     get:
       tags: [Plans]
@@ -4188,6 +4235,55 @@ components:
         auditedEvents24h:
           $ref: '#/components/schemas/KpiMetricDto'
       required: [affiliatesActive, plansActive, funeralsThisMonth, auditedEvents24h]
+    DailyReportResponseDto:
+      type: object
+      description: |
+        Arqueo diario: movimiento de caja de un dia calendario. `net` = `services.total -
+        purchases.total`. Los asientos de reversion netean dentro de `purchases.total`
+        (filas ACTIVE con monto negativo); `annulledCount` los informa aparte.
+      properties:
+        date:
+          type: string
+          format: date
+          description: Dia conciliado (ISO-8601).
+        services:
+          $ref: '#/components/schemas/DailyReportServicesSummary'
+        purchases:
+          $ref: '#/components/schemas/DailyReportPurchasesSummary'
+        net:
+          type: number
+          description: Movimiento neto del dia (`services.total - purchases.total`).
+      required: [date, services, purchases, net]
+    DailyReportServicesSummary:
+      type: object
+      description: Ingreso por servicios funebres del dia (funerales no eliminados).
+      properties:
+        count:
+          type: integer
+          format: int64
+          description: Cantidad de funerales con fecha en el dia.
+        total:
+          type: number
+          description: Suma de `total_amount` de esos funerales.
+      required: [count, total]
+    DailyReportPurchasesSummary:
+      type: object
+      description: Egreso por compras a proveedores del dia (ingresos ACTIVE).
+      properties:
+        count:
+          type: integer
+          format: int64
+          description: Cantidad de ingresos ACTIVE con fecha en el dia (incluye reversiones).
+        total:
+          type: number
+          description: |
+            Suma de `total_amount`; las reversiones aportan montos negativos, asi una
+            compra anulada-y-revertida netea a cero.
+        annulledCount:
+          type: integer
+          format: int64
+          description: Cantidad de originales en estado ANNULLED con fecha en el dia.
+      required: [count, total, annulledCount]
     ActivityFeedEntryDto:
       type: object
       description: |
