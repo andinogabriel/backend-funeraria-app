@@ -4300,6 +4300,10 @@ components:
       type: object
       description: Un servicio funebre individual del detalle diario.
       properties:
+        funeralId:
+          type: integer
+          format: int64
+          description: Id del funeral, para enlazar a `/servicios/:id` desde el front.
         receiptNumber:
           type: string
           description: Numero de recibo del funeral (eg. `F-99121`).
@@ -4313,7 +4317,7 @@ components:
         amount:
           type: number
           description: '`total_amount` del funeral.'
-      required: [receiptNumber, deceasedName, amount]
+      required: [funeralId, receiptNumber, deceasedName, amount]
     DailyReportPurchaseLine:
       type: object
       description: Una compra a proveedor individual del detalle diario.

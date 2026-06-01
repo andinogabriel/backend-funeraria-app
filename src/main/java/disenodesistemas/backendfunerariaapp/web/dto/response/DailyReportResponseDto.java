@@ -56,13 +56,19 @@ public record DailyReportResponseDto(
   /**
    * One funeral service in the day's detail.
    *
+   * @param funeralId the funeral's database id, so the frontend can deep-link to
+   *     {@code /servicios/:id} (the funeral detail route is keyed by id, not receipt number)
    * @param receiptNumber the funeral's receipt number (e.g. {@code F-99121})
    * @param deceasedName full name of the deceased the service was for
    * @param planName name of the plan sold, or {@code null} if the funeral has no linked plan
    * @param amount the funeral's {@code total_amount}
    */
   public record ServiceLine(
-      String receiptNumber, String deceasedName, String planName, BigDecimal amount) {}
+      long funeralId,
+      String receiptNumber,
+      String deceasedName,
+      String planName,
+      BigDecimal amount) {}
 
   /**
    * One supplier purchase in the day's detail.
