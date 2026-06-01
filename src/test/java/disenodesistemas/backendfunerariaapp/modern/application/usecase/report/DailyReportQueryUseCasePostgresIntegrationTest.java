@@ -106,25 +106,100 @@ class DailyReportQueryUseCasePostgresIntegrationTest extends AbstractPostgresInt
     final DailyReportResponseDto empty = useCase.buildDailyReport(LocalDate.of(2026, 6, 4));
     assertThat(empty.services().count()).isZero();
     assertThat(empty.services().total()).isEqualByComparingTo("0");
+    assertThat(empty.services().lines()).isEmpty();
     assertThat(empty.purchases().count()).isZero();
     assertThat(empty.purchases().total()).isEqualByComparingTo("0");
     assertThat(empty.purchases().annulledCount()).isZero();
+    assertThat(empty.purchases().lines()).isEmpty();
     assertThat(empty.net()).isEqualByComparingTo("0");
   }
+
+  @Test
+  @DisplayName(
+      "Given a populated day, when building the report, then each summary carries the per-row detail lines (deceased + plan name on services; supplier + status + reversal flag on purchases)")
+  void summaries_carry_per_row_detail_lines() {
+    final LocalDate day = LocalDate.of(2026, 6, 5);
+    insertFuneral(
+        "F-DET-1", day.atStartOfDay().plusHours(10), "500000.00", null, "Carlos", "Gómez");
+
+    insertIncome(920001, day, 9, "200000.00", "ACTIVE");
+    insertIncome(920002, day, 13, "80000.00", "ANNULLED");
+    insertReversal(920102, day, 14, "-80000.00", 920002);
+
+    final DailyReportResponseDto report = useCase.buildDailyReport(day);
+
+    // Services detail: one funeral with the deceased's full name.
+    assertThat(report.services().lines()).hasSize(1);
+    final var service = report.services().lines().get(0);
+    assertThat(service.receiptNumber()).isEqualTo("F-DET-1");
+    assertThat(service.deceasedName()).isEqualTo("Carlos Gómez");
+    assertThat(service.amount()).isEqualByComparingTo("500000.00");
+
+    // Purchases detail: all three rows (active original, annulled original, reversal), newest
+    // first. The reversal row is flagged and carries the negative amount; the summary still nets
+    // to the active original alone (200000 + (-80000) = 120000).
+    assertThat(report.purchases().lines()).hasSize(3);
+    assertThat(report.purchases().total()).isEqualByComparingTo("120000.00");
+    assertThat(report.purchases().count()).isEqualTo(2);
+    assertThat(report.purchases().annulledCount()).isEqualTo(1);
+
+    final var reversalLine =
+        report.purchases().lines().stream()
+            .filter(DailyReportResponseDto.PurchaseLine::reversal)
+            .findFirst()
+            .orElseThrow();
+    assertThat(reversalLine.amount()).isEqualByComparingTo("-80000.00");
+    assertThat(reversalLine.status()).isEqualTo("ACTIVE");
+
+    final var annulledLine =
+        report.purchases().lines().stream()
+            .filter(l -> "ANNULLED".equals(l.status()))
+            .findFirst()
+            .orElseThrow();
+    assertThat(annulledLine.reversal()).isFalse();
+  }
+
+  private long nextDni = 38500001;
 
   private void insertFuneral(
       final String receipt,
       final LocalDateTime funeralDate,
       final String totalAmount,
       final Timestamp deletedAt) {
+    insertFuneral(receipt, funeralDate, totalAmount, deletedAt, "Juan", "Pérez");
+  }
+
+  /**
+   * Inserts a funeral plus the {@code deceased} row it joins to (the service-detail query inner-
+   * joins {@code deceased}, so a funeral with a null {@code deceased_id} would never surface). Each
+   * call mints a fresh DNI so the {@code deceased.dni} unique constraint never collides.
+   */
+  private void insertFuneral(
+      final String receipt,
+      final LocalDateTime funeralDate,
+      final String totalAmount,
+      final Timestamp deletedAt,
+      final String firstName,
+      final String lastName) {
+    final long dni = nextDni++;
+    jdbcTemplate.update(
+        "insert into deceased (id, dni, first_name, last_name, birth_date, death_date, gender_id,"
+            + " relationship_id, death_cause_id) values (nextval('deceased_seq'), ?, ?, ?,"
+            + " date '1950-01-01', date '2026-06-01', 1, 1, 1)",
+        dni,
+        firstName,
+        lastName);
+    final Long deceasedId =
+        jdbcTemplate.queryForObject("select id from deceased where dni = ?", Long.class, dni);
     jdbcTemplate.update(
         "insert into funeral (funeral_date, register_date, receipt_number, receipt_series,"
-            + " tax, total_amount, deleted_at) values (?, ?, ?, 'T', 21, ?, ?)",
+            + " tax, total_amount, deleted_at, deceased_id) values (?, ?, ?, 'T', 21, ?, ?, ?)",
         Timestamp.valueOf(funeralDate),
         Timestamp.valueOf(funeralDate),
         receipt,
         new BigDecimal(totalAmount),
-        deletedAt);
+        deletedAt,
+        deceasedId);
   }
 
   /**
@@ -146,5 +221,31 @@ class DailyReportQueryUseCasePostgresIntegrationTest extends AbstractPostgresInt
         incomeDate,
         receiptNumber,
         status);
+  }
+
+  /**
+   * Inserts an ACTIVE reversal counter-entry whose {@code reversal_of_id} points at the income with
+   * receipt {@code originalReceipt}, so the use case's {@code reversal_of_id is not null} flag
+   * resolves to {@code true} on that row.
+   */
+  private void insertReversal(
+      final long receiptNumber,
+      final LocalDate day,
+      final int hourArt,
+      final String totalAmount,
+      final long originalReceipt) {
+    final Timestamp incomeDate =
+        Timestamp.from(day.atStartOfDay(REPORTING_ZONE).plusHours(hourArt).toInstant());
+    final Long originalId =
+        jdbcTemplate.queryForObject(
+            "select id from incomes where receipt_number = ?", Long.class, originalReceipt);
+    jdbcTemplate.update(
+        "insert into incomes (id, deleted, tax, total_amount, income_date, receipt_number,"
+            + " receipt_series, status, reversal_of_id)"
+            + " values (nextval('incomes_seq'), false, 21, ?, ?, ?, 1001, 'ACTIVE', ?)",
+        new BigDecimal(totalAmount),
+        incomeDate,
+        receiptNumber,
+        originalId);
   }
 }
