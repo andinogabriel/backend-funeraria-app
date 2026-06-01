@@ -67,11 +67,16 @@
 --   *   4 active plans + 2 soft-deleted plans (in the papelera)
 --   * 150 affiliates (18 hand-crafted with intentional family groupings +
 --                     132 synthetic via generate_series)
---   * 120 deceased rows with linked funerals (4 hand-crafted with addresses +
---                     116 synthetic; funerals spread across ~32 months)
---   * 120 funerals (matching deceased 1:1, receipt types + plans cycled)
+--   * 126 deceased rows with linked funerals (4 hand-crafted with addresses +
+--                     116 synthetic spread across ~32 months + 6 arqueo-day
+--                     services dated relative to today)
+--   * 126 funerals (matching deceased 1:1, receipt types + plans cycled)
 --   * 100 active incomes + 5 ANNULLED incomes paired with 5 reversal
 --           counter-entries (status=ACTIVE, reversal_of_id set, negative qty)
+--   *   9 arqueo-day incomes (8 originals + 1 reversal) dated relative to today
+--           so the daily report (/arqueo, PR6) has three reconcilable days:
+--           today (net +), yesterday (with an annulled+reversed purchase) and
+--           7 days ago (net -, red card). See section 12c.
 --   * ~200 income_details (2 lines per synthetic income on average) plus the
 --           reversal lines mirroring the originals at negative quantity
 --   * varied low_stock_threshold across all items (PR5a); five active items
@@ -811,6 +816,177 @@ select
 from detail_rows;
 
 -- ---------------------------------------------------------------------------
+-- 12c. ARQUEO DIARIO fixtures (PR6). The daily cash-reconciliation report groups
+-- by calendar day, but the bulk funerals / incomes above scatter their dates
+-- across ~2-3 years with near-zero same-day overlap — so no single day has the
+-- volume to make the arqueo meaningful, and nothing lands near "today". This
+-- block seeds three hand-picked days RELATIVE to current_date so the operator
+-- can open /arqueo and immediately reconcile a populated day no matter when the
+-- seed runs:
+--
+--   * TODAY      — 3 servicios + 2 compras, net POSITIVE, no annulments.
+--   * YESTERDAY  — 2 servicios + 2 compras + 1 compra ANULADA with its same-day
+--                  reversal counter-entry; the reversal nets out of the active
+--                  total and annulledCount surfaces 1.
+--   * 7 DAYS AGO — 1 servicio chico + 3 compras grandes, net NEGATIVE so the
+--                  "Neto del día" card renders red.
+--
+-- Markers stay inside the existing cleanup ranges (deceased dni 38000121..126,
+-- funeral receipts F-99121..126, incomes 99301..308 + reversal 99211), so the
+-- cleanup at the top of the file already wipes them on a re-run.
+--
+-- income_date is inserted at 11:00 local: comfortably inside the day on either
+-- side of the report's Argentina-zone (UTC-3) bracket, same as every other
+-- income in this seed.
+-- ---------------------------------------------------------------------------
+
+-- Deceased for the arqueo funerals. dni 38000121..126, just past the bulk range.
+with admin_user as (
+    select u.id from users u
+    join user_role ur on ur.user_id = u.id
+    join roles r on r.id = ur.role_id
+    where r.name = 'ROLE_ADMIN'
+    order by u.id
+    limit 1
+)
+insert into deceased (id, dni, first_name, last_name, birth_date, death_date, register_date, affiliated, gender_id, relationship_id, death_cause_id, address_id, user_id)
+select
+    nextval('deceased_seq'),
+    seed.dni,
+    seed.first_name,
+    seed.last_name,
+    date '1940-01-01' + ((seed.dni % 18000)) as birth_date,
+    current_date - seed.day_offset - 1 as death_date,
+    (current_date - seed.day_offset - 1)::timestamp + time '14:00',
+    false,
+    1 + (seed.dni % 3),
+    1 + (seed.dni % 31),
+    1 + (seed.dni % 4),
+    null,
+    (select id from admin_user)
+from (values
+    (38000121, 'Raúl',    'Domínguez', 0),
+    (38000122, 'Elena',   'Paredes',   0),
+    (38000123, 'Tomás',   'Bianchi',   0),
+    (38000124, 'Norma',   'Vázquez',   1),
+    (38000125, 'Héctor',  'Salas',     1),
+    (38000126, 'Beatriz', 'Ferreyra',  7)
+) as seed(dni, first_name, last_name, day_offset);
+
+-- Funerals (servicios = money IN). Receipt F-99121..126, dates relative to today.
+with plan_lookup as (
+    select id, name from plans where name like '[TEST]%'
+),
+deceased_lookup as (
+    select id, dni from deceased where dni between 38000121 and 38000126
+)
+insert into funeral (receipt_number, receipt_series, funeral_date, register_date, tax, total_amount, plan_id, receipt_type_id, deceased_id)
+select
+    seed.receipt_number, 'T',
+    (current_date - seed.day_offset)::timestamp + time '10:30',
+    (current_date - seed.day_offset)::timestamp - interval '1 day',
+    21.00, seed.total_amount,
+    (select id from plan_lookup where name = seed.plan_name),
+    1,
+    (select id from deceased_lookup where dni = seed.deceased_dni)
+from (values
+    -- TODAY: 3 servicios → total 2,370,000
+    ('F-99121', 0, 450000.00,  '[TEST] Plan Standard',   38000121),
+    ('F-99122', 0, 820000.00,  '[TEST] Plan Premium',    38000122),
+    ('F-99123', 0, 1100000.00, '[TEST] Plan Memorial',   38000123),
+    -- YESTERDAY: 2 servicios → total 1,200,000
+    ('F-99124', 1, 520000.00,  '[TEST] Plan Standard',   38000124),
+    ('F-99125', 1, 680000.00,  '[TEST] Plan Premium',    38000125),
+    -- 7 DAYS AGO: 1 servicio chico → total 300,000
+    ('F-99126', 7, 300000.00,  '[TEST] Plan Económico',  38000126)
+) as seed(receipt_number, day_offset, total_amount, plan_name, deceased_dni);
+
+-- Incomes (compras = money OUT). 99301..308 originals, day-relative dates.
+-- 99304 is ANNULLED (its reversal 99211 lands the same day, below).
+with admin_user as (
+    select u.id from users u
+    join user_role ur on ur.user_id = u.id
+    join roles r on r.id = ur.role_id
+    where r.name = 'ROLE_ADMIN'
+    order by u.id
+    limit 1
+),
+supplier_lookup as (
+    select id, nif from suppliers where nif like '30-99%'
+)
+insert into incomes (id, deleted, tax, total_amount, income_date, last_modified_date, receipt_number, receipt_series, receipt_type_id, supplier_id, user_id, user_modified_id, status)
+select
+    nextval('incomes_seq'),
+    false, 21.00, seed.total_amount,
+    (current_date - seed.day_offset)::timestamp + time '11:00',
+    (current_date - seed.day_offset)::timestamp + time '11:00',
+    seed.receipt_number, 1001, 1,
+    (select id from supplier_lookup where nif = seed.supplier_nif),
+    (select id from admin_user), (select id from admin_user),
+    seed.status
+from (values
+    -- TODAY: 2 compras activas → total 275,000
+    (99301, 0, 180000.00, '30-99100001-1', 'ACTIVE'),
+    (99302, 0, 95000.00,  '30-99100003-7', 'ACTIVE'),
+    -- YESTERDAY: 2 compras activas + 1 anulada → active 500,000, annulled 1
+    (99303, 1, 350000.00, '30-99100002-9', 'ACTIVE'),
+    (99305, 1, 150000.00, '30-99100004-5', 'ACTIVE'),
+    (99304, 1, 200000.00, '30-99100002-9', 'ANNULLED'),
+    -- 7 DAYS AGO: 3 compras grandes → total 2,650,000
+    (99306, 7, 1200000.00, '30-99100002-9', 'ACTIVE'),
+    (99307, 7, 800000.00,  '30-99100001-1', 'ACTIVE'),
+    (99308, 7, 650000.00,  '30-99100005-3', 'ACTIVE')
+) as seed(receipt_number, day_offset, total_amount, supplier_nif, status);
+
+-- Reversal counter-entry for the annulled 99304 (yesterday). ACTIVE, negative
+-- amount, reversal_of_id → 99304, same day. Nets the annulled amount out of
+-- yesterday's active total: 350k + 150k + (-200k) = 300,000.
+with admin_user as (
+    select u.id from users u
+    join user_role ur on ur.user_id = u.id
+    join roles r on r.id = ur.role_id
+    where r.name = 'ROLE_ADMIN'
+    order by u.id
+    limit 1
+)
+insert into incomes (id, deleted, tax, total_amount, income_date, last_modified_date, receipt_number, receipt_series, receipt_type_id, supplier_id, user_id, user_modified_id, status, reversal_of_id)
+select
+    nextval('incomes_seq'),
+    false, src.tax, -src.total_amount,
+    src.income_date + interval '2 hours', now(),
+    99211, 1001, 1,
+    src.supplier_id,
+    (select id from admin_user), (select id from admin_user),
+    'ACTIVE', src.id
+from incomes src
+where src.receipt_number = 99304;
+
+-- One detail line per arqueo income so the detail dialog isn't empty. Picks a
+-- TEST item deterministically; the reversal (99211) mirrors 99304's line negated.
+with item_lookup as (
+    select id, code from items where code like 'TEST-%'
+)
+insert into income_details (id, income_id, item_id, quantity, purchase_price, sale_price)
+select
+    nextval('income_details_seq'),
+    inc.id,
+    (select id from item_lookup where code = seed.item_code),
+    seed.quantity, seed.purchase_price, seed.sale_price
+from (values
+    (99301, 'TEST-COF-001', 1, 180000.00, 230000.00),
+    (99302, 'TEST-CIR-001', 5, 19000.00,  26000.00),
+    (99303, 'TEST-COF-002', 1, 350000.00, 420000.00),
+    (99305, 'TEST-FLO-002', 6, 25000.00,  34000.00),
+    (99304, 'TEST-COF-002', 1, 200000.00, 260000.00),
+    (99306, 'TEST-COF-002', 3, 400000.00, 480000.00),
+    (99307, 'TEST-ACC-001', 4, 200000.00, 260000.00),
+    (99308, 'TEST-REC-002', 5, 130000.00, 170000.00),
+    -- Reversal line: negative quantity mirroring the annulled 99304.
+    (99211, 'TEST-COF-002', -1, 200000.00, 260000.00)
+) as seed(receipt_number, item_code, quantity, purchase_price, sale_price)
+join incomes inc on inc.receipt_number = seed.receipt_number;
+
+-- ---------------------------------------------------------------------------
 -- 13. SEQUENCE REFRESH so future inserts via JPA do not collide.
 -- ---------------------------------------------------------------------------
 
@@ -1065,9 +1241,13 @@ commit;
 --   select count(*) from plans      where name like '[TEST]%';   -- expects 6 (4 active + 2 papelera)
 --   select count(*) from plans      where name like '[TEST]%' and deleted_at is not null; -- expects 2
 --   select count(*) from affiliates where dni between 35000001 and 35000999;   -- expects 150
---   select count(*) from deceased   where dni between 38000001 and 38000999;   -- expects 120
---   select count(*) from funeral    where receipt_number like 'F-99%';         -- expects 120
---   select count(*) from incomes    where receipt_number between 99001 and 99999; -- expects 105 (100 originals + 5 reversals)
+--   select count(*) from deceased   where dni between 38000001 and 38000999;   -- expects 126
+--   select count(*) from funeral    where receipt_number like 'F-99%';         -- expects 126
+--   select count(*) from incomes    where receipt_number between 99001 and 99999; -- expects 114 (100 bulk + 5 reversals + 8 arqueo + 1 arqueo reversal)
+--   -- Arqueo (PR6): three reconcilable days relative to current_date —
+--   select count(*) from funeral where funeral_date::date = current_date;        -- expects 3 (services today)
+--   select count(*) from incomes where income_date::date = current_date and status='ACTIVE'; -- expects 2 (purchases today)
+--   select count(*) from incomes where income_date::date = current_date - 1 and status='ANNULLED'; -- expects 1 (annulled yesterday)
 --   select count(*) from incomes    where receipt_number between 99001 and 99100 and status = 'ANNULLED'; -- expects 5
 --   select count(*) from incomes    where receipt_number between 99201 and 99205 and reversal_of_id is not null; -- expects 5
 --   select count(*) from income_details
