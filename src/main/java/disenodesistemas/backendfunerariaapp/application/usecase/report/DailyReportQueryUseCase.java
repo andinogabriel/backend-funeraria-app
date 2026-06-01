@@ -1,13 +1,16 @@
 package disenodesistemas.backendfunerariaapp.application.usecase.report;
 
 import disenodesistemas.backendfunerariaapp.web.dto.response.DailyReportResponseDto;
+import disenodesistemas.backendfunerariaapp.web.dto.response.DailyReportResponseDto.PurchaseLine;
 import disenodesistemas.backendfunerariaapp.web.dto.response.DailyReportResponseDto.PurchasesSummary;
+import disenodesistemas.backendfunerariaapp.web.dto.response.DailyReportResponseDto.ServiceLine;
 import disenodesistemas.backendfunerariaapp.web.dto.response.DailyReportResponseDto.ServicesSummary;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -72,45 +75,73 @@ public class DailyReportQueryUseCase {
   private ServicesSummary aggregateServices(final LocalDate date) {
     final LocalDateTime start = date.atStartOfDay();
     final LocalDateTime end = date.plusDays(1).atStartOfDay();
-    final MonetaryAggregate row =
-        jdbcTemplate.queryForObject(
-            "select count(*), coalesce(sum(total_amount), 0) "
-                + "from funeral "
-                + "where deleted_at is null and funeral_date >= ? and funeral_date < ?",
-            COUNT_AND_TOTAL,
+
+    final List<ServiceLine> lines =
+        jdbcTemplate.query(
+            "select f.receipt_number, "
+                + "trim(d.first_name || ' ' || d.last_name) as deceased_name, "
+                + "p.name as plan_name, f.total_amount "
+                + "from funeral f "
+                + "join deceased d on d.id = f.deceased_id "
+                + "left join plans p on p.id = f.plan_id "
+                + "where f.deleted_at is null and f.funeral_date >= ? and f.funeral_date < ? "
+                + "order by f.funeral_date desc, f.id desc",
+            SERVICE_LINE,
             start,
             end);
-    return new ServicesSummary(row.count(), row.total());
+
+    final BigDecimal total =
+        lines.stream().map(ServiceLine::amount).reduce(BigDecimal.ZERO, BigDecimal::add);
+    return new ServicesSummary(lines.size(), total, lines);
   }
 
   private PurchasesSummary aggregatePurchases(final LocalDate date) {
     final Timestamp start = Timestamp.from(date.atStartOfDay(REPORTING_ZONE).toInstant());
     final Timestamp end = Timestamp.from(date.plusDays(1).atStartOfDay(REPORTING_ZONE).toInstant());
 
-    final MonetaryAggregate active =
-        jdbcTemplate.queryForObject(
-            "select count(*), coalesce(sum(total_amount), 0) "
-                + "from incomes "
-                + "where deleted = false and status = 'ACTIVE' "
-                + "and income_date >= ? and income_date < ?",
-            COUNT_AND_TOTAL,
+    // Pull every income dated on the day regardless of lifecycle (ACTIVE originals, reversal
+    // counter-entries and ANNULLED originals) so the detail shows the full picture; derive the
+    // summary figures from this single result set instead of issuing separate count queries.
+    final List<PurchaseLine> lines =
+        jdbcTemplate.query(
+            "select i.receipt_number, s.name as supplier_name, i.total_amount, i.status, "
+                + "(i.reversal_of_id is not null) as reversal "
+                + "from incomes i "
+                + "left join suppliers s on s.id = i.supplier_id "
+                + "where i.deleted = false and i.income_date >= ? and i.income_date < ? "
+                + "order by i.income_date desc, i.id desc",
+            PURCHASE_LINE,
             start,
             end);
 
-    final Long annulledCount =
-        jdbcTemplate.queryForObject(
-            "select count(*) from incomes "
-                + "where deleted = false and status = 'ANNULLED' "
-                + "and income_date >= ? and income_date < ?",
-            Long.class,
-            start,
-            end);
-
-    return new PurchasesSummary(
-        active.count(), active.total(), annulledCount == null ? 0L : annulledCount);
+    BigDecimal activeTotal = BigDecimal.ZERO;
+    long activeCount = 0L;
+    long annulledCount = 0L;
+    for (final PurchaseLine line : lines) {
+      if ("ANNULLED".equals(line.status())) {
+        annulledCount++;
+      } else {
+        activeTotal = activeTotal.add(line.amount());
+        activeCount++;
+      }
+    }
+    return new PurchasesSummary(activeCount, activeTotal, annulledCount, lines);
   }
 
-  /** Row mapper shared by both {@code (count, sum)} aggregations. */
-  private static final RowMapper<MonetaryAggregate> COUNT_AND_TOTAL =
-      (rs, rowNum) -> new MonetaryAggregate(rs.getLong(1), rs.getBigDecimal(2));
+  private static final RowMapper<ServiceLine> SERVICE_LINE =
+      (rs, rowNum) ->
+          new ServiceLine(
+              rs.getString("receipt_number"),
+              rs.getString("deceased_name"),
+              rs.getString("plan_name"),
+              rs.getBigDecimal("total_amount"));
+
+  private static final RowMapper<PurchaseLine> PURCHASE_LINE =
+      (rs, rowNum) ->
+          new PurchaseLine(
+              String.valueOf(rs.getLong("receipt_number")),
+              rs.getString("supplier_name"),
+              rs.getBigDecimal("total_amount"),
+              rs.getString("status"),
+              rs.getBoolean("reversal"));
 }

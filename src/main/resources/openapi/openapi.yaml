@@ -4265,7 +4265,12 @@ components:
         total:
           type: number
           description: Suma de `total_amount` de esos funerales.
-      required: [count, total]
+        lines:
+          type: array
+          description: Detalle por funeral que compone el total, mas reciente primero.
+          items:
+            $ref: '#/components/schemas/DailyReportServiceLine'
+      required: [count, total, lines]
     DailyReportPurchasesSummary:
       type: object
       description: Egreso por compras a proveedores del dia (ingresos ACTIVE).
@@ -4283,7 +4288,56 @@ components:
           type: integer
           format: int64
           description: Cantidad de originales en estado ANNULLED con fecha en el dia.
-      required: [count, total, annulledCount]
+        lines:
+          type: array
+          description: |
+            Detalle por ingreso que compone el dia — originales ACTIVE, asientos de
+            reversion (monto negativo) y originales ANNULLED — mas reciente primero.
+          items:
+            $ref: '#/components/schemas/DailyReportPurchaseLine'
+      required: [count, total, annulledCount, lines]
+    DailyReportServiceLine:
+      type: object
+      description: Un servicio funebre individual del detalle diario.
+      properties:
+        receiptNumber:
+          type: string
+          description: Numero de recibo del funeral (eg. `F-99121`).
+        deceasedName:
+          type: string
+          description: Nombre completo del fallecido.
+        planName:
+          type: string
+          nullable: true
+          description: Nombre del plan vendido; `null` si el funeral no tiene plan asociado.
+        amount:
+          type: number
+          description: '`total_amount` del funeral.'
+      required: [receiptNumber, deceasedName, amount]
+    DailyReportPurchaseLine:
+      type: object
+      description: Una compra a proveedor individual del detalle diario.
+      properties:
+        receiptNumber:
+          type: string
+          description: Numero de recibo del ingreso.
+        supplierName:
+          type: string
+          nullable: true
+          description: Nombre del proveedor; `null` si el ingreso no tiene proveedor asociado.
+        amount:
+          type: number
+          description: '`total_amount` del ingreso; negativo en los asientos de reversion.'
+        status:
+          type: string
+          enum: [ACTIVE, ANNULLED]
+          description: Estado de ciclo de vida del ingreso.
+        reversal:
+          type: boolean
+          description: |
+            `true` cuando la fila es un asiento de reversion (monto negativo, con back-pointer
+            al original anulado).
+      required: [receiptNumber, amount, status, reversal]
     ActivityFeedEntryDto:
       type: object
       description: |
