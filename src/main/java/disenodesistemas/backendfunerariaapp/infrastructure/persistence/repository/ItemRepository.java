@@ -69,6 +69,10 @@ public interface ItemRepository extends JpaRepository<ItemEntity, Long> {
    *       this through an autocomplete column.</li>
    *   <li>{@code brandName}: exact match on the linked brand's name. Same source as
    *       {@code categoryName}.</li>
+   *   <li>{@code lowStock}: when {@code true}, restricts to items at or below their configured
+   *       {@code lowStockThreshold} (and with a non-null stock — catalog entries without
+   *       inventory cannot be "low"). When {@code false} the predicate is a tautology. Backs the
+   *       "Stock crítico" dashboard tile's deep-link into the items list.</li>
    * </ul>
    */
   @Query(
@@ -93,12 +97,17 @@ public interface ItemRepository extends JpaRepository<ItemEntity, Long> {
         :brandName = ''
         or (b is not null and b.name = :brandName)
       )
+      and (
+        :lowStock = false
+        or (i.stock is not null and i.stock <= i.lowStockThreshold)
+      )
       """)
   Page<ItemEntity> search(
       @Param("code") String code,
       @Param("name") String name,
       @Param("categoryName") String categoryName,
       @Param("brandName") String brandName,
+      @Param("lowStock") boolean lowStock,
       Pageable pageable);
 
   /**

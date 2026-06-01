@@ -62,9 +62,10 @@ public class ItemController {
       @RequestParam(value = "code", required = false) final String code,
       @RequestParam(value = "name", required = false) final String name,
       @RequestParam(value = "categoryName", required = false) final String categoryName,
-      @RequestParam(value = "brandName", required = false) final String brandName) {
+      @RequestParam(value = "brandName", required = false) final String brandName,
+      @RequestParam(value = "lowStock", defaultValue = "false") final boolean lowStock) {
     return itemQueryUseCase.getItemsPaginated(
-        page, limit, sortBy, sortDir, code, name, categoryName, brandName);
+        page, limit, sortBy, sortDir, code, name, categoryName, brandName, lowStock);
   }
 
   @PreAuthorize("hasRole('ADMIN')")

@@ -51,14 +51,14 @@ class ItemSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTest 
   @Test
   @DisplayName("Given a `code` substring when the search runs then only matching codes return")
   void codeMatchesSubstring() {
-    final Page<ItemEntity> result = port.search("COF", "", "", "", defaultPageable());
+    final Page<ItemEntity> result = port.search("COF", "", "", "", false, defaultPageable());
     assertThat(result.getContent()).extracting(ItemEntity::getCode).containsOnly("COF-001", "COF-002");
   }
 
   @Test
   @DisplayName("Given a `name` substring when the search runs then only matching names return")
   void nameMatchesSubstring() {
-    final Page<ItemEntity> result = port.search("", "Cofre", "", "", defaultPageable());
+    final Page<ItemEntity> result = port.search("", "Cofre", "", "", false, defaultPageable());
     assertThat(result.getContent()).extracting(ItemEntity::getCode).containsOnly("COF-001", "COF-002");
   }
 
@@ -66,7 +66,7 @@ class ItemSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTest 
   @DisplayName(
       "Given an exact `categoryName` filter when the search runs then only matching items return")
   void categoryNameFiltersExact() {
-    final Page<ItemEntity> result = port.search("", "", "Velas", "", defaultPageable());
+    final Page<ItemEntity> result = port.search("", "", "Velas", "", false, defaultPageable());
     assertThat(result.getContent()).extracting(ItemEntity::getCode).containsOnly("VEL-001");
   }
 
@@ -74,7 +74,7 @@ class ItemSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTest 
   @DisplayName(
       "Given an exact `brandName` filter when the search runs then items without a brand are excluded")
   void brandNameFiltersExactAndDropsNullBrand() {
-    final Page<ItemEntity> result = port.search("", "", "", "Akme", defaultPageable());
+    final Page<ItemEntity> result = port.search("", "", "", "Akme", false, defaultPageable());
     assertThat(result.getContent())
         .extracting(ItemEntity::getCode)
         .containsOnly("COF-001", "VEL-001");
@@ -85,7 +85,7 @@ class ItemSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTest 
       "Given multiple column filters at once when the search runs then they AND together")
   void multipleFiltersCombineWithAnd() {
     final Page<ItemEntity> result =
-        port.search("COF", "", "Cofres", "Akme", defaultPageable());
+        port.search("COF", "", "Cofres", "Akme", false, defaultPageable());
     assertThat(result.getContent()).extracting(ItemEntity::getCode).containsOnly("COF-001");
   }
 
@@ -93,8 +93,24 @@ class ItemSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTest 
   @DisplayName(
       "Given empty strings on every filter when the search runs then every item comes back (including the one with no brand)")
   void noFiltersReturnsEverything() {
-    final Page<ItemEntity> result = port.search("", "", "", "", defaultPageable());
+    final Page<ItemEntity> result = port.search("", "", "", "", false, defaultPageable());
     assertThat(result.getTotalElements()).isEqualTo(4);
+  }
+
+  @Test
+  @DisplayName(
+      "Given lowStock=true when the search runs then only items at or below their threshold (with a non-null stock) return")
+  void lowStockFiltersBelowThreshold() {
+    // The fixture items (8001..8004) have a null stock (default), so they are never "low" and
+    // must be excluded by the lowStock predicate; only the three explicit-stock rows qualify.
+    insertItemWithStock(8101L, "STK-LOW", "Stock bajo", 2, 5);
+    insertItemWithStock(8102L, "STK-EQ", "Stock al umbral", 5, 5);
+    insertItemWithStock(8103L, "STK-OK", "Stock sobrado", 20, 5);
+
+    final Page<ItemEntity> result = port.search("", "", "", "", true, defaultPageable());
+    assertThat(result.getContent())
+        .extracting(ItemEntity::getCode)
+        .containsExactlyInAnyOrder("STK-LOW", "STK-EQ");
   }
 
   private void insertItem(
@@ -114,6 +130,20 @@ class ItemSearchPostgresIntegrationTest extends AbstractPostgresIntegrationTest 
         price,
         categoryId,
         brandId);
+  }
+
+  private void insertItemWithStock(
+      final long id, final String code, final String name, final int stock, final int threshold) {
+    jdbcTemplate.update(
+        "insert into items"
+            + " (id, code, name, price, stock, low_stock_threshold,"
+            + " created_at, created_by, updated_at, updated_by)"
+            + " values (?, ?, ?, 1000, ?, ?, now(), 'test', now(), 'test')",
+        id,
+        code,
+        name,
+        stock,
+        threshold);
   }
 
   private static PageRequest defaultPageable() {
