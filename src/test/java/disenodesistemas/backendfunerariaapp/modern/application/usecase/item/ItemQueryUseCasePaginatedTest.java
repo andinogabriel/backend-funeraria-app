@@ -67,38 +67,38 @@ class ItemQueryUseCasePaginatedTest {
             null, // lowStockThreshold
             null,
             null);
-    when(port.search(eq(""), eq(""), eq(""), eq(""), any(Pageable.class)))
+    when(port.search(eq(""), eq(""), eq(""), eq(""), eq(false), any(Pageable.class)))
         .thenReturn(new PageImpl<>(List.of(entity)));
     when(mapper.toDto(entity)).thenReturn(dto);
 
     final Page<ItemResponseDto> result =
-        useCase.getItemsPaginated(0, 10, "name", "asc", null, "  ", null, "");
+        useCase.getItemsPaginated(0, 10, "name", "asc", null, "  ", null, "", false);
 
     assertThat(result.getContent()).containsExactly(dto);
-    verify(port).search(eq(""), eq(""), eq(""), eq(""), any(Pageable.class));
+    verify(port).search(eq(""), eq(""), eq(""), eq(""), eq(false), any(Pageable.class));
   }
 
   @Test
   @DisplayName(
       "Given non-blank text filters when invoked then values are trimmed and forwarded to the port verbatim")
   void textFiltersAreTrimmedAndForwarded() {
-    when(port.search(eq("COF"), eq("Cofre"), eq("Cofres"), eq("Akme"), any(Pageable.class)))
+    when(port.search(eq("COF"), eq("Cofre"), eq("Cofres"), eq("Akme"), eq(false), any(Pageable.class)))
         .thenReturn(new PageImpl<>(List.of()));
 
-    useCase.getItemsPaginated(0, 10, "name", "asc", " COF ", "Cofre", "Cofres", "Akme");
+    useCase.getItemsPaginated(0, 10, "name", "asc", " COF ", "Cofre", "Cofres", "Akme", false);
 
     verify(port)
-        .search(eq("COF"), eq("Cofre"), eq("Cofres"), eq("Akme"), any(Pageable.class));
+        .search(eq("COF"), eq("Cofre"), eq("Cofres"), eq("Akme"), eq(false), any(Pageable.class));
   }
 
   @Test
   @DisplayName(
       "Given sortDir 'ASC' (upper case) when invoked then the pageable carries an ascending sort")
   void sortDirIsCaseInsensitive() {
-    when(port.search(eq(""), eq(""), eq(""), eq(""), any(Pageable.class)))
+    when(port.search(eq(""), eq(""), eq(""), eq(""), eq(false), any(Pageable.class)))
         .thenReturn(new PageImpl<>(List.of()));
 
-    useCase.getItemsPaginated(0, 10, "name", "ASC", null, null, null, null);
+    useCase.getItemsPaginated(0, 10, "name", "ASC", null, null, null, null, false);
 
     final Pageable used = capturePageable();
     assertThat(used.getSort().getOrderFor("name").isAscending()).isTrue();
@@ -108,10 +108,10 @@ class ItemQueryUseCasePaginatedTest {
   @DisplayName(
       "Given a non-zero page index when invoked then the pageable carries it forward 0-indexed")
   void pageIndexIsForwardedZeroIndexed() {
-    when(port.search(eq(""), eq(""), eq(""), eq(""), any(Pageable.class)))
+    when(port.search(eq(""), eq(""), eq(""), eq(""), eq(false), any(Pageable.class)))
         .thenReturn(new PageImpl<>(List.of()));
 
-    useCase.getItemsPaginated(2, 25, "name", "asc", null, null, null, null);
+    useCase.getItemsPaginated(2, 25, "name", "asc", null, null, null, null, false);
 
     final Pageable used = capturePageable();
     assertThat(used.getPageNumber()).isEqualTo(2);
@@ -120,7 +120,7 @@ class ItemQueryUseCasePaginatedTest {
 
   private Pageable capturePageable() {
     final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-    verify(port).search(eq(""), eq(""), eq(""), eq(""), captor.capture());
+    verify(port).search(eq(""), eq(""), eq(""), eq(""), eq(false), captor.capture());
     return captor.getValue();
   }
 }

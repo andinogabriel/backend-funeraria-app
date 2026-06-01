@@ -51,8 +51,9 @@ public class JpaItemPersistenceAdapter implements ItemPersistencePort {
       final String name,
       final String categoryName,
       final String brandName,
+      final boolean lowStock,
       final Pageable pageable) {
-    return itemRepository.search(code, name, categoryName, brandName, pageable);
+    return itemRepository.search(code, name, categoryName, brandName, lowStock, pageable);
   }
 
   @Override

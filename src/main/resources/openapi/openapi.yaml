@@ -2162,6 +2162,52 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
 
+  /api/v1/metrics/dashboard/series:
+    get:
+      tags: [Metrics]
+      summary: KPI recalculado para un rango seleccionable
+      description: |
+        Recalcula un unico indicador temporal (`SERVICES`, `PURCHASES` o `AUDIT`) sobre una
+        ventana rodante elegida por el operador (`DAY`, `WEEK`, `MONTH`, `YEAR`). Respalda el
+        selector de rango por card del dashboard: al cambiar la ventana de "Servicios" a un
+        rango anual, el front llama a este endpoint en lugar de recargar todo el snapshot. La
+        ventana es semiabierta `[inicio, fin)` terminando al final del dia de hoy; el trend
+        compara contra la ventana inmediatamente anterior del mismo largo y el sparkline parte
+        la ventana en 8 buckets ordenados de mas viejo a mas nuevo.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: metric
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [SERVICES, PURCHASES, AUDIT]
+          description: Indicador temporal a recalcular.
+        - name: range
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [DAY, WEEK, MONTH, YEAR]
+          description: Ventana rodante (1 / 7 / 30 / 365 dias).
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: KPI recalculado para el rango pedido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KpiMetricDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/metrics/activity-feed:
     get:
       tags: [Metrics]

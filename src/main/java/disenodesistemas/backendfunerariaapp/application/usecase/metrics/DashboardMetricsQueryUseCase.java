@@ -68,6 +68,52 @@ public class DashboardMetricsQueryUseCase {
         auditedEvents24hMetric());
   }
 
+  /* -------------------------------- range-selectable metric ------------------------------ */
+
+  /**
+   * Recomputes a single time-windowed KPI ({@link MetricKind}) over an operator-selected
+   * rolling {@link MetricRange}. Backs the per-card range dropdown on the dashboard: when the
+   * operator switches "Servicios del mes" to a yearly window, the frontend calls this with
+   * {@code (SERVICES, YEAR)} and the card re-renders without reloading the whole snapshot.
+   *
+   * <p>The window is half-open {@code [start, end)} where {@code end} is the start of tomorrow
+   * (so "today" is fully included) and {@code start} is {@code range.days()} days earlier. The
+   * trend compares it against the immediately-preceding window of the same length; the sparkline
+   * splits the window into {@link #DAILY_BUCKETS} equal buckets, oldest first.
+   */
+  @Transactional(readOnly = true)
+  public KpiMetricDto rangeMetric(final MetricKind kind, final MetricRange range) {
+    final LocalDate today = LocalDate.now(clock);
+    final LocalDateTime end = today.plusDays(1).atStartOfDay();
+    final LocalDateTime start = end.minusDays(range.days());
+    final LocalDateTime previousStart = start.minusDays(range.days());
+
+    final long current = countInWindow(kind, start, end);
+    final long previous = countInWindow(kind, previousStart, start);
+    final Double trend = trendPercent(current, previous);
+
+    final List<Long> sparkline = new ArrayList<>(DAILY_BUCKETS);
+    final long totalSeconds = java.time.Duration.between(start, end).getSeconds();
+    final long step = Math.max(1, totalSeconds / DAILY_BUCKETS);
+    for (int i = 0; i < DAILY_BUCKETS; i++) {
+      final LocalDateTime bucketStart = start.plusSeconds(i * step);
+      final LocalDateTime bucketEnd = i == DAILY_BUCKETS - 1 ? end : bucketStart.plusSeconds(step);
+      sparkline.add(countInWindow(kind, bucketStart, bucketEnd));
+    }
+    return new KpiMetricDto(current, trend, List.copyOf(sparkline));
+  }
+
+  private long countInWindow(
+      final MetricKind kind, final LocalDateTime start, final LocalDateTime end) {
+    return switch (kind) {
+      case SERVICES -> countFuneralsBetween(start, end);
+      case PURCHASES -> countPurchasesBetween(start, end);
+      case AUDIT ->
+          countAuditBetween(
+              start.atZone(clock.getZone()).toInstant(), end.atZone(clock.getZone()).toInstant());
+    };
+  }
+
   /* -------------------------------- affiliates ------------------------------------------- */
 
   /**

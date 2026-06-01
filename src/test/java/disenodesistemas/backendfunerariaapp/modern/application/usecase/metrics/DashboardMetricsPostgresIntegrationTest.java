@@ -183,6 +183,46 @@ class DashboardMetricsPostgresIntegrationTest extends AbstractPostgresIntegratio
     assertThat(metric.sparkline()).isEmpty();
   }
 
+  @Test
+  @DisplayName(
+      "Given funerals across rolling windows when rangeMetric(SERVICES, WEEK) runs then it counts the last 7 days and trends against the preceding 7")
+  void rangeMetricServicesWeekWindow() {
+    final LocalDate today = LocalDate.now(FIXED_CLOCK);
+    // Last 7 days (today .. today-6): 3 funerals. Preceding 7 days (today-7 .. today-13): 1.
+    insertFuneral(today.atTime(10, 0));
+    insertFuneral(today.minusDays(2).atTime(10, 0));
+    insertFuneral(today.minusDays(6).atTime(10, 0));
+    insertFuneral(today.minusDays(8).atTime(10, 0));
+    // Older than both windows — excluded.
+    insertFuneral(today.minusDays(40).atTime(10, 0));
+
+    final KpiMetricDto metric =
+        useCase.rangeMetric(
+            disenodesistemas.backendfunerariaapp.application.usecase.metrics.MetricKind.SERVICES,
+            disenodesistemas.backendfunerariaapp.application.usecase.metrics.MetricRange.WEEK);
+    assertThat(metric.value()).isEqualTo(3L);
+    assertThat(metric.trendPercent()).isEqualTo(200.0);
+    assertThat(metric.sparkline()).hasSize(8);
+  }
+
+  @Test
+  @DisplayName(
+      "Given ACTIVE and ANNULLED incomes when rangeMetric(PURCHASES, MONTH) runs then it counts only ACTIVE non-deleted rows in the last 30 days")
+  void rangeMetricPurchasesMonthWindow() {
+    final LocalDate today = LocalDate.now(FIXED_CLOCK);
+    insertIncome(today.minusDays(1).atTime(10, 0), "ACTIVE", false);
+    insertIncome(today.minusDays(15).atTime(10, 0), "ACTIVE", false);
+    insertIncome(today.minusDays(5).atTime(10, 0), "ANNULLED", false); // excluded
+    insertIncome(today.minusDays(5).atTime(10, 0), "ACTIVE", true); // soft-deleted, excluded
+    insertIncome(today.minusDays(60).atTime(10, 0), "ACTIVE", false); // outside window
+
+    final KpiMetricDto metric =
+        useCase.rangeMetric(
+            disenodesistemas.backendfunerariaapp.application.usecase.metrics.MetricKind.PURCHASES,
+            disenodesistemas.backendfunerariaapp.application.usecase.metrics.MetricRange.MONTH);
+    assertThat(metric.value()).isEqualTo(2L);
+  }
+
   /* ----------------------------------- helpers ---------------------------------- */
 
   /** Inserts an income with only the columns relevant to the purchases metric. */

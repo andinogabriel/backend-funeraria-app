@@ -2,8 +2,11 @@ package disenodesistemas.backendfunerariaapp.web.controller;
 
 import disenodesistemas.backendfunerariaapp.application.usecase.metrics.ActivityFeedQueryUseCase;
 import disenodesistemas.backendfunerariaapp.application.usecase.metrics.DashboardMetricsQueryUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.metrics.MetricKind;
+import disenodesistemas.backendfunerariaapp.application.usecase.metrics.MetricRange;
 import disenodesistemas.backendfunerariaapp.web.dto.response.ActivityFeedResponseDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.DashboardMetricsResponseDto;
+import disenodesistemas.backendfunerariaapp.web.dto.response.KpiMetricDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -40,6 +43,21 @@ public class MetricsController {
   @GetMapping("/dashboard")
   public ResponseEntity<DashboardMetricsResponseDto> dashboard() {
     return ResponseEntity.ok(dashboardMetricsQueryUseCase.buildSnapshot());
+  }
+
+  /**
+   * Recomputes a single time-windowed KPI for an operator-selected rolling range. Backs the
+   * per-card range dropdown (Servicios / Compras / Eventos auditados): the dashboard calls this
+   * when the operator switches a card's window instead of reloading the whole snapshot. The
+   * {@code metric} and {@code range} params bind from the {@link MetricKind} / {@link MetricRange}
+   * enum names (uppercase), so an unknown value yields a 400 before reaching the use case.
+   */
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  @GetMapping("/dashboard/series")
+  public ResponseEntity<KpiMetricDto> series(
+      @RequestParam("metric") final MetricKind metric,
+      @RequestParam("range") final MetricRange range) {
+    return ResponseEntity.ok(dashboardMetricsQueryUseCase.rangeMetric(metric, range));
   }
 
   /**

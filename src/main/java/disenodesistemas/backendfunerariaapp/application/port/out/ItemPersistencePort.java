@@ -31,7 +31,12 @@ public interface ItemPersistencePort {
    * for the JPQL behind it.
    */
   Page<ItemEntity> search(
-      String code, String name, String categoryName, String brandName, Pageable pageable);
+      String code,
+      String name,
+      String categoryName,
+      String brandName,
+      boolean lowStock,
+      Pageable pageable);
 
   ItemEntity save(ItemEntity item);
 

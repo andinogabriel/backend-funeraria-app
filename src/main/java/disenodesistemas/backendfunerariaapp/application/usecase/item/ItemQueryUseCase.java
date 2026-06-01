@@ -74,7 +74,8 @@ public class ItemQueryUseCase {
       final String code,
       final String name,
       final String categoryName,
-      final String brandName) {
+      final String brandName,
+      final boolean lowStock) {
     final Pageable pageable =
         PageRequest.of(
             page,
@@ -89,6 +90,7 @@ public class ItemQueryUseCase {
             blankToEmpty(name),
             blankToEmpty(categoryName),
             blankToEmpty(brandName),
+            lowStock,
             pageable);
     return new PageImpl<>(
         entities.getContent().stream().map(itemMapper::toDto).toList(),
