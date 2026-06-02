@@ -45,6 +45,8 @@ tags:
     description: Indicadores agregados para el dashboard operativo.
   - name: Reports
     description: Reportes financieros de solo lectura (arqueo de caja). Solo ADMIN.
+  - name: Membership
+    description: Tarifario de cuotas de afiliacion (pricing por edad y salud).
 paths:
   /api/v1/users:
     get:
@@ -2246,6 +2248,108 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
 
+  /api/v1/membership/tariff:
+    get:
+      tags: [Membership]
+      summary: Configuracion del tarifario de cuotas
+      description: |
+        Devuelve la configuracion completa del tarifario de cuotas de afiliacion: monto base,
+        edad maxima de ingreso, limite de cuotas en mora, y las listas ordenadas de niveles de
+        salud y franjas etarias con sus multiplicadores. Disponible para ADMIN y USER (el alta
+        necesita cotizar).
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Configuracion del tarifario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TariffConfigResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    put:
+      tags: [Membership]
+      summary: Editar el tarifario (solo ADMIN)
+      description: |
+        Actualiza el monto base, la edad maxima de ingreso, el limite de mora y los
+        multiplicadores de los niveles de salud y franjas etarias existentes (identificados por
+        id). v1 no crea ni elimina filas: un id desconocido devuelve 404.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TariffConfigUpdateDto'
+      responses:
+        '200':
+          description: Tarifario actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TariffConfigResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/membership/tariff/quote:
+    get:
+      tags: [Membership]
+      summary: Cotizar cuota mensual
+      description: |
+        Cotiza la cuota mensual para una edad y un nivel de salud: `cuota = base *
+        multiplicador_edad * multiplicador_salud`. Cuando la edad esta fuera del rango asegurable
+        devuelve 200 con `insurable=false` y un `reason` (no es un error). Un `healthTier`
+        desconocido devuelve 404.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: age
+          in: query
+          required: true
+          schema: { type: integer }
+          description: Edad del aspirante en anios.
+        - name: healthTier
+          in: query
+          required: true
+          schema: { type: string }
+          description: Codigo del nivel de salud (ej. STANDARD, GRADED, SPECIAL).
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Cotizacion (asegurable o no).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeeQuoteResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/reports/daily:
     get:
       tags: [Reports]
@@ -4268,6 +4372,89 @@ components:
             format: int64
           description: Serie de 8 buckets para el sparkline; vacio si la metrica no la soporta.
       required: [value, sparkline]
+    HealthTierDto:
+      type: object
+      description: Nivel de salud del tarifario de cuotas.
+      properties:
+        id: { type: integer, format: int64 }
+        code: { type: string, description: Clave de negocio inmutable (ej. STANDARD). }
+        name: { type: string }
+        healthMultiplier: { type: number, description: Multiplicador de cuota por salud. }
+        waitingPeriodMonths: { type: integer, description: Carencia en meses para el reclamo. }
+        displayOrder: { type: integer }
+      required: [id, code, name, healthMultiplier, waitingPeriodMonths, displayOrder]
+    AgeBandDto:
+      type: object
+      description: Franja etaria del tarifario. `maxAge` null indica franja abierta.
+      properties:
+        id: { type: integer, format: int64 }
+        minAge: { type: integer }
+        maxAge: { type: integer, nullable: true }
+        ageMultiplier: { type: number }
+        label: { type: string }
+        displayOrder: { type: integer }
+      required: [id, minAge, ageMultiplier, label, displayOrder]
+    TariffConfigResponseDto:
+      type: object
+      description: Configuracion completa del tarifario de cuotas (settings + niveles + franjas).
+      properties:
+        baseAmount: { type: number, description: Monto base que escalan los multiplicadores. }
+        maxIssueAge: { type: integer, description: Edad maxima de ingreso (sobre ella, no asegurable). }
+        overdueGraceCount: { type: integer, description: Cuotas en mora toleradas antes de suspender el reclamo. }
+        healthTiers:
+          type: array
+          items: { $ref: '#/components/schemas/HealthTierDto' }
+        ageBands:
+          type: array
+          items: { $ref: '#/components/schemas/AgeBandDto' }
+      required: [baseAmount, maxIssueAge, overdueGraceCount, healthTiers, ageBands]
+    FeeQuoteResponseDto:
+      type: object
+      description: |
+        Resultado de cotizar una cuota mensual. Cuando `insurable` es false, `monthlyFee`, la
+        franja y la carencia son null y `reason` trae un codigo (ej. ABOVE_MAX_ISSUE_AGE,
+        NO_AGE_BAND).
+      properties:
+        insurable: { type: boolean }
+        monthlyFee: { type: number, nullable: true }
+        age: { type: integer }
+        ageBandLabel: { type: string, nullable: true }
+        healthTierCode: { type: string }
+        healthTierName: { type: string }
+        waitingPeriodMonths: { type: integer, nullable: true }
+        reason: { type: string, nullable: true }
+      required: [insurable, age, healthTierCode, healthTierName]
+    HealthTierUpdateDto:
+      type: object
+      description: Edicion de un nivel de salud (el `code` es inmutable y no se envia).
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        healthMultiplier: { type: number }
+        waitingPeriodMonths: { type: integer }
+      required: [id, name, healthMultiplier, waitingPeriodMonths]
+    AgeBandUpdateDto:
+      type: object
+      description: Edicion de una franja etaria (solo multiplicador y etiqueta; las edades son fijas).
+      properties:
+        id: { type: integer, format: int64 }
+        ageMultiplier: { type: number }
+        label: { type: string }
+      required: [id, ageMultiplier, label]
+    TariffConfigUpdateDto:
+      type: object
+      description: Payload de edicion del tarifario. Actualiza filas existentes por id.
+      properties:
+        baseAmount: { type: number }
+        maxIssueAge: { type: integer }
+        overdueGraceCount: { type: integer }
+        healthTiers:
+          type: array
+          items: { $ref: '#/components/schemas/HealthTierUpdateDto' }
+        ageBands:
+          type: array
+          items: { $ref: '#/components/schemas/AgeBandUpdateDto' }
+      required: [baseAmount, maxIssueAge, overdueGraceCount, healthTiers, ageBands]
     DashboardMetricsResponseDto:
       type: object
       description: Snapshot agregado de los KPIs renderizados en el dashboard operativo.
