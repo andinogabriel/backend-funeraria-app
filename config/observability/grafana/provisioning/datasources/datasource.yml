@@ -14,10 +14,9 @@ datasources:
       timeInterval: 15s
 
   # Tempo stores the OTLP traces produced by the application and forwarded by the OTel Collector.
-  # The 'tracesToLogsV2' block lets Grafana jump from a span to the logs that share its traceId
-  # (when a Loki/log datasource is wired in the future) and the 'serviceMap' option enables the
-  # service graph view inside Grafana's Explore tab. No additional configuration is required for
-  # the Search tab to work.
+  # tracesToLogsV2 jumps from a span to the Loki log lines that share its traceId. traceId is Loki
+  # structured metadata (not a label), so the custom query filters it with a pipe expression.
+  # serviceMap enables the service graph view in Explore.
   - name: Tempo
     uid: tempo
     type: tempo
@@ -26,12 +25,11 @@ datasources:
     editable: false
     jsonData:
       tracesToLogsV2:
-        datasourceUid: prometheus
+        datasourceUid: loki
         spanStartTimeShift: -5m
         spanEndTimeShift: 5m
-        tags: ['service.name', 'service']
-        filterByTraceID: true
-        filterBySpanID: false
+        customQuery: true
+        query: '{service="backend-funeraria-app"} | traceId = "$${__span.traceId}"'
       serviceMap:
         datasourceUid: prometheus
       nodeGraph:
@@ -39,4 +37,22 @@ datasources:
       search:
         hide: false
       lokiSearch:
-        datasourceUid: prometheus
+        datasourceUid: loki
+
+  # Loki holds the application JSON logs shipped by Grafana Alloy. The derived field turns the
+  # traceId structured-metadata field of a log line into a link that opens the trace in Tempo.
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: false
+    jsonData:
+      maxLines: 1000
+      derivedFields:
+        - name: traceId
+          matcherType: label
+          matcherRegex: traceId
+          datasourceUid: tempo
+          url: '$${__value.raw}'
+          urlDisplayLabel: Ver traza en Tempo

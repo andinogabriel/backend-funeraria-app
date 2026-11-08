@@ -1,7 +1,7 @@
 # Alertmanager configuration for the local observability stack.
 #
-# Variables wrapped in ${...} are substituted at startup because the alertmanager service is
-# launched with `--config.expand-env=true`. The defaults shipped in '.env.example' point at
+# Placeholders wrapped in ${ALERTMANAGER_...} are substituted at startup by entrypoint.sh
+# (Alertmanager has no env expansion of its own). The defaults shipped in '.env.example' point at
 # 'smtp.gmail.com:587' with dummy credentials so the service starts cleanly even before a real
 # Gmail App Password is provisioned; SMTP auth failures are expected in that case and surface as
 # warnings in the Alertmanager log.

@@ -166,7 +166,7 @@ The service includes a production-oriented observability baseline:
 - Prometheus metrics exposure
 - request tracing through `X-Trace-Id` and optional `X-Correlation-Id`
 - distributed tracing via Micrometer Tracing bridged to the OpenTelemetry SDK; spans ship over
-  OTLP/HTTP when `MANAGEMENT_OTLP_TRACING_ENDPOINT` is set
+  OTLP/HTTP when `MANAGEMENT_TRACING_EXPORT_ENABLED=true`
 - optional local Prometheus, Grafana, Alertmanager, OpenTelemetry Collector and Tempo stack
   through Docker Compose
 
@@ -206,6 +206,15 @@ Useful local URLs when the profile is enabled:
 - OTel Collector OTLP/HTTP: `http://localhost:4318`
 - OTel Collector OTLP/gRPC: `http://localhost:4317`
 - Tempo HTTP: `http://localhost:3200`
+- Loki HTTP: `http://localhost:3100`
+- Grafana Alloy UI (log pipeline debugging): `http://localhost:12345`
+
+Every image of the stack is pinned to an explicit version in `docker-compose.yml` (Dependabot's
+`docker-compose` ecosystem proposes upgrades), so an upstream major release cannot break the
+stack silently. Pinning surfaced two such breakages that `:latest` would also have hit: Tempo 3
+removed the `ingester` / `compactor` config blocks (retention now lives under
+`backend_worker.compaction`), and Alertmanager has no `--config.expand-env` flag, which made the
+container exit at startup (see the Alertmanager note below).
 
 Provisioned dashboards:
 
@@ -220,13 +229,26 @@ Provisioned dashboards:
 Provisioned datasources:
 
 - `Prometheus` (default)
-- `Tempo` — search traces by `traceId`, jump from a trace to logs and view the service map
+- `Tempo` — search traces by `traceId`, jump from a span to its log lines in Loki, service map
+- `Loki` — application JSON logs shipped by Grafana Alloy from the `app` container. Labels are
+  low-cardinality (`service`, `container`, `level`); `traceId`, `correlationId` and `event` are
+  structured metadata. Example queries in `Explore → Loki`:
+  - `{service="backend-funeraria-app", level="ERROR"}`
+  - `{service="backend-funeraria-app"} | event="request.completed" | json | durationMs > 1000`
+  - `{service="backend-funeraria-app"} | traceId="<id from X-Trace-Id>"`
+  The `traceId` field of a log line links straight to the trace in Tempo.
 
-To ship spans from the application to the local stack, set
-`MANAGEMENT_OTLP_TRACING_ENDPOINT=http://otel-collector:4318/v1/traces` (in your shell or
-`.env`) before running the observability profile. Without that variable the application still
-produces spans in process and the `traceId` continues to flow into MDC and response headers,
-but nothing is exported.
+To ship spans from the application to the local stack, set `MANAGEMENT_TRACING_EXPORT_ENABLED=true`
+(in your shell or `.env`) before running the observability profile. The endpoint defaults to the
+compose collector (`MANAGEMENT_OTLP_TRACING_ENDPOINT`, never empty). With export off the
+application still produces spans in process and the `traceId` continues to flow into MDC and
+response headers, but nothing is exported.
+
+Spring Boot 4 note: tracing needs `spring-boot-starter-opentelemetry` (the auto-configuration
+moved into its own modules) and the exporter property is
+`management.opentelemetry.tracing.export.otlp.endpoint`. With only the bare Micrometer/OTel
+libraries on the classpath no `Tracer` is created and `X-Trace-Id` silently falls back to a
+random id.
 
 Baseline alert rules:
 
@@ -238,8 +260,9 @@ Baseline alert rules:
 
 Alertmanager routes every firing alert (with a `RESOLVED` companion email when it clears) to a
 single email receiver over Gmail SMTP. Credentials and the recipient address are injected as
-environment variables and substituted into `alertmanager.yml` at startup, so no secret is
-committed to the repository.
+environment variables and rendered into `alertmanager.yml` at startup by
+`config/observability/alertmanager/entrypoint.sh` (Alertmanager cannot expand environment
+variables itself), so no secret is committed to the repository.
 
 To switch from the dummy defaults to a real Gmail account:
 

@@ -1,0 +1,76 @@
+// Grafana Alloy: ships container logs from the compose project to Loki.
+//
+// Discovers containers through the Docker socket, keeps only the application containers, parses
+// the JSON log lines produced by the `json-logs` Spring profile (LogstashEncoder) and promotes a
+// few fields: `level` becomes a label; `traceId`, `correlationId` and `event` become structured
+// metadata (high cardinality, so not labels). Grafana's Loki datasource turns traceId into a link
+// to the matching Tempo trace.
+
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "app_containers" {
+  targets = discovery.docker.containers.targets
+
+  // Only ship logs from this compose project's application containers.
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    regex         = "app"
+    action        = "keep"
+  }
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+    replacement   = "backend-funeraria-app"
+  }
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+}
+
+loki.source.docker "app" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.relabel.app_containers.output
+  relabel_rules = discovery.relabel.app_containers.rules
+  forward_to    = [loki.process.json.receiver]
+}
+
+loki.process "json" {
+  stage.json {
+    expressions = {
+      level         = "level",
+      traceId       = "traceId",
+      correlationId = "correlationId",
+      event         = "event",
+      ts            = "\"@timestamp\"",
+    }
+  }
+
+  stage.timestamp {
+    source = "ts"
+    format = "RFC3339Nano"
+  }
+
+  stage.labels {
+    values = { level = "" }
+  }
+
+  stage.structured_metadata {
+    values = {
+      traceId       = "",
+      correlationId = "",
+      event         = "",
+    }
+  }
+
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

@@ -45,11 +45,12 @@ services:
       APP_BOOTSTRAP_ADMIN_PASSWORD: ${APP_BOOTSTRAP_ADMIN_PASSWORD:-Admin123!}
       APP_BOOTSTRAP_ADMIN_FIRST_NAME: ${APP_BOOTSTRAP_ADMIN_FIRST_NAME:-Admin}
       APP_BOOTSTRAP_ADMIN_LAST_NAME: ${APP_BOOTSTRAP_ADMIN_LAST_NAME:-Funeraria}
-      # Distributed tracing export. Empty by default so the app does not try to ship spans when
-      # the observability stack is not running. Set MANAGEMENT_OTLP_TRACING_ENDPOINT in the host
-      # shell or .env (typically http://otel-collector:4318/v1/traces) to enable export when
-      # running with `docker compose --profile observability up`.
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: ${MANAGEMENT_OTLP_TRACING_ENDPOINT:-}
+      # Distributed tracing export. Off by default so the app does not try to ship spans when the
+      # observability stack is not running; set MANAGEMENT_TRACING_EXPORT_ENABLED=true (shell or
+      # .env) together with `docker compose --profile observability up`. The endpoint must never
+      # be empty (Spring Boot 4 fails at startup), so it defaults to the compose collector.
+      MANAGEMENT_TRACING_EXPORT_ENABLED: ${MANAGEMENT_TRACING_EXPORT_ENABLED:-false}
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: ${MANAGEMENT_OTLP_TRACING_ENDPOINT:-http://otel-collector:4318/v1/traces}
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:-1.0}
     ports:
       - "${SERVER_PORT:-8081}:8081"
@@ -62,7 +63,7 @@ services:
   prometheus:
     profiles:
       - observability
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.16.0
     container_name: backend-funeraria-prometheus
     depends_on:
       app:
@@ -81,15 +82,15 @@ services:
   alertmanager:
     profiles:
       - observability
-    image: prom/alertmanager:latest
+    image: prom/alertmanager:v0.34.2
     container_name: backend-funeraria-alertmanager
-    # --config.expand-env=true expands ${VAR} placeholders inside alertmanager.yml at startup so
-    # SMTP credentials and the recipient address can be supplied through environment variables
-    # instead of being committed in the YAML.
+    # Alertmanager cannot expand environment variables itself (there is no --config.expand-env
+    # flag; the previous setup passing it made the container exit at startup). entrypoint.sh
+    # renders the ${ALERTMANAGER_*} placeholders of alertmanager.yml from the environment below
+    # and then execs Alertmanager, so SMTP credentials are never committed in the YAML.
+    entrypoint: ["/bin/sh", "/etc/alertmanager/entrypoint.sh"]
     command:
-      - --config.file=/etc/alertmanager/alertmanager.yml
       - --storage.path=/alertmanager
-      - --config.expand-env=true
     environment:
       ALERTMANAGER_SMTP_HOST: ${ALERTMANAGER_SMTP_HOST:-smtp.gmail.com}
       ALERTMANAGER_SMTP_PORT: ${ALERTMANAGER_SMTP_PORT:-587}
@@ -101,6 +102,7 @@ services:
       - "${ALERTMANAGER_PORT:-9093}:9093"
     volumes:
       - ./config/observability/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./config/observability/alertmanager/entrypoint.sh:/etc/alertmanager/entrypoint.sh:ro
       - alertmanager_data:/alertmanager
 
   # OpenTelemetry Collector receives OTLP traffic from the app and forwards spans to Tempo.
@@ -109,7 +111,7 @@ services:
   otel-collector:
     profiles:
       - observability
-    image: otel/opentelemetry-collector-contrib:latest
+    image: otel/opentelemetry-collector-contrib:0.165.0
     container_name: backend-funeraria-otel-collector
     command: ["--config=/etc/otel-collector-config.yaml"]
     depends_on:
@@ -125,7 +127,7 @@ services:
   tempo:
     profiles:
       - observability
-    image: grafana/tempo:latest
+    image: grafana/tempo:3.1.1
     container_name: backend-funeraria-tempo
     command: ["-config.file=/etc/tempo/tempo.yaml"]
     ports:
@@ -134,15 +136,47 @@ services:
       - ./config/observability/tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
       - tempo_data:/var/tempo
 
+  # Grafana Loki stores the application logs shipped by Alloy (7-day retention, filesystem).
+  loki:
+    profiles:
+      - observability
+    image: grafana/loki:3.7.9
+    container_name: backend-funeraria-loki
+    command: ["-config.file=/etc/loki/loki.yaml"]
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
+    volumes:
+      - ./config/observability/loki/loki.yaml:/etc/loki/loki.yaml:ro
+      - loki_data:/loki
+
+  # Grafana Alloy tails the app container logs through the Docker socket (read-only) and pushes
+  # them to Loki, promoting traceId / correlationId to structured metadata.
+  alloy:
+    profiles:
+      - observability
+    image: grafana/alloy:v1.21.3
+    container_name: backend-funeraria-alloy
+    command: ["run", "--server.http.listen-addr=0.0.0.0:12345", "/etc/alloy/config.alloy"]
+    depends_on:
+      loki:
+        condition: service_started
+    ports:
+      - "${ALLOY_PORT:-12345}:12345"
+    volumes:
+      - ./config/observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
   grafana:
     profiles:
       - observability
-    image: grafana/grafana:latest
+    image: grafana/grafana:13.3.0
     container_name: backend-funeraria-grafana
     depends_on:
       prometheus:
         condition: service_started
       tempo:
+        condition: service_started
+      loki:
         condition: service_started
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
@@ -162,3 +196,4 @@ volumes:
   alertmanager_data:
   tempo_data:
   grafana_data:
+  loki_data:

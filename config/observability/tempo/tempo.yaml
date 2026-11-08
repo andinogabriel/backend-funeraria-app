@@ -1,10 +1,14 @@
-# Grafana Tempo configuration for the local observability stack.
+# Grafana Tempo 3.x configuration for the local observability stack.
 #
 # Single-binary deployment using the local filesystem as the trace store. This is intentionally
 # the smallest possible setup that still produces a working trace search UI in Grafana — there
-# is no S3 backend, no clustering, no metrics-generator and no compactor tuning. The goal is to
-# let a contributor running the observability profile follow a request from the request log to
-# its trace without setting up cloud infrastructure first.
+# is no S3 backend, no clustering and no metrics-generator. The goal is to let a contributor
+# running the observability profile follow a request from its log line to its trace without
+# setting up cloud infrastructure first.
+#
+# Tempo 3 removed the `ingester` and `compactor` blocks of the 2.x layout; block retention now
+# lives under `backend_worker.compaction`. The image is pinned in docker-compose.yml so a future
+# major cannot break this file silently again.
 
 server:
   http_listen_port: 3200
@@ -18,11 +22,7 @@ distributor:
         http:
           endpoint: 0.0.0.0:4318
 
-ingester:
-  trace_idle_period: 10s
-  max_block_duration: 1m
-
-compactor:
+backend_worker:
   compaction:
     block_retention: 24h
 

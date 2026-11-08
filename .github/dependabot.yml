@@ -42,3 +42,35 @@ updates:
         update-types:
           - "minor"
           - "patch"
+
+  # Pinned images of the docker-compose stack (Postgres + observability profile). Versions are
+  # pinned so the stack cannot break on an upstream major; Dependabot keeps them moving.
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "America/Argentina/Buenos_Aires"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "build"
+      include: "scope"
+
+  # Base images of the application Dockerfile (Maven/Temurin build and JRE runtime).
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:15"
+      timezone: "America/Argentina/Buenos_Aires"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "build"
+      include: "scope"
