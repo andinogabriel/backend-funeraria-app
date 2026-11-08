@@ -87,16 +87,35 @@ management:
     enabled: true
     sampling:
       probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
-  otlp:
+    export:
+      otlp:
+        # Spans are always created in-process (traceId reaches MDC and the X-Trace-Id header) but
+        # only shipped when this is true. Off by default so tests and a plain `docker compose up`
+        # never try to reach a collector; the compose observability profile turns it on through
+        # MANAGEMENT_TRACING_EXPORT_ENABLED=true.
+        enabled: ${MANAGEMENT_TRACING_EXPORT_ENABLED:false}
+  opentelemetry:
     tracing:
-      # When 'endpoint' is unset (default), the OTLP exporter is auto-configured but receives no
-      # endpoint so spans stay in-process and traceId still flows into MDC and response headers
-      # without any external dependency. Set MANAGEMENT_OTLP_TRACING_ENDPOINT (for example
-      # http://otel-collector:4318/v1/traces) to ship spans to a collector. The collector wiring
-      # lives in the docker-compose 'observability' profile and is shipped in a follow-up PR
-      # alongside Tempo and the tracing dashboards.
-      endpoint: ${MANAGEMENT_OTLP_TRACING_ENDPOINT:}
-      transport: http
+      export:
+        otlp:
+          # Spring Boot 4 property (the old 'management.otlp.tracing.endpoint' is deprecated).
+          # Must always hold a valid URL: Boot creates the OTLP connection details as soon as the
+          # property exists, and an empty value fails context startup ("Invalid endpoint").
+          # Whether spans are actually shipped is decided by management.tracing.export.otlp.enabled.
+          endpoint: ${MANAGEMENT_OTLP_TRACING_ENDPOINT:http://otel-collector:4318/v1/traces}
+          transport: http
+  otlp:
+    metrics:
+      export:
+        # spring-boot-starter-opentelemetry also brings the OTLP metrics registry, which would push
+        # to localhost:4318 every minute. Metrics are scraped by Prometheus from
+        # /actuator/prometheus instead, so the OTLP metrics push stays off.
+        enabled: false
+  logging:
+    export:
+      otlp:
+        # Logs reach Loki through Grafana Alloy (container stdout); no OTLP log export.
+        enabled: false
 
 logging:
   pattern:

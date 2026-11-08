@@ -22,6 +22,7 @@ every PR description.
 | [0014](0014-outbox-consumer-fanout.md)          | Outbox consumer fan-out + activity-log read model | `DomainEventConsumer`, `ActivityLogConsumer`, `activity_log` table, `/metrics/activity-feed` |
 | [0015](0015-retention-policy.md)                | Retention policy for outbox + activity-log (two-phase soft + hard delete) | `RetentionUseCase`, `RetentionScheduler`, `deleted_at` columns, V7 migration, `app.retention.*` properties |
 | [0016](0016-business-metrics-and-alert-routing.md) | Business and background-job metrics, alert routing | `OutboxBacklogMetrics`, `DomainEventMetricsConsumer`, `RetentionScheduler` meters, business alert rules + promtool tests, Alertmanager routing |
+| [0017](0017-centralized-logs-and-pinned-observability-stack.md) | Centralized logs (Loki + Alloy), pinned observability images, Boot 4 tracing module | `config/observability/{loki,alloy}`, pinned images in `docker-compose.yml`, Alertmanager `entrypoint.sh`, `spring-boot-starter-opentelemetry` |
 
 ## When to add a new ADR
 
