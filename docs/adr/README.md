@@ -24,6 +24,7 @@ every PR description.
 | [0016](0016-business-metrics-and-alert-routing.md) | Business and background-job metrics, alert routing | `OutboxBacklogMetrics`, `DomainEventMetricsConsumer`, `RetentionScheduler` meters, business alert rules + promtool tests, Alertmanager routing |
 | [0017](0017-centralized-logs-and-pinned-observability-stack.md) | Centralized logs (Loki + Alloy), pinned observability images, Boot 4 tracing module | `config/observability/{loki,alloy}`, pinned images in `docker-compose.yml`, Alertmanager `entrypoint.sh`, `spring-boot-starter-opentelemetry` |
 | [0018](0018-tracing-export-on-by-default.md) | Tracing export on by default, OTel Collector in the base stack, tracing pipeline alerts | `docker-compose.yml`, `config/observability/otel-collector`, `backend-funeraria-tracing` alert group |
+| [0019](0019-encrypted-offsite-backups.md) | Encrypted off-host backup copy with rclone (crypt, copy never sync, alerts) | `config/backup/offsite.sh`, `backup-offsite` service, `BackendFunerariaBackupOffsite*` alerts |
 
 ## When to add a new ADR
 

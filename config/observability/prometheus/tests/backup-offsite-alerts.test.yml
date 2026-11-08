@@ -1,0 +1,71 @@
+# Unit tests for the off-host backup alerts. Run with:
+#   promtool test rules config/observability/prometheus/tests/backup-offsite-alerts.test.yml
+# CI runs them on every PR (see .github/workflows/ci.yml, "Observability config" job).
+
+rule_files:
+  - ../alerts/backend-funeraria-business-alerts.yml
+
+evaluation_interval: 1m
+
+tests:
+  # Failing runs are tolerated for three hours (network blips), then page.
+  - interval: 1m
+    input_series:
+      - series: 'backup_offsite_last_run_success{job="db-backup",instance="alloy"}'
+        values: '0x200'
+    alert_rule_test:
+      - eval_time: 2h
+        alertname: BackendFunerariaBackupOffsiteFailed
+        exp_alerts: []
+      - eval_time: 3h10m
+        alertname: BackendFunerariaBackupOffsiteFailed
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              service: backend-funeraria-app
+            exp_annotations:
+              summary: Off-host backup copy is failing
+              description: The encrypted off-host copy has failed for three hours; the newest dumps exist only on this host.
+              runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#backup-offsite-failed
+
+  # Newest off-host dump frozen at t=0 while enabled: stale once older than 28 h (+15m for).
+  - interval: 1m
+    input_series:
+      - series: 'backup_offsite_enabled{job="db-backup",instance="alloy"}'
+        values: '1x1900'
+      - series: 'backup_offsite_newest_dump_timestamp_seconds{job="db-backup",instance="alloy"}'
+        values: '0x1900'
+    alert_rule_test:
+      - eval_time: 27h
+        alertname: BackendFunerariaBackupOffsiteStale
+        exp_alerts: []
+      - eval_time: 30h
+        alertname: BackendFunerariaBackupOffsiteStale
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              service: backend-funeraria-app
+            exp_annotations:
+              summary: No recent backup off-host
+              description: The newest dump stored off-host is 1d 6h 0m 0s old.
+              runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#backup-offsite-stale
+
+  # Disabled: the stale alert stays quiet (no newest-dump series), the disabled reminder fires.
+  - interval: 1m
+    input_series:
+      - series: 'backup_offsite_enabled{job="db-backup",instance="alloy"}'
+        values: '0x150'
+    alert_rule_test:
+      - eval_time: 2h
+        alertname: BackendFunerariaBackupOffsiteStale
+        exp_alerts: []
+      - eval_time: 2h
+        alertname: BackendFunerariaBackupOffsiteDisabled
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              service: backend-funeraria-app
+            exp_annotations:
+              summary: Backups are not copied off this host
+              description: BACKUP_OFFSITE_REMOTE is not configured; all database backups live on the same host as the database.
+              runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#backup-offsite-disabled

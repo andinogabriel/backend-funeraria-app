@@ -88,6 +88,39 @@ services:
       - ./backups:/backups
     restart: unless-stopped
 
+  # Off-host, encrypted copy of the dumps above (rclone crypt to any rclone remote: S3, B2, Google
+  # Drive, SFTP...). Runs hourly, copies only new dumps, keeps BACKUP_OFFSITE_KEEP_DAYS remotely and
+  # writes backup_offsite.prom for the alerts. With BACKUP_OFFSITE_REMOTE empty it only reports
+  # itself as disabled. Restore: `docker compose run --rm backup-offsite fetch` then
+  # scripts/backup/restore-verify.sh backups/restore/<file>. See docs/runbooks/retention-and-restore.md.
+  backup-offsite:
+    image: rclone/rclone:1.75.2
+    container_name: backend-funeraria-backup-offsite
+    entrypoint: ["/bin/sh", "/scripts/offsite.sh"]
+    environment:
+      BACKUP_OFFSITE_REMOTE: ${BACKUP_OFFSITE_REMOTE:-}
+      BACKUP_OFFSITE_PASSPHRASE: ${BACKUP_OFFSITE_PASSPHRASE:-}
+      BACKUP_OFFSITE_SALT: ${BACKUP_OFFSITE_SALT:-}
+      BACKUP_OFFSITE_KEEP_DAYS: ${BACKUP_OFFSITE_KEEP_DAYS:-90}
+      BACKUP_OFFSITE_INTERVAL_SECONDS: ${BACKUP_OFFSITE_INTERVAL_SECONDS:-3600}
+      # The "offsite" rclone remote, configured entirely from the environment. Only the variables
+      # your backend needs must be set; empty ones are ignored by rclone. Examples in .env.example.
+      RCLONE_CONFIG_OFFSITE_TYPE: ${RCLONE_CONFIG_OFFSITE_TYPE:-}
+      RCLONE_CONFIG_OFFSITE_PROVIDER: ${RCLONE_CONFIG_OFFSITE_PROVIDER:-}
+      RCLONE_CONFIG_OFFSITE_ENDPOINT: ${RCLONE_CONFIG_OFFSITE_ENDPOINT:-}
+      RCLONE_CONFIG_OFFSITE_REGION: ${RCLONE_CONFIG_OFFSITE_REGION:-}
+      RCLONE_CONFIG_OFFSITE_ACCESS_KEY_ID: ${RCLONE_CONFIG_OFFSITE_ACCESS_KEY_ID:-}
+      RCLONE_CONFIG_OFFSITE_SECRET_ACCESS_KEY: ${RCLONE_CONFIG_OFFSITE_SECRET_ACCESS_KEY:-}
+      RCLONE_CONFIG_OFFSITE_ACCOUNT: ${RCLONE_CONFIG_OFFSITE_ACCOUNT:-}
+      RCLONE_CONFIG_OFFSITE_KEY: ${RCLONE_CONFIG_OFFSITE_KEY:-}
+      RCLONE_CONFIG_OFFSITE_HOST: ${RCLONE_CONFIG_OFFSITE_HOST:-}
+      RCLONE_CONFIG_OFFSITE_USER: ${RCLONE_CONFIG_OFFSITE_USER:-}
+      RCLONE_CONFIG_OFFSITE_PASS: ${RCLONE_CONFIG_OFFSITE_PASS:-}
+    volumes:
+      - ./config/backup:/scripts:ro
+      - ./backups:/backups
+    restart: unless-stopped
+
   prometheus:
     profiles:
       - observability

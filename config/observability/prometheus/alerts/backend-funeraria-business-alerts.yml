@@ -199,6 +199,48 @@ groups:
           description: Prometheus sees no backup_last_run_timestamp_seconds; the db-backup service may not be running.
           runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#backup-metrics-missing
 
+      # Off-host copy (backup-offsite service). Hourly runs, so a few failed runs in a row are
+      # tolerated (network blips) before paging.
+      - alert: BackendFunerariaBackupOffsiteFailed
+        expr: max(backup_offsite_last_run_success{job="db-backup"}) == 0
+        for: 3h
+        labels:
+          severity: critical
+          service: backend-funeraria-app
+        annotations:
+          summary: Off-host backup copy is failing
+          description: The encrypted off-host copy has failed for three hours; the newest dumps exist only on this host.
+          runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#backup-offsite-failed
+
+      # The newest dump confirmed off-host is older than a day plus margin: either uploads stopped
+      # or no new dumps are being produced (BackupStale fires too in that case).
+      - alert: BackendFunerariaBackupOffsiteStale
+        # Age on the left side of `and` so $value in the description is the age, not the flag.
+        expr: |
+          time() - max(backup_offsite_newest_dump_timestamp_seconds{job="db-backup"}) > 100800
+          and on()
+          max(backup_offsite_enabled{job="db-backup"}) == 1
+        for: 15m
+        labels:
+          severity: critical
+          service: backend-funeraria-app
+        annotations:
+          summary: No recent backup off-host
+          description: The newest dump stored off-host is {{ $value | humanizeDuration }} old.
+          runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#backup-offsite-stale
+
+      # Off-host copy not configured: a disk or host loss would take every backup with it.
+      - alert: BackendFunerariaBackupOffsiteDisabled
+        expr: max(backup_offsite_enabled{job="db-backup"}) == 0
+        for: 1h
+        labels:
+          severity: warning
+          service: backend-funeraria-app
+        annotations:
+          summary: Backups are not copied off this host
+          description: BACKUP_OFFSITE_REMOTE is not configured; all database backups live on the same host as the database.
+          runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#backup-offsite-disabled
+
   - name: backend-funeraria-meta
     rules:
       # Always firing. Its only purpose is to prove the Prometheus -> Alertmanager pipeline is
