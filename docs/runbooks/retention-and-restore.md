@@ -133,6 +133,32 @@ window has been used in anger and you trust the cutoff.
 
 ## Restore from backup
 
+### Where the backups come from
+
+The `db-backup` service in `docker-compose.yml` (default profile) runs `config/backup/backup.sh`
+once at startup and then daily at `BACKUP_AT_UTC` (default 05:00 UTC, 02:00 Argentina, before the
+03:30 retention sweep):
+
+- `pg_dump --format=custom` into `./backups/daily/<db>-<UTC timestamp>.dump` (git-ignored);
+- integrity check with `pg_restore --list` (a dump that fails it is deleted and the run fails);
+- rotation keeps the newest `BACKUP_KEEP` dumps (default 14);
+- `./backups/metrics/backup.prom` feeds the `BackendFunerariaBackup*` alerts through Alloy.
+
+Manual run: `docker compose exec db-backup /scripts/backup.sh`.
+
+Prove a dump is restorable (restores into a throwaway Postgres container and checks the Flyway
+history and row counts):
+
+```bash
+scripts/backup/restore-verify.sh                      # newest dump
+scripts/backup/restore-verify.sh backups/daily/<file>.dump
+```
+
+Run it after changing the backup job and as a monthly drill. `./backups` lives on the same host
+as the database: copy it off-host (object storage, another machine) for real disaster recovery.
+
+### Restoring
+
 Restoring a Postgres backup whose snapshot pre-dates the current cutoffs creates a clock-skew
 problem: the restored database has rows that the retention sweep on the live clock will mark
 as eligible for soft delete (or worse, hard delete) on the very next cron tick. This is

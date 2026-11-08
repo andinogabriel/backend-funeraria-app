@@ -74,3 +74,14 @@ loki.write "local" {
     url = "http://loki:3100/loki/api/v1/push"
   }
 }
+
+// Backup metrics: the db-backup service writes a Prometheus textfile (backup.prom) after every
+// run. Alloy's embedded node exporter, restricted to the textfile collector, exposes it and
+// Prometheus scrapes it (job "db-backup"), so a backup that stops succeeding raises an alert.
+prometheus.exporter.unix "backups" {
+  set_collectors = ["textfile"]
+
+  textfile {
+    directory = "/backup-metrics"
+  }
+}

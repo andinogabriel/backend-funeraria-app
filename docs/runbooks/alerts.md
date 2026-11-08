@@ -136,3 +136,25 @@ deleted too early. Users recover with a hard reload.
 above 4 s ("poor" in Core Web Vitals). Correlate with backend latency (slow API responses delay
 the first meaningful paint) and with recent frontend releases (bundle size, render-blocking
 CSS/fonts). The "Web Vitals" panels show which metric degraded.
+
+## backup-failed
+
+`BackendFunerariaBackupFailed` (critical): the last nightly `pg_dump` failed (dump error or the
+archive failed the `pg_restore --list` integrity check). `docker compose logs db-backup` shows the
+`backup.failed` line with the reason. Common causes: database unreachable, disk full in
+`./backups`. Trigger a manual run once fixed:
+`docker compose exec db-backup /scripts/backup.sh`.
+
+## backup-stale
+
+`BackendFunerariaBackupStale` (critical): no successful dump in 26 hours although runs may not be
+failing explicitly (scheduler stuck, container stopped). Check `docker compose ps db-backup`, the
+`backup.next` log line (when the next run is due) and run a manual backup as above. Remember that
+the retention sweep hard-deletes old outbox/activity rows: a restore can only go back as far as
+the newest good dump.
+
+## backup-metrics-missing
+
+`BackendFunerariaBackupMetricsMissing`: Prometheus has no backup metrics at all. The `db-backup`
+service is not running, has never completed a run, or Alloy cannot read `./backups/metrics`
+(check the Alloy UI at `http://localhost:12345`, component `prometheus.exporter.unix.backups`).

@@ -60,6 +60,31 @@ services:
     volumes:
       - app_storage:/data/storage
 
+  # Nightly pg_dump of the application database (default profile: backups must not depend on the
+  # observability stack being up). Dumps land in ./backups/daily (git-ignored), are integrity
+  # checked with pg_restore --list, rotated (BACKUP_KEEP), and a Prometheus textfile in
+  # ./backups/metrics feeds the backup alerts through Grafana Alloy. Verify restorability with
+  # scripts/backup/restore-verify.sh. See docs/runbooks/retention-and-restore.md.
+  db-backup:
+    image: postgres:17-alpine
+    container_name: backend-funeraria-db-backup
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "/scripts/scheduler.sh"]
+    environment:
+      PGHOST: postgres
+      PGDATABASE: ${POSTGRES_DB:-funerariadb}
+      PGUSER: ${POSTGRES_USER:-postgres}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      BACKUP_AT_UTC: ${BACKUP_AT_UTC:-05:00}
+      BACKUP_KEEP: ${BACKUP_KEEP:-14}
+      BACKUP_ON_START: ${BACKUP_ON_START:-true}
+    volumes:
+      - ./config/backup:/scripts:ro
+      - ./backups:/backups
+    restart: unless-stopped
+
   prometheus:
     profiles:
       - observability
@@ -165,6 +190,8 @@ services:
     volumes:
       - ./config/observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Prometheus textfile written by the db-backup service (backup_* metrics).
+      - ./backups/metrics:/backup-metrics:ro
 
   grafana:
     profiles:

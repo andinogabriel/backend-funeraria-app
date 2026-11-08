@@ -283,6 +283,15 @@ Until those values are real, the alertmanager service still starts and the UI wo
 sends fail at auth or connection level and the messages are dropped. ADR-0008 documents the
 decision and the trade-offs in detail.
 
+## Database Backups
+
+`docker compose up` also starts `db-backup`: a `pg_dump` at startup and daily at
+`BACKUP_AT_UTC` (default `05:00` UTC), integrity-checked, rotated (`BACKUP_KEEP`, default 14) and
+written to `./backups/daily`. With the observability profile, the `BackendFunerariaBackup*`
+alerts fire when a run fails, when no dump succeeded in 26 h, or when backup metrics disappear.
+Verify a dump actually restores with `scripts/backup/restore-verify.sh`. Details and the restore
+procedure: [`docs/runbooks/retention-and-restore.md`](docs/runbooks/retention-and-restore.md).
+
 ## Security Flows
 
 These diagrams explain the runtime behavior expected by the current security implementation.
