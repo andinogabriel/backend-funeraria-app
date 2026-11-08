@@ -2350,6 +2350,58 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
 
+  /api/v1/client-telemetry/errors:
+    post:
+      tags: [Metrics]
+      summary: Reportar un error del navegador
+      description: |
+        El frontend reporta errores no capturados (sesiones autenticadas). Se convierten en la
+        metrica `client_errors_total{kind,route}` y una linea de log `client.error`. `route` es el
+        patron de ruta de Angular (ej. `/afiliados/:id`), nunca la URL concreta.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientErrorRequestDto'
+      responses:
+        '202':
+          description: Reporte aceptado.
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+
+  /api/v1/client-telemetry/web-vitals:
+    post:
+      tags: [Metrics]
+      summary: Reportar una metrica Core Web Vitals
+      description: |
+        Una muestra de LCP, INP, CLS, FCP o TTFB medida en el navegador. Alimenta los histogramas
+        `client_web_vitals_duration_milliseconds{name}` y `client_web_vitals_cls`, y el contador
+        `client_web_vitals_rating_total{name,rating,route}`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebVitalRequestDto'
+      responses:
+        '202':
+          description: Muestra aceptada.
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+
   /api/v1/reports/daily:
     get:
       tags: [Reports]
@@ -4372,6 +4424,39 @@ components:
             format: int64
           description: Serie de 8 buckets para el sparkline; vacio si la metrica no la soporta.
       required: [value, sparkline]
+    ClientErrorRequestDto:
+      type: object
+      description: Error no capturado reportado por el navegador.
+      properties:
+        kind:
+          type: string
+          enum: [js, chunk_load, http]
+        message:
+          type: string
+          maxLength: 300
+        route:
+          type: string
+          pattern: '^/[A-Za-z0-9/:_\-]{0,119}$'
+          description: Patron de ruta de Angular, ej. /afiliados/:id.
+      required: [kind, message, route]
+    WebVitalRequestDto:
+      type: object
+      description: Muestra de Core Web Vitals. Duraciones en ms; CLS sin unidad.
+      properties:
+        name:
+          type: string
+          enum: [CLS, FCP, INP, LCP, TTFB]
+        value:
+          type: number
+          minimum: 0
+          maximum: 600000
+        rating:
+          type: string
+          enum: [good, needs-improvement, poor]
+        route:
+          type: string
+          pattern: '^/[A-Za-z0-9/:_\-]{0,119}$'
+      required: [name, value, rating, route]
     HealthTierDto:
       type: object
       description: Nivel de salud del tarifario de cuotas.

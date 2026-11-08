@@ -91,3 +91,20 @@ tests:
               summary: Alerting pipeline heartbeat
               description: This alert is always firing. If it stops, alerting itself is broken.
               runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#watchdog
+
+  # Six chunk-load failures within 15 minutes -> stale bundles after a deploy.
+  - interval: 1m
+    input_series:
+      - series: 'client_errors_total{job="backend-funeraria-app",kind="chunk-load",route="/afiliados"}'
+        values: '0 0 2 4 6 8 8 8 8 8 8 8 8 8 8 8'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: BackendFunerariaClientChunkLoadErrors
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              service: backend-funeraria-app
+            exp_annotations:
+              summary: Browsers fail to load application bundles
+              description: 8 chunk-load failures in the last 15 minutes.
+              runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#client-chunk-load-errors

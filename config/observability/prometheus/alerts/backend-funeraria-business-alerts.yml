@@ -118,6 +118,48 @@ groups:
           description: "{{ $value | humanizePercentage }} of the time is spent in GC pauses."
           runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#gc-pressure
 
+  # Browser-side signals reported through /api/v1/client-telemetry (signed-in sessions only).
+  - name: backend-funeraria-frontend
+    interval: 1m
+    rules:
+      - alert: BackendFunerariaClientErrorSpike
+        expr: sum(rate(client_errors_total{job="backend-funeraria-app"}[10m])) * 60 > 5
+        for: 10m
+        labels:
+          severity: warning
+          service: backend-funeraria-app
+        annotations:
+          summary: Frontend errors are spiking
+          description: "{{ printf \"%.1f\" $value }} uncaught browser errors per minute."
+          runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#client-error-spike
+
+      # Lazy bundles failing to load right after a deploy: open tabs are asking for chunk hashes
+      # that no longer exist (usually index.html cached when it should not be).
+      - alert: BackendFunerariaClientChunkLoadErrors
+        expr: sum(increase(client_errors_total{job="backend-funeraria-app",kind="chunk-load"}[15m])) > 5
+        labels:
+          severity: warning
+          service: backend-funeraria-app
+        annotations:
+          summary: Browsers fail to load application bundles
+          description: "{{ printf \"%.0f\" $value }} chunk-load failures in the last 15 minutes."
+          runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#client-chunk-load-errors
+
+      # p75 is the Core Web Vitals reporting convention; "poor" LCP starts at 4 s.
+      - alert: BackendFunerariaPoorLcp
+        expr: |
+          histogram_quantile(0.75,
+            sum by (le) (rate(client_web_vitals_duration_milliseconds_bucket{job="backend-funeraria-app",name="LCP"}[1h]))
+          ) > 4000
+        for: 1h
+        labels:
+          severity: warning
+          service: backend-funeraria-app
+        annotations:
+          summary: Pages load slowly for users (LCP p75 is poor)
+          description: "LCP p75 is {{ printf \"%.0f\" $value }} ms over the last hour (poor above 4000 ms)."
+          runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#poor-lcp
+
   - name: backend-funeraria-meta
     rules:
       # Always firing. Its only purpose is to prove the Prometheus -> Alertmanager pipeline is

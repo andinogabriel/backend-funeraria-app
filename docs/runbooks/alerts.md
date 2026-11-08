@@ -114,3 +114,25 @@ protected endpoints.
 the `null` receiver so it never emails. To turn it into a dead-man's switch, add a webhook
 receiver pointed at an external heartbeat service (healthchecks.io, Better Stack, ...) and route
 `alertname="Watchdog"` to it: that service pages you when the heartbeat stops arriving.
+
+## client-error-spike
+
+`BackendFunerariaClientErrorSpike`: more than 5 uncaught browser errors per minute for 10
+minutes (only signed-in sessions report). Find the failing screen in Grafana ("Frontend errors
+by kind" on the Business & Jobs dashboard), then the messages in Loki:
+`{service="backend-funeraria-app"} | event="client.error"` (fields `kind`, `route`,
+`clientMessage`). A spike right after a frontend deploy usually points at that release.
+
+## client-chunk-load-errors
+
+`BackendFunerariaClientChunkLoadErrors`: browsers fail to load lazy bundles. Tabs opened before
+a deploy request chunk hashes that no longer exist. Check that `index.html` is served with
+`Cache-Control: no-store` (frontend `nginx.conf`) and that the previous release's assets are not
+deleted too early. Users recover with a hard reload.
+
+## poor-lcp
+
+`BackendFunerariaPoorLcp`: the 75th percentile Largest Contentful Paint over the last hour is
+above 4 s ("poor" in Core Web Vitals). Correlate with backend latency (slow API responses delay
+the first meaningful paint) and with recent frontend releases (bundle size, render-blocking
+CSS/fonts). The "Web Vitals" panels show which metric degraded.
