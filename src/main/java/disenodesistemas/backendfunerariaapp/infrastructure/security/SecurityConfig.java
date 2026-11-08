@@ -4,6 +4,7 @@ import disenodesistemas.backendfunerariaapp.application.port.out.MessageResolver
 import disenodesistemas.backendfunerariaapp.application.port.out.DeviceFingerprintPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.SecurityThreatProtectionPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.UserDevicePort;
+import disenodesistemas.backendfunerariaapp.infrastructure.idempotency.IdempotencyFilter;
 import disenodesistemas.backendfunerariaapp.infrastructure.logging.RequestTracingFilter;
 import disenodesistemas.backendfunerariaapp.infrastructure.security.jwt.JwtEntryPoint;
 import disenodesistemas.backendfunerariaapp.infrastructure.security.config.JwtProperties;
@@ -31,6 +32,7 @@ import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
@@ -59,6 +61,7 @@ public class SecurityConfig {
   private final UserDevicePort userDevicePort;
   private final SecurityRequestProperties securityRequestProperties;
   private final RequestTracingFilter requestTracingFilter;
+  private final IdempotencyFilter idempotencyFilter;
 
   @Bean
   public PasswordEncoder passwordEncoder() {
@@ -125,6 +128,9 @@ public class SecurityConfig {
 
     http.addFilterBefore(requestTracingFilter, SecurityContextHolderFilter.class);
     http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
+    // After authorization: keys are scoped to the authenticated principal and rejected requests
+    // (401/403) never reserve one.
+    http.addFilterAfter(idempotencyFilter, AuthorizationFilter.class);
     return http.build();
   }
 }
