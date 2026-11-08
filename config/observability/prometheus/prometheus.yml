@@ -29,3 +29,10 @@ scrape_configs:
     static_configs:
       - targets:
           - alertmanager:9093
+
+  # Backup freshness/outcome from the db-backup textfile, exposed by Grafana Alloy.
+  - job_name: db-backup
+    metrics_path: /api/v0/component/prometheus.exporter.unix.backups/metrics
+    static_configs:
+      - targets:
+          - alloy:12345

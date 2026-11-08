@@ -56,3 +56,6 @@ src/main/resources/application-local.yaml
 .m2/
 src.zip
 .claude/
+
+# Local database dumps produced by the db-backup service (docker-compose).
+backups/

@@ -160,6 +160,45 @@ groups:
           description: "LCP p75 is {{ printf \"%.0f\" $value }} ms over the last hour (poor above 4000 ms)."
           runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#poor-lcp
 
+  # Nightly pg_dump (db-backup service), metrics exposed through Alloy's textfile collector.
+  - name: backend-funeraria-backups
+    interval: 1m
+    rules:
+      - alert: BackendFunerariaBackupFailed
+        expr: max(backup_last_run_success{job="db-backup"}) == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: backend-funeraria-app
+        annotations:
+          summary: Database backup failed
+          description: The last pg_dump run failed; the newest restorable dump is older than expected.
+          runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#backup-failed
+
+      # Daily schedule: more than 26 h without a successful dump means at least one missed night.
+      - alert: BackendFunerariaBackupStale
+        expr: time() - max(backup_last_success_timestamp_seconds{job="db-backup"}) > 93600
+        for: 15m
+        labels:
+          severity: critical
+          service: backend-funeraria-app
+        annotations:
+          summary: No successful database backup in the last 26 hours
+          description: The newest successful dump is {{ $value | humanizeDuration }} old.
+          runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#backup-stale
+
+      # The textfile disappeared or the db-backup service never ran: silence is not success.
+      - alert: BackendFunerariaBackupMetricsMissing
+        expr: absent(backup_last_run_timestamp_seconds{job="db-backup"})
+        for: 30m
+        labels:
+          severity: warning
+          service: backend-funeraria-app
+        annotations:
+          summary: Backup metrics are missing
+          description: Prometheus sees no backup_last_run_timestamp_seconds; the db-backup service may not be running.
+          runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#backup-metrics-missing
+
   - name: backend-funeraria-meta
     rules:
       # Always firing. Its only purpose is to prove the Prometheus -> Alertmanager pipeline is

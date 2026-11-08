@@ -108,3 +108,20 @@ tests:
               summary: Browsers fail to load application bundles
               description: 8 chunk-load failures in the last 15 minutes.
               runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#client-chunk-load-errors
+
+  # A failed backup run pages (critical) after 5 minutes.
+  - interval: 1m
+    input_series:
+      - series: 'backup_last_run_success{job="db-backup",database="funerariadb"}'
+        values: '1 1 0 0 0 0 0 0 0 0'
+    alert_rule_test:
+      - eval_time: 9m
+        alertname: BackendFunerariaBackupFailed
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              service: backend-funeraria-app
+            exp_annotations:
+              summary: Database backup failed
+              description: The last pg_dump run failed; the newest restorable dump is older than expected.
+              runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#backup-failed
