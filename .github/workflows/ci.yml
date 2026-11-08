@@ -119,12 +119,29 @@ jobs:
 
       - name: Validate Alertmanager config
         run: |
-          # Placeholders are expanded by Alertmanager at runtime (--config.expand-env); fill them
-          # with dummies so amtool can parse the file.
-          sed -e 's/${ALERTMANAGER_SMTP_HOST}/smtp.example.com/; s/${ALERTMANAGER_SMTP_PORT}/587/; s/${[A-Z_]*}/ci@example.com/g' \
-            config/observability/alertmanager/alertmanager.yml > /tmp/alertmanager.yml
-          docker run --rm -v /tmp/alertmanager.yml:/am.yml:ro \
-            --entrypoint amtool prom/alertmanager:v0.34.2 check-config /am.yml
+          # Render the template with the real entrypoint.sh (same logic as the container), once
+          # with the Watchdog heartbeat disabled and once enabled, then check each rendering and
+          # assert where the Watchdog alert is routed.
+          am=config/observability/alertmanager
+          render() {
+            docker run --rm -v "$PWD/$am:/cfg:ro" -e ALERTMANAGER_TEMPLATE=/cfg/alertmanager.yml \
+              -e ALERTMANAGER_SMTP_HOST=smtp.example.com -e ALERTMANAGER_SMTP_PORT=587 \
+              -e ALERTMANAGER_SMTP_USER=ci@example.com -e ALERTMANAGER_SMTP_PASSWORD=x \
+              -e ALERTMANAGER_SMTP_FROM=ci@example.com -e ALERTMANAGER_EMAIL_TO=ci@example.com \
+              -e ALERTMANAGER_WATCHDOG_URL="$1" \
+              --entrypoint /bin/sh prom/alertmanager:v0.34.2 /cfg/entrypoint.sh --render-only
+          }
+          check() {
+            docker run --rm -v "$1:/am.yml:ro" --entrypoint amtool prom/alertmanager:v0.34.2 check-config /am.yml
+            got=$(docker run --rm -v "$1:/am.yml:ro" --entrypoint amtool prom/alertmanager:v0.34.2 \
+              config routes test --config.file=/am.yml alertname=Watchdog severity=none)
+            echo "Watchdog -> $got (expected $2)"
+            [ "$got" = "$2" ]
+          }
+          render "" > /tmp/am-off.yml
+          render "https://hc-ping.com/00000000-0000-0000-0000-000000000000" > /tmp/am-on.yml
+          check /tmp/am-off.yml null
+          check /tmp/am-on.yml watchdog-heartbeat
 
       - name: Validate Grafana dashboards are valid JSON
         run: |

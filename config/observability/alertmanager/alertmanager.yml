@@ -11,6 +11,11 @@
 #   ALERTMANAGER_SMTP_PASSWORD=<your-Google-App-Password>     # 2FA + App Password required
 #   ALERTMANAGER_SMTP_FROM=<your-gmail-account>               # Gmail enforces From == auth user
 #   ALERTMANAGER_EMAIL_TO=<recipient-address>
+#
+# Dead-man's switch for the alerting pipeline itself: set ALERTMANAGER_WATCHDOG_URL to the ping URL
+# of an external heartbeat check (healthchecks.io, Better Stack, ...). entrypoint.sh then routes the
+# always-firing Watchdog alert there every 5 minutes; the external service notifies you when the
+# pings stop. Unset, Watchdog goes to the "null" receiver.
 
 global:
   resolve_timeout: 5m
@@ -29,13 +34,14 @@ route:
   group_interval: 5m
   repeat_interval: 4h
   routes:
-    # Heartbeat: always firing by design. Routed to a no-op receiver so it never emails; to get a
-    # real dead-man's switch, point a webhook receiver at an external heartbeat service
-    # (healthchecks.io, Better Stack, ...) that pages when the heartbeat STOPS. See
-    # docs/runbooks/alerts.md#watchdog.
+    # Heartbeat: always firing by design. entrypoint.sh resolves the receiver: "watchdog-heartbeat"
+    # when ALERTMANAGER_WATCHDOG_URL is set, otherwise "null". Re-sent every 5 minutes so the
+    # external check (period 5m, grace 10m) sees a steady ping. See docs/runbooks/alerts.md#watchdog.
     - matchers:
         - alertname = "Watchdog"
-      receiver: "null"
+      receiver: "${ALERTMANAGER_WATCHDOG_RECEIVER}"
+      group_wait: 0s
+      group_interval: 1m
       repeat_interval: 5m
     # Critical alerts page faster and repeat every hour until resolved.
     - matchers:
@@ -64,6 +70,13 @@ inhibit_rules:
 
 receivers:
   - name: "null"
+  # Pings the external heartbeat service. The URL is a secret (anyone holding it can keep the check
+  # green), so it only lives in .env. send_resolved is off: Watchdog never resolves on purpose.
+  - name: watchdog-heartbeat
+    webhook_configs:
+      - url: '${ALERTMANAGER_WATCHDOG_URL}'
+        send_resolved: false
+        timeout: 10s
   - name: email-critical
     email_configs:
       - to: '${ALERTMANAGER_EMAIL_TO}'

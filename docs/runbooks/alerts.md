@@ -110,10 +110,24 @@ protected endpoints.
 
 ## watchdog
 
-`Watchdog`: always firing on purpose. It proves Prometheus → Alertmanager works. It is routed to
-the `null` receiver so it never emails. To turn it into a dead-man's switch, add a webhook
-receiver pointed at an external heartbeat service (healthchecks.io, Better Stack, ...) and route
-`alertname="Watchdog"` to it: that service pages you when the heartbeat stops arriving.
+`Watchdog`: always firing on purpose. It proves Prometheus → Alertmanager works end to end.
+
+It becomes a dead-man's switch once `ALERTMANAGER_WATCHDOG_URL` is set: Alertmanager pings that
+URL every 5 minutes and the external service notifies you when the pings stop. That is the only
+alert that still reaches you when Prometheus, Alertmanager or the whole host is down.
+
+Setup (healthchecks.io, free tier):
+
+1. Create a check: period 5 minutes, grace 10 minutes, add your email (or Telegram, Slack...)
+   as an integration.
+2. Copy its ping URL (`https://hc-ping.com/<uuid>`) into `.env` as `ALERTMANAGER_WATCHDOG_URL`.
+3. `docker compose --profile observability up -d alertmanager`. The Alertmanager log prints
+   `Watchdog routed to 'watchdog-heartbeat'`, and the check turns green within a few minutes.
+
+When the external service says the heartbeat is missing: check, in this order, that the host is
+up, `docker compose ps prometheus alertmanager`, Prometheus `/api/v1/alerts` lists `Watchdog`, and
+the Alertmanager log has no webhook errors (`docker compose logs alertmanager | grep -i webhook`).
+Without the URL, Watchdog is routed to the `null` receiver and nothing leaves the host.
 
 ## tracing-collector-down
 
