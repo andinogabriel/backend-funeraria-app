@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.application.usecase.user;
 
+import disenodesistemas.backendfunerariaapp.utils.LogMasking;
 import disenodesistemas.backendfunerariaapp.application.port.out.AuditEventPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.ConfirmationTokenPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.MessageResolverPort;
@@ -45,7 +46,7 @@ public class UserAccountUseCase {
     if (userPersistencePort.findByEmail(user.email()).isPresent()) {
       log.atWarn()
           .addKeyValue("event", "user.account.create.rejected")
-          .addKeyValue("email", user.email())
+          .addKeyValue("email", LogMasking.maskEmail(user.email()))
           .addKeyValue("reason", "email_already_registered")
           .log("user.account.create.rejected");
       throw new ConflictException("user.error.email.already.registered");
@@ -53,7 +54,7 @@ public class UserAccountUseCase {
 
     log.atInfo()
         .addKeyValue("event", "user.account.create.started")
-        .addKeyValue("email", user.email())
+        .addKeyValue("email", LogMasking.maskEmail(user.email()))
         .log("user.account.create.started");
     final UserEntity userEntity = userMapper.toRegisterEntity(user);
     userEntity.setEncryptedPassword(passwordEncoder.encode(user.password()));
@@ -62,7 +63,7 @@ public class UserAccountUseCase {
     final UserResponseDto createdUser = userMapper.toDto(userPersistencePort.save(userEntity));
     log.atInfo()
         .addKeyValue("event", "user.account.create.completed")
-        .addKeyValue("email", createdUser.email())
+        .addKeyValue("email", LogMasking.maskEmail(createdUser.email()))
         .addKeyValue("userId", createdUser.id())
         .log("user.account.create.completed");
     return createdUser;
@@ -79,7 +80,7 @@ public class UserAccountUseCase {
     if (userEntity.isEnabled()) {
       log.atWarn()
           .addKeyValue("event", "user.account.confirmation.rejected")
-          .addKeyValue("email", userEntity.getEmail())
+          .addKeyValue("email", LogMasking.maskEmail(userEntity.getEmail()))
           .addKeyValue("reason", "already_activated")
           .log("user.account.confirmation.rejected");
       throw new AppException(
@@ -89,7 +90,7 @@ public class UserAccountUseCase {
     if (tokenEntity.getExpiryDate().isBefore(Instant.now())) {
       log.atWarn()
           .addKeyValue("event", "user.account.confirmation.rejected")
-          .addKeyValue("email", userEntity.getEmail())
+          .addKeyValue("email", LogMasking.maskEmail(userEntity.getEmail()))
           .addKeyValue("reason", "expired_token")
           .log("user.account.confirmation.rejected");
       return messageResolverPort.getMessage("confirmationToken.error.expired");
@@ -99,7 +100,7 @@ public class UserAccountUseCase {
     userPersistencePort.save(userEntity);
     log.atInfo()
         .addKeyValue("event", "user.account.confirmation.completed")
-        .addKeyValue("email", userEntity.getEmail())
+        .addKeyValue("email", LogMasking.maskEmail(userEntity.getEmail()))
         .log("user.account.confirmation.completed");
     recordUserActivated(userEntity);
     return messageResolverPort.getMessage("confirmationToken.successful.activation");

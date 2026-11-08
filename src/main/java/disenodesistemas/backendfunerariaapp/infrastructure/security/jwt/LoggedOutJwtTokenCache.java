@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.infrastructure.security.jwt;
 
+import disenodesistemas.backendfunerariaapp.utils.LogMasking;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
@@ -54,19 +55,19 @@ public class LoggedOutJwtTokenCache {
         final String token = normalize(event.token());
         if (StringUtils.isBlank(token)) {
             log.atWarn().addKeyValue("event", "security.logout.cache.skip.blank")
-                    .addKeyValue("email", event.userEmail()).log("security.logout.cache.skip.blank");
+                    .addKeyValue("email", LogMasking.maskEmail(event.userEmail())).log("security.logout.cache.skip.blank");
             return;
         }
         if (tokenEventMap.containsKey(token)) {
             log.atInfo().addKeyValue("event", "security.logout.cache.hit")
-                    .addKeyValue("email", event.userEmail()).log("security.logout.cache.hit");
+                    .addKeyValue("email", LogMasking.maskEmail(event.userEmail())).log("security.logout.cache.hit");
             return;
         }
 
         final Instant tokenExpiryDate = tokenProvider.getTokenExpiryFromJWT(token).toInstant();
         final long ttlForToken = getTTLForToken(tokenExpiryDate);
         log.atInfo().addKeyValue("event", "security.logout.cache.store")
-                .addKeyValue("email", event.userEmail()).addKeyValue("ttlSeconds", ttlForToken)
+                .addKeyValue("email", LogMasking.maskEmail(event.userEmail())).addKeyValue("ttlSeconds", ttlForToken)
                 .addKeyValue("expiresAt", tokenExpiryDate).log("security.logout.cache.store");
         tokenEventMap.put(token, event, ttlForToken, TimeUnit.SECONDS);
     }

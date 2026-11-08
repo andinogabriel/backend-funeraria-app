@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.infrastructure.persistence;
 
+import disenodesistemas.backendfunerariaapp.utils.LogMasking;
 import disenodesistemas.backendfunerariaapp.application.port.out.AuditEventPort;
 import disenodesistemas.backendfunerariaapp.domain.entity.AuditEvent;
 import disenodesistemas.backendfunerariaapp.domain.enums.AuditAction;
@@ -88,7 +89,7 @@ public class JpaAuditEventPersistenceAdapter implements AuditEventPort {
     log.atInfo()
         .addKeyValue("event", "audit.event.recorded")
         .addKeyValue("action", action.name())
-        .addKeyValue("actorEmail", actorEmail)
+        .addKeyValue("actorEmail", LogMasking.maskEmail(actorEmail))
         .addKeyValue("targetType", targetType)
         .addKeyValue("targetId", targetId)
         .log("audit.event.recorded");

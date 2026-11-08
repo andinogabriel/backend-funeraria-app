@@ -42,6 +42,11 @@ observability:
     correlation-id-header: X-Correlation-Id
 
 management:
+  # Actuator runs on its own port so health and metrics are never reachable through the public
+  # API port (8081). docker-compose publishes it to localhost only; Prometheus scrapes it over the
+  # internal compose network.
+  server:
+    port: ${MANAGEMENT_SERVER_PORT:8082}
   endpoints:
     web:
       base-path: /actuator

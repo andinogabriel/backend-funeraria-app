@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.event.listener;
 
+import disenodesistemas.backendfunerariaapp.utils.LogMasking;
 import disenodesistemas.backendfunerariaapp.infrastructure.security.jwt.LoggedOutJwtTokenCache;
 import disenodesistemas.backendfunerariaapp.event.OnUserLogoutSuccessEvent;
 import disenodesistemas.backendfunerariaapp.web.dto.DeviceInfo;
@@ -34,7 +35,7 @@ public class OnUserLogoutSuccessEventListener {
     final DeviceInfo deviceInfo = event.logOutRequest() == null ? null : event.logOutRequest().deviceInfo();
     log.atInfo()
         .addKeyValue("event", "user.logout.completed")
-        .addKeyValue("email", event.userEmail())
+        .addKeyValue("email", LogMasking.maskEmail(event.userEmail()))
         .addKeyValue("deviceId", deviceInfo == null ? null : deviceInfo.deviceId())
         .addKeyValue("deviceType", deviceInfo == null ? null : deviceInfo.deviceType())
         .log("user.logout.completed");
