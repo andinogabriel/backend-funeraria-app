@@ -114,6 +114,25 @@ class OutboxAdapterPostgresIntegrationTest extends AbstractPostgresIntegrationTe
     assertThat(repository.countByStatus(OutboxStatus.PENDING)).isZero();
   }
 
+  @Test
+  @DisplayName(
+      "Given pending rows when asking for the oldest pending capture time then it is returned, and empty once drained")
+  void oldestPendingOccurredAtTracksTheBacklog() {
+    assertThat(repository.findOldestOccurredAt(OutboxStatus.PENDING)).isEmpty();
+
+    publishSampleEvent();
+    publishSampleEvent();
+    final var oldest =
+        repository.findAll().stream()
+            .map(OutboxEvent::getOccurredAt)
+            .min(java.util.Comparator.naturalOrder());
+
+    assertThat(repository.findOldestOccurredAt(OutboxStatus.PENDING)).isEqualTo(oldest);
+
+    outboxRelay.drain();
+    assertThat(repository.findOldestOccurredAt(OutboxStatus.PENDING)).isEmpty();
+  }
+
   private void publishSampleEvent() {
     transactionTemplate.executeWithoutResult(
         status ->

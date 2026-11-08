@@ -11,6 +11,7 @@ groups:
         annotations:
           summary: Backend Funeraria App is down
           description: The monolith has not been scraped successfully for more than one minute.
+          runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#app-down
 
       - alert: BackendFunerariaHigh5xxRate
         expr: |
@@ -25,6 +26,7 @@ groups:
         annotations:
           summary: High 5xx error ratio
           description: More than 5% of the recent HTTP traffic is failing with server-side errors.
+          runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#high-5xx-rate
 
       - alert: BackendFunerariaHighLatencyP95
         expr: |
@@ -39,6 +41,7 @@ groups:
         annotations:
           summary: High HTTP latency p95
           description: The 95th percentile latency has stayed above 1.5 seconds for ten minutes.
+          runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#high-latency-p95
 
       - alert: BackendFunerariaDatabasePoolPressure
         expr: |
@@ -53,6 +56,7 @@ groups:
         annotations:
           summary: High database connection pool pressure
           description: The Hikari connection pool has been above 80% utilization for ten minutes.
+          runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#db-pool-pressure
 
       - alert: BackendFunerariaHeapPressure
         expr: |
@@ -67,3 +71,4 @@ groups:
         annotations:
           summary: High JVM heap usage
           description: Heap usage has remained above 85% for ten minutes.
+          runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#heap-pressure

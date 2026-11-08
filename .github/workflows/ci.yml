@@ -95,6 +95,43 @@ jobs:
           path: target/checkstyle-result.xml
           if-no-files-found: ignore
 
+  observability-config:
+    name: Observability config
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      # Same image versions the docker-compose observability profile runs, so a rule or
+      # routing change that would break the local stack fails the PR instead.
+      - name: Validate Prometheus rules
+        run: |
+          docker run --rm -v "$PWD/config/observability/prometheus:/p:ro" \
+            --entrypoint promtool prom/prometheus:v3.16.0 \
+            check rules /p/alerts/backend-funeraria-alerts.yml /p/alerts/backend-funeraria-business-alerts.yml
+
+      - name: Unit-test alert rules
+        run: |
+          docker run --rm -v "$PWD/config/observability/prometheus:/p:ro" -w /p/tests \
+            --entrypoint promtool prom/prometheus:v3.16.0 \
+            test rules business-alerts.test.yml
+
+      - name: Validate Alertmanager config
+        run: |
+          # Placeholders are expanded by Alertmanager at runtime (--config.expand-env); fill them
+          # with dummies so amtool can parse the file.
+          sed -e 's/${ALERTMANAGER_SMTP_HOST}/smtp.example.com/; s/${ALERTMANAGER_SMTP_PORT}/587/; s/${[A-Z_]*}/ci@example.com/g' \
+            config/observability/alertmanager/alertmanager.yml > /tmp/alertmanager.yml
+          docker run --rm -v /tmp/alertmanager.yml:/am.yml:ro \
+            --entrypoint amtool prom/alertmanager:v0.34.2 check-config /am.yml
+
+      - name: Validate Grafana dashboards are valid JSON
+        run: |
+          for f in config/observability/grafana/provisioning/dashboards/json/*.json; do
+            python3 -m json.tool "$f" > /dev/null || { echo "Invalid JSON: $f"; exit 1; }
+          done
+
   docker-build:
     name: Docker Build
     runs-on: ubuntu-latest
