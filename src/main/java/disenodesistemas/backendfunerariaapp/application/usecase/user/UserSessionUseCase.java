@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.application.usecase.user;
 
+import disenodesistemas.backendfunerariaapp.utils.LogMasking;
 import disenodesistemas.backendfunerariaapp.application.model.RequestMetadata;
 import disenodesistemas.backendfunerariaapp.application.port.out.AuthIdempotencyPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
@@ -214,7 +215,7 @@ public class UserSessionUseCase {
       final String email, final String deviceId, final RequestMetadata requestMetadata) {
     log.atInfo()
         .addKeyValue("event", "user.login.started")
-        .addKeyValue("email", email)
+        .addKeyValue("email", LogMasking.maskEmail(email))
         .addKeyValue("deviceId", deviceId)
         .addKeyValue("ipAddress", requestMetadata.ipAddress())
         .log("user.login.started");
@@ -228,7 +229,7 @@ public class UserSessionUseCase {
   private void logLoginRejected(final String email, final String deviceId, final String reason) {
     log.atWarn()
         .addKeyValue("event", "user.login.rejected")
-        .addKeyValue("email", email)
+        .addKeyValue("email", LogMasking.maskEmail(email))
         .addKeyValue("deviceId", deviceId)
         .addKeyValue("reason", reason)
         .log("user.login.rejected");
@@ -242,7 +243,7 @@ public class UserSessionUseCase {
   private void logLoginCompleted(final String email, final UserDevice userDevice) {
     log.atInfo()
         .addKeyValue("event", "user.login.completed")
-        .addKeyValue("email", email)
+        .addKeyValue("email", LogMasking.maskEmail(email))
         .addKeyValue("deviceId", userDevice.getDeviceId())
         .addKeyValue("tokenVersion", userDevice.getTokenVersion())
         .log("user.login.completed");
@@ -256,7 +257,7 @@ public class UserSessionUseCase {
   private void logLogoutStarted(final String email, final DeviceInfo deviceInfo) {
     log.atInfo()
         .addKeyValue("event", "user.logout.started")
-        .addKeyValue("email", email)
+        .addKeyValue("email", LogMasking.maskEmail(email))
         .addKeyValue(
             "deviceId",
             deviceInfo == null ? null : userSessionDeviceService.resolveDeviceId(deviceInfo))
@@ -271,7 +272,7 @@ public class UserSessionUseCase {
   private void logLogoutCompleted(final String email, final UserDevice userDevice) {
     log.atInfo()
         .addKeyValue("event", "user.logout.completed")
-        .addKeyValue("email", email)
+        .addKeyValue("email", LogMasking.maskEmail(email))
         .addKeyValue("deviceId", userDevice.getDeviceId())
         .addKeyValue("tokenVersion", userDevice.getTokenVersion())
         .log("user.logout.completed");
@@ -298,7 +299,7 @@ public class UserSessionUseCase {
   private void logRefreshCompleted(final String email, final UserDevice userDevice) {
     log.atInfo()
         .addKeyValue("event", "user.token.refresh.completed")
-        .addKeyValue("email", email)
+        .addKeyValue("email", LogMasking.maskEmail(email))
         .addKeyValue("deviceId", userDevice.getDeviceId())
         .addKeyValue("tokenVersion", userDevice.getTokenVersion())
         .log("user.token.refresh.completed");

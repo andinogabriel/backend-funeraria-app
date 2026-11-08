@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.config;
 
+import disenodesistemas.backendfunerariaapp.utils.LogMasking;
 import disenodesistemas.backendfunerariaapp.domain.entity.RoleEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
 import disenodesistemas.backendfunerariaapp.domain.enums.Role;
@@ -61,7 +62,7 @@ public class DockerDevelopmentBootstrapConfig {
     if (userRepository.findByEmail(developmentAdminProperties.email()).isPresent()) {
       log.atInfo()
           .addKeyValue("event", "bootstrap.dev.admin.skipped")
-          .addKeyValue("email", developmentAdminProperties.email())
+          .addKeyValue("email", LogMasking.maskEmail(developmentAdminProperties.email()))
           .addKeyValue("reason", "already_exists")
           .log("bootstrap.dev.admin.skipped");
       return;
@@ -85,7 +86,7 @@ public class DockerDevelopmentBootstrapConfig {
 
     log.atInfo()
         .addKeyValue("event", "bootstrap.dev.admin.created")
-        .addKeyValue("email", developmentAdminProperties.email())
+        .addKeyValue("email", LogMasking.maskEmail(developmentAdminProperties.email()))
         .addKeyValue("roles", adminUser.getRoles().stream().map(role -> role.getName().name()).toList())
         .addKeyValue("note", "use_app_bootstrap_admin_password_for_login")
         .log("bootstrap.dev.admin.created");
