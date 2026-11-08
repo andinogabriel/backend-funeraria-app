@@ -154,8 +154,38 @@ scripts/backup/restore-verify.sh                      # newest dump
 scripts/backup/restore-verify.sh backups/daily/<file>.dump
 ```
 
-Run it after changing the backup job and as a monthly drill. `./backups` lives on the same host
-as the database: copy it off-host (object storage, another machine) for real disaster recovery.
+Run it after changing the backup job and as a monthly drill.
+
+### Off-host copy
+
+`./backups` lives on the same host as the database, so the `backup-offsite` service copies every
+dump to an rclone remote (S3, Backblaze B2, Google Drive, SFTP, another disk...):
+
+- encrypted client side with rclone `crypt` (contents and file names) using
+  `BACKUP_OFFSITE_PASSPHRASE`; the job refuses to upload when the passphrase is empty;
+- hourly, copy only (local rotation never deletes remote copies); remote retention
+  `BACKUP_OFFSITE_KEEP_DAYS` (default 90; keep it longer than local retention `BACKUP_KEEP`);
+- after each run it confirms the newest local dump is present remotely and writes
+  `./backups/metrics/backup_offsite.prom` (alerts `BackendFunerariaBackupOffsite*`).
+
+Setup: fill `BACKUP_OFFSITE_REMOTE`, `BACKUP_OFFSITE_PASSPHRASE` and the `RCLONE_CONFIG_OFFSITE_*`
+variables in `.env` (examples in `.env.example`), then `docker compose up -d backup-offsite` and
+check `docker compose logs backup-offsite` for `backup.offsite.completed`.
+
+**The passphrase is the only key.** Store it in a password manager outside this host. Without it
+the remote copies cannot be decrypted, by anyone.
+
+Restore from off-host (for example on a new machine with the same `.env`):
+
+```bash
+docker compose run --rm backup-offsite list                 # remote dumps, decrypted names
+docker compose run --rm backup-offsite fetch                # newest -> backups/restore/
+docker compose run --rm backup-offsite fetch <file>.dump    # a specific one
+scripts/backup/restore-verify.sh backups/restore/<file>.dump
+```
+
+Include an off-host fetch in the monthly drill: it is the only proof that the passphrase and the
+remote credentials you have stored actually work.
 
 ### Restoring
 

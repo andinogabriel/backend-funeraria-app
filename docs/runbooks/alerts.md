@@ -193,3 +193,30 @@ the newest good dump.
 `BackendFunerariaBackupMetricsMissing`: Prometheus has no backup metrics at all. The `db-backup`
 service is not running, has never completed a run, or Alloy cannot read `./backups/metrics`
 (check the Alloy UI at `http://localhost:12345`, component `prometheus.exporter.unix.backups`).
+
+## backup-offsite-failed
+
+`BackendFunerariaBackupOffsiteFailed`: the encrypted off-host copy has failed for 3 hours.
+`docker compose logs backup-offsite | grep backup.offsite.failed` shows the reason: credentials
+(`RCLONE_CONFIG_OFFSITE_*`), a missing bucket, network, or an empty `BACKUP_OFFSITE_PASSPHRASE`
+(the job refuses to upload unencrypted dumps). Force a run with
+`docker compose run --rm backup-offsite once`.
+
+## backup-offsite-stale
+
+`BackendFunerariaBackupOffsiteStale`: the newest dump stored off-host is older than 28 hours. If
+`BackupStale` also fires, fix the nightly dump first (no new dump means nothing to copy).
+Otherwise treat it like `backup-offsite-failed`.
+
+## backup-offsite-not-running
+
+`BackendFunerariaBackupOffsiteNotRunning`: no off-host run recorded for 3 hours although the copy
+is configured. The `backup-offsite` container is stopped or crash-looping:
+`docker compose ps backup-offsite`, `docker compose logs backup-offsite`, then
+`docker compose up -d backup-offsite`.
+
+## backup-offsite-disabled
+
+`BackendFunerariaBackupOffsiteDisabled`: `BACKUP_OFFSITE_REMOTE` is empty, so every backup lives
+on the same disk as the database. Configure a remote as described in `.env.example` and
+`docs/runbooks/retention-and-restore.md`. On a throwaway dev machine, silence it in Alertmanager.

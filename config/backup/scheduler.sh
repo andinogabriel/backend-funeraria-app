@@ -4,6 +4,10 @@
 # crond does not pass the container environment (PG* variables) to its jobs.
 set -eu
 
+# PID 1 sh ignores SIGTERM by default; handle it and sleep in the background so `docker compose
+# stop` returns immediately instead of waiting for the 10 s SIGKILL.
+trap 'exit 0' TERM INT
+
 BACKUP_AT_UTC="${BACKUP_AT_UTC:-05:00}"   # 05:00 UTC = 02:00 Argentina, before the 03:30 retention sweep
 hour="${BACKUP_AT_UTC%%:*}"
 minute="${BACKUP_AT_UTC##*:}"
@@ -19,6 +23,6 @@ while true; do
   wait=$(( (target - now + 86400) % 86400 ))
   [ "$wait" -eq 0 ] && wait=86400
   echo "level=INFO event=backup.next sleepSeconds=$wait at=${BACKUP_AT_UTC}Z"
-  sleep "$wait"
+  sleep "$wait" & wait $!
   run
 done
