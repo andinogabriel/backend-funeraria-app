@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.MDC;
 import org.slf4j.spi.LoggingEventBuilder;
@@ -50,6 +51,8 @@ public class RequestTracingFilter extends OncePerRequestFilter {
   private static final Pattern CORRELATION_ID_PATTERN =
       Pattern.compile("^[a-zA-Z0-9._\\-]{8,128}$");
 
+  private static final String ACTUATOR_PREFIX = "/actuator";
+
   private final RequestTracingProperties requestTracingProperties;
   private final SecurityRequestProperties securityRequestProperties;
 
@@ -62,6 +65,15 @@ public class RequestTracingFilter extends OncePerRequestFilter {
    * actually needs a trace id, where the UUID fallback below kicks in.
    */
   private final ObjectProvider<Tracer> tracerProvider;
+
+  /**
+   * Skips actuator traffic (health probes, Prometheus scrapes). Those run every few seconds and
+   * would otherwise flood the request log with lines that carry no operational signal.
+   */
+  @Override
+  protected boolean shouldNotFilter(final @NonNull HttpServletRequest request) {
+    return Strings.CS.startsWith(request.getRequestURI(), ACTUATOR_PREFIX);
+  }
 
   /**
    * Initializes the trace and correlation identifiers for the current request before any
@@ -146,13 +158,19 @@ public class RequestTracingFilter extends OncePerRequestFilter {
   }
 
   /**
+   * Emitted at DEBUG: {@code request.completed} already carries method, path, status and
+   * duration, so an INFO-level start line only doubled the log volume of every request.
+   *
    * Emits the structured log entry that marks the beginning of request processing. The event
    * captures the HTTP route context and the most relevant client-provided headers used by the
    * security and observability layers for later correlation.
    */
   private void logRequestStarted(final HttpServletRequest request) {
+    if (!log.isDebugEnabled()) {
+      return;
+    }
     LoggingEventBuilder builder =
-        log.atInfo()
+        log.atDebug()
             .addKeyValue("event", "request.started")
             .addKeyValue("method", request.getMethod())
             .addKeyValue("path", request.getRequestURI())

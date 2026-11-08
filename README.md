@@ -170,7 +170,10 @@ The service includes a production-oriented observability baseline:
 - optional local Prometheus, Grafana, Alertmanager, OpenTelemetry Collector and Tempo stack
   through Docker Compose
 
-Default public operational endpoints:
+Operational endpoints. They are served on the **management port 8082**
+(`MANAGEMENT_SERVER_PORT`), not on the public API port 8081. docker-compose binds 8082 to
+`127.0.0.1` only and Prometheus scrapes it over the internal network, so health and metrics are
+never reachable from outside the host:
 
 - `GET /actuator/health`
 - `GET /actuator/health/liveness`

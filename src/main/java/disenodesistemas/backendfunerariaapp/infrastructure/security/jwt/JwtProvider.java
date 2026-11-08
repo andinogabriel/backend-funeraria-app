@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.infrastructure.security.jwt;
 
+import disenodesistemas.backendfunerariaapp.utils.LogMasking;
 import disenodesistemas.backendfunerariaapp.application.port.out.JwtTokenPort;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserDevice;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
@@ -204,7 +205,7 @@ public class JwtProvider implements JwtTokenPort {
 
     log.atWarn()
         .addKeyValue("event", "security.jwt.logged_out_token_detected")
-        .addKeyValue("email", logoutEvent.userEmail())
+        .addKeyValue("email", LogMasking.maskEmail(logoutEvent.userEmail()))
         .addKeyValue("logoutAt", logoutEvent.eventTime())
         .log("security.jwt.logged_out_token_detected");
     throw new InvalidTokenRequestException("JWT", authToken, "jwt.token.error.logged.out");

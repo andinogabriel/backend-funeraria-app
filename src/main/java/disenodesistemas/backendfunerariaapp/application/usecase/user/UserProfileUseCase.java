@@ -1,5 +1,6 @@
 package disenodesistemas.backendfunerariaapp.application.usecase.user;
 
+import disenodesistemas.backendfunerariaapp.utils.LogMasking;
 import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.MessageResolverPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.UserPersistencePort;
@@ -48,7 +49,7 @@ public class UserProfileUseCase {
     if (!passwordEncoder.matches(passwordResetDto.oldPassword(), userEntity.getEncryptedPassword())) {
       log.atWarn()
           .addKeyValue("event", "user.password.change.rejected")
-          .addKeyValue("email", userEntity.getEmail())
+          .addKeyValue("email", LogMasking.maskEmail(userEntity.getEmail()))
           .addKeyValue("reason", "invalid_current_password")
           .log("user.password.change.rejected");
       throw new AppException("user.error.actual.password.not.match", HttpStatus.BAD_REQUEST);
@@ -56,13 +57,13 @@ public class UserProfileUseCase {
 
     log.atInfo()
         .addKeyValue("event", "user.password.change.started")
-        .addKeyValue("email", userEntity.getEmail())
+        .addKeyValue("email", LogMasking.maskEmail(userEntity.getEmail()))
         .log("user.password.change.started");
     userEntity.setEncryptedPassword(passwordEncoder.encode(passwordResetDto.newPassword()));
     userPersistencePort.save(userEntity);
     log.atInfo()
         .addKeyValue("event", "user.password.change.completed")
-        .addKeyValue("email", userEntity.getEmail())
+        .addKeyValue("email", LogMasking.maskEmail(userEntity.getEmail()))
         .log("user.password.change.completed");
     return Map.of(
         "message",
@@ -130,7 +131,7 @@ public class UserProfileUseCase {
       final String event, final String email, final int requestedCount) {
     log.atInfo()
         .addKeyValue("event", event)
-        .addKeyValue("email", email)
+        .addKeyValue("email", LogMasking.maskEmail(email))
         .addKeyValue("requestedCount", requestedCount)
         .log(event);
   }
@@ -139,7 +140,7 @@ public class UserProfileUseCase {
       final String event, final String email, final int totalCount) {
     log.atInfo()
         .addKeyValue("event", event)
-        .addKeyValue("email", email)
+        .addKeyValue("email", LogMasking.maskEmail(email))
         .addKeyValue("totalCount", totalCount)
         .log(event);
   }
