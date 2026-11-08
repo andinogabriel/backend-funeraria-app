@@ -72,3 +72,47 @@ groups:
           summary: High JVM heap usage
           description: Heap usage has remained above 85% for ten minutes.
           runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#heap-pressure
+
+  # Tracing pipeline: app -> OTel Collector -> Tempo. Export is on by default (ADR-0018), so a
+  # silent break here means traces are missing exactly when someone needs them for an incident.
+  - name: backend-funeraria-tracing
+    interval: 30s
+    rules:
+      - alert: BackendFunerariaTracingCollectorDown
+        expr: up{job="otel-collector"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: backend-funeraria-app
+        annotations:
+          summary: OpenTelemetry Collector is down
+          description: The OTel Collector has not been scraped for five minutes; application spans are being dropped.
+          runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#tracing-collector-down
+
+      - alert: BackendFunerariaTraceExportFailing
+        expr: sum(rate(otelcol_exporter_send_failed_spans{job="otel-collector"}[5m])) > 0
+        for: 10m
+        labels:
+          severity: warning
+          service: backend-funeraria-app
+        annotations:
+          summary: Spans are failing to reach Tempo
+          description: The collector has been failing to export spans to Tempo for ten minutes ({{ $value | humanize }} spans/s dropped).
+          runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#trace-export-failing
+
+      - alert: BackendFunerariaTracesNotReceived
+        # The app serves traffic but the collector accepts no spans: export switched off or the
+        # app cannot reach the collector. `or vector(0)` covers a collector that never received a
+        # span (the counter only appears after the first one).
+        expr: |
+          sum(rate(http_server_requests_seconds_count{job="backend-funeraria-app"}[15m])) > 0
+          and on()
+          (sum(rate(otelcol_receiver_accepted_spans{job="otel-collector"}[15m])) or on() vector(0)) == 0
+        for: 15m
+        labels:
+          severity: warning
+          service: backend-funeraria-app
+        annotations:
+          summary: Application traffic is producing no traces
+          description: The app has handled requests for 15 minutes but the collector received no spans.
+          runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#traces-not-received

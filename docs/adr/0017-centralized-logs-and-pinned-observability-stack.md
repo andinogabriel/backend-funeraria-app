@@ -42,7 +42,7 @@ Three gaps showed up when the local observability stack was brought up against c
   endpoint property exists, and an empty value fails context startup, so the old "leave the
   endpoint empty to disable" convention (ADR-0007) no longer works. The endpoint now always has
   a valid default (the compose collector) and shipping is gated by
-  `management.tracing.export.otlp.enabled` (`MANAGEMENT_TRACING_EXPORT_ENABLED`, default false).
+  `management.tracing.export.otlp.enabled` (`MANAGEMENT_TRACING_EXPORT_ENABLED`, default false; compose flips it to true in ADR-0018).
 
 ## Consequences
 
