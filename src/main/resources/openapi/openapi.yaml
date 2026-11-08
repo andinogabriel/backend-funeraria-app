@@ -15,6 +15,12 @@ info:
     - Los endpoints autenticados requieren `Authorization: Bearer <token>`.
     - Los endpoints autenticados tambien requieren `X-Device-Id`.
     - `POST /api/v1/users/login` y `POST /api/v1/users/refresh` aceptan `Idempotency-Key`.
+    - Toda mutacion autenticada (POST, PUT, PATCH, DELETE bajo `/api/`) acepta `Idempotency-Key`
+      (8 a 100 caracteres `[A-Za-z0-9_-]`). La primera respuesta se guarda 24 h por usuario y clave:
+      un reintento con la misma clave y el mismo request la repite con `Idempotency-Replayed: true`
+      sin volver a ejecutar la operacion; si la primera sigue en curso responde 409 con
+      `Idempotency-Status: in-progress`; la misma clave con otro request responde 422; una clave
+      invalida responde 400. Un resultado 5xx libera la clave para poder reintentar.
     - Todas las respuestas incluyen `X-Trace-Id`; si el cliente envia `X-Correlation-Id`, la API lo propaga.
     - Los errores de negocio y validacion siguen el modelo `ProblemDetail`.
 servers:
@@ -2873,7 +2879,9 @@ components:
       name: Idempotency-Key
       in: header
       required: false
-      description: Clave opcional para evitar reintentos duplicados en login y refresh.
+      description: |
+        Clave opcional (UUID recomendado) que hace seguro reintentar login, refresh y cualquier
+        mutacion autenticada. Ver la seccion de convenciones del contrato.
       schema:
         type: string
         example: 31d8e812-3f3c-40c0-86db-23458f5bfe0b
