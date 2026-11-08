@@ -21,6 +21,7 @@ every PR description.
 | [0013](0013-transactional-outbox.md)            | Transactional outbox for domain events           | `outbox_events` table, `OutboxPort`, `OutboxRelay`, Funeral + Affiliate events |
 | [0014](0014-outbox-consumer-fanout.md)          | Outbox consumer fan-out + activity-log read model | `DomainEventConsumer`, `ActivityLogConsumer`, `activity_log` table, `/metrics/activity-feed` |
 | [0015](0015-retention-policy.md)                | Retention policy for outbox + activity-log (two-phase soft + hard delete) | `RetentionUseCase`, `RetentionScheduler`, `deleted_at` columns, V7 migration, `app.retention.*` properties |
+| [0016](0016-business-metrics-and-alert-routing.md) | Business and background-job metrics, alert routing | `OutboxBacklogMetrics`, `DomainEventMetricsConsumer`, `RetentionScheduler` meters, business alert rules + promtool tests, Alertmanager routing |
 
 ## When to add a new ADR
 

@@ -1,0 +1,93 @@
+# Unit tests for the business alert rules. Run with:
+#   promtool test rules config/observability/prometheus/tests/business-alerts.test.yml
+# CI runs them on every PR (see .github/workflows/ci.yml, "Observability config" job).
+
+rule_files:
+  - ../alerts/backend-funeraria-business-alerts.yml
+
+evaluation_interval: 30s
+
+tests:
+  # Oldest PENDING row keeps aging past 5 minutes -> stalled relay fires after its `for`.
+  - interval: 1m
+    input_series:
+      - series: 'outbox_oldest_pending_age_seconds{job="backend-funeraria-app",instance="app:8082"}'
+        values: '0 60 120 180 240 300 360 420 480 540 600 660 720'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: BackendFunerariaOutboxStalled
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: BackendFunerariaOutboxStalled
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              service: backend-funeraria-app
+            exp_annotations:
+              summary: Outbox relay is not draining
+              description: The oldest PENDING outbox event is 12m 0s old.
+              runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#outbox-stalled
+
+  # A freshly restarted process (gauge 0, uptime 1h) must NOT be considered stale...
+  - interval: 1m
+    input_series:
+      - series: 'retention_last_success_timestamp_seconds{job="backend-funeraria-app",instance="app:8082"}'
+        values: '0x30'
+      - series: 'process_uptime_seconds{job="backend-funeraria-app",instance="app:8082"}'
+        values: '3600+60x30'
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: BackendFunerariaRetentionStale
+        exp_alerts: []
+
+  # ...but a process up for 27h that never succeeded is.
+  - interval: 1m
+    input_series:
+      - series: 'retention_last_success_timestamp_seconds{job="backend-funeraria-app",instance="app:8082"}'
+        values: '0x30'
+      - series: 'process_uptime_seconds{job="backend-funeraria-app",instance="app:8082"}'
+        values: '97200+60x30'
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: BackendFunerariaRetentionStale
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              service: backend-funeraria-app
+              job: backend-funeraria-app
+              instance: app:8082
+            exp_annotations:
+              summary: Retention sweep has not succeeded for more than a day
+              description: No successful retention sweep in the last 26 hours.
+              runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#retention-stale
+
+  # Sustained 429s on login -> brute-force alert.
+  - interval: 1m
+    input_series:
+      - series: 'http_server_requests_seconds_count{job="backend-funeraria-app",uri="/api/v1/users/login",status="429"}'
+        values: '0+30x20'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: BackendFunerariaLoginBruteForce
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              service: backend-funeraria-app
+            exp_annotations:
+              summary: Login attempts are being rate-limited
+              description: 0.50 rejected login attempts per second over the last 5 minutes.
+              runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#login-brute-force
+
+  # Watchdog is always firing.
+  - interval: 1m
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: Watchdog
+        exp_alerts:
+          - exp_labels:
+              severity: none
+              service: backend-funeraria-app
+            exp_annotations:
+              summary: Alerting pipeline heartbeat
+              description: This alert is always firing. If it stops, alerting itself is broken.
+              runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#watchdog

@@ -4,6 +4,7 @@ import disenodesistemas.backendfunerariaapp.domain.entity.OutboxEvent;
 import disenodesistemas.backendfunerariaapp.domain.enums.OutboxStatus;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -31,6 +32,14 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
 
   /** Total rows in the given status — used by the metrics surface and the operator UI. */
   long countByStatus(OutboxStatus status);
+
+  /**
+   * Capture time of the oldest row in {@code status}, or empty when there is none. Backs the
+   * {@code outbox_oldest_pending_age_seconds} gauge: a growing age means the relay is stuck even
+   * if the backlog count looks small.
+   */
+  @Query("select min(e.occurredAt) from OutboxEvent e where e.status = :status")
+  Optional<Instant> findOldestOccurredAt(@Param("status") OutboxStatus status);
 
   /**
    * IDs of up to {@code pageable.size} PUBLISHED rows whose {@code publishedAt} is strictly
