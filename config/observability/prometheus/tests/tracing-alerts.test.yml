@@ -1,0 +1,79 @@
+# Unit tests for the tracing pipeline alerts. Run with:
+#   promtool test rules config/observability/prometheus/tests/tracing-alerts.test.yml
+# CI runs them on every PR (see .github/workflows/ci.yml, "Observability config" job).
+
+rule_files:
+  - ../alerts/backend-funeraria-alerts.yml
+
+evaluation_interval: 30s
+
+tests:
+  # Collector unreachable for longer than five minutes.
+  - interval: 1m
+    input_series:
+      - series: 'up{job="otel-collector",instance="otel-collector:8888"}'
+        values: '1 1 0 0 0 0 0 0 0'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: BackendFunerariaTracingCollectorDown
+        exp_alerts: []
+      - eval_time: 8m
+        alertname: BackendFunerariaTracingCollectorDown
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              service: backend-funeraria-app
+              job: otel-collector
+              instance: otel-collector:8888
+            exp_annotations:
+              summary: OpenTelemetry Collector is down
+              description: The OTel Collector has not been scraped for five minutes; application spans are being dropped.
+              runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#tracing-collector-down
+
+  # Export failures sustained past ten minutes fire; a healthy pipeline does not.
+  - interval: 1m
+    input_series:
+      - series: 'otelcol_exporter_send_failed_spans{job="otel-collector",exporter="otlp_grpc/tempo"}'
+        values: '0+60x20'
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: BackendFunerariaTraceExportFailing
+        exp_alerts: []
+      - eval_time: 18m
+        alertname: BackendFunerariaTraceExportFailing
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              service: backend-funeraria-app
+            exp_annotations:
+              summary: Spans are failing to reach Tempo
+              description: The collector has been failing to export spans to Tempo for ten minutes (1 spans/s dropped).
+              runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#trace-export-failing
+
+  # Traffic but no spans at all (counter absent) -> fires; traffic with spans -> silent.
+  - interval: 1m
+    input_series:
+      - series: 'http_server_requests_seconds_count{job="backend-funeraria-app",uri="/api/v1/items"}'
+        values: '0+30x45'
+    alert_rule_test:
+      - eval_time: 40m
+        alertname: BackendFunerariaTracesNotReceived
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              service: backend-funeraria-app
+            exp_annotations:
+              summary: Application traffic is producing no traces
+              description: The app has handled requests for 15 minutes but the collector received no spans.
+              runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#traces-not-received
+
+  - interval: 1m
+    input_series:
+      - series: 'http_server_requests_seconds_count{job="backend-funeraria-app",uri="/api/v1/items"}'
+        values: '0+30x45'
+      - series: 'otelcol_receiver_accepted_spans{job="otel-collector",receiver="otlp",transport="http"}'
+        values: '0+90x45'
+    alert_rule_test:
+      - eval_time: 40m
+        alertname: BackendFunerariaTracesNotReceived
+        exp_alerts: []

@@ -115,7 +115,7 @@ jobs:
         run: |
           docker run --rm -v "$PWD/config/observability/prometheus:/p:ro" -w /p/tests \
             --entrypoint promtool prom/prometheus:v3.16.0 \
-            test rules business-alerts.test.yml
+            test rules business-alerts.test.yml tracing-alerts.test.yml
 
       - name: Validate Alertmanager config
         run: |

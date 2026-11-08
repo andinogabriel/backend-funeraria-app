@@ -23,6 +23,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
     environment:
       SPRING_PROFILES_ACTIVE: docker,json-logs
       SERVER_PORT: 8081
@@ -45,11 +47,12 @@ services:
       APP_BOOTSTRAP_ADMIN_PASSWORD: ${APP_BOOTSTRAP_ADMIN_PASSWORD:-Admin123!}
       APP_BOOTSTRAP_ADMIN_FIRST_NAME: ${APP_BOOTSTRAP_ADMIN_FIRST_NAME:-Admin}
       APP_BOOTSTRAP_ADMIN_LAST_NAME: ${APP_BOOTSTRAP_ADMIN_LAST_NAME:-Funeraria}
-      # Distributed tracing export. Off by default so the app does not try to ship spans when the
-      # observability stack is not running; set MANAGEMENT_TRACING_EXPORT_ENABLED=true (shell or
-      # .env) together with `docker compose --profile observability up`. The endpoint must never
-      # be empty (Spring Boot 4 fails at startup), so it defaults to the compose collector.
-      MANAGEMENT_TRACING_EXPORT_ENABLED: ${MANAGEMENT_TRACING_EXPORT_ENABLED:-false}
+      # Distributed tracing export. On by default: the OTel Collector is part of the base stack, so
+      # the app always has an OTLP sink. Tempo/Grafana (where traces are stored and browsed) still
+      # need `--profile observability`; without them the collector drops spans after its retry
+      # window, never the app. Set MANAGEMENT_TRACING_EXPORT_ENABLED=false to switch export off.
+      # The endpoint must never be empty (Spring Boot 4 fails at startup).
+      MANAGEMENT_TRACING_EXPORT_ENABLED: ${MANAGEMENT_TRACING_EXPORT_ENABLED:-true}
       MANAGEMENT_OTLP_TRACING_ENDPOINT: ${MANAGEMENT_OTLP_TRACING_ENDPOINT:-http://otel-collector:4318/v1/traces}
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:-1.0}
     ports:
@@ -131,20 +134,17 @@ services:
       - alertmanager_data:/alertmanager
 
   # OpenTelemetry Collector receives OTLP traffic from the app and forwards spans to Tempo.
-  # Only runs with the 'observability' profile; when off, the app's OTLP exporter has no endpoint
-  # configured and stays in process-only mode without trying to reach this service.
+  # Part of the base stack (no profile) so tracing export can stay on by default; it is small and
+  # memory-capped (memory_limiter). Tempo itself only runs with the 'observability' profile, which
+  # is why there is no depends_on on it. OTLP ports are bound to the host loopback only.
   otel-collector:
-    profiles:
-      - observability
     image: otel/opentelemetry-collector-contrib:0.165.0
     container_name: backend-funeraria-otel-collector
     command: ["--config=/etc/otel-collector-config.yaml"]
-    depends_on:
-      tempo:
-        condition: service_started
+    mem_limit: 256m
     ports:
-      - "${OTEL_COLLECTOR_HTTP_PORT:-4318}:4318"
-      - "${OTEL_COLLECTOR_GRPC_PORT:-4317}:4317"
+      - "127.0.0.1:${OTEL_COLLECTOR_HTTP_PORT:-4318}:4318"
+      - "127.0.0.1:${OTEL_COLLECTOR_GRPC_PORT:-4317}:4317"
     volumes:
       - ./config/observability/otel-collector/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
 

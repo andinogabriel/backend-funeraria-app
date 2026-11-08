@@ -20,6 +20,13 @@ scrape_configs:
       - targets:
           - app:8082
 
+  # The OTel Collector's own telemetry (spans received / exported / failed). Feeds the tracing
+  # pipeline alerts in backend-funeraria-alerts.yml.
+  - job_name: otel-collector
+    static_configs:
+      - targets:
+          - otel-collector:8888
+
   - job_name: prometheus
     static_configs:
       - targets:

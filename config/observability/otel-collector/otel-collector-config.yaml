@@ -1,11 +1,14 @@
-# OpenTelemetry Collector configuration for the local observability stack.
+# OpenTelemetry Collector configuration for the local stack.
 #
-# This collector accepts OTLP traffic from the application over both gRPC (4317) and HTTP (4318),
-# applies a small batch processor to keep network usage stable, and forwards spans to the local
-# Tempo instance over OTLP/gRPC. Only the tracing pipeline is wired here; metrics still go
-# directly from the application to Prometheus via /actuator/prometheus and logs stay local-first
-# through the JSON log encoder. The collector is intentionally lean so a contributor running the
-# observability profile only needs Docker + Compose.
+# The collector runs in the base compose stack (not only with the 'observability' profile), so the
+# application always has an OTLP endpoint to ship spans to and tracing export can stay on by
+# default. Spans are batched and forwarded to Tempo over OTLP/gRPC. When Tempo is not running
+# (observability profile off) the exporter retries for a bounded time and then drops the batch:
+# the failure stays inside the collector and never back-pressures the application.
+#
+# Only the tracing pipeline is wired here; application metrics still go directly to Prometheus via
+# /actuator/prometheus and logs are shipped by Alloy to Loki. The collector's own telemetry is
+# exposed on :8888 so Prometheus can alert when spans stop flowing or fail to export.
 
 receivers:
   otlp:
@@ -16,6 +19,12 @@ receivers:
         endpoint: 0.0.0.0:4318
 
 processors:
+  # Hard ceiling on collector memory so a Tempo outage with a full retry queue cannot grow the
+  # container unbounded. Checked before batching, as recommended upstream.
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 200
+    spike_limit_mib: 50
   # Batch spans before exporting so the collector stays efficient under load while still flushing
   # frequently enough that traces show up in Tempo within a few seconds during development.
   batch:
@@ -26,14 +35,38 @@ processors:
 exporters:
   # Tempo accepts OTLP natively over gRPC at port 4317 inside the compose network. TLS is
   # disabled because everything runs on the local Docker bridge.
-  otlp/tempo:
+  otlp_grpc/tempo:
     endpoint: tempo:4317
     tls:
       insecure: true
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 2m
+    sending_queue:
+      enabled: true
+      queue_size: 1000
+
+extensions:
+  # Liveness endpoint (GET :13133/) for probes; the distroless image has no shell for a
+  # compose healthcheck, so this is reachable from inside the compose network only.
+  health_check:
+    endpoint: 0.0.0.0:13133
 
 service:
+  extensions: [health_check]
+  telemetry:
+    metrics:
+      level: normal
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 0.0.0.0
+                port: 8888
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [batch]
-      exporters: [otlp/tempo]
+      processors: [memory_limiter, batch]
+      exporters: [otlp_grpc/tempo]

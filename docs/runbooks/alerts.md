@@ -115,6 +115,27 @@ the `null` receiver so it never emails. To turn it into a dead-man's switch, add
 receiver pointed at an external heartbeat service (healthchecks.io, Better Stack, ...) and route
 `alertname="Watchdog"` to it: that service pages you when the heartbeat stops arriving.
 
+## tracing-collector-down
+
+`BackendFunerariaTracingCollectorDown`: Prometheus cannot scrape the OTel Collector for 5 minutes.
+Spans are lost while it lasts. Check `docker compose ps otel-collector` and
+`docker compose logs otel-collector`; restart with `docker compose up -d otel-collector`. A config
+error shows up as a crash loop at startup.
+
+## trace-export-failing
+
+`BackendFunerariaTraceExportFailing`: the collector receives spans but cannot deliver them to Tempo
+for 10 minutes. Usually Tempo is not running (`--profile observability` missing) or is unhealthy:
+`docker compose logs tempo`. Batches are dropped after a 2 minute retry window, so traces from the
+outage are gone; nothing needs replaying.
+
+## traces-not-received
+
+`BackendFunerariaTracesNotReceived`: the app served requests for 15 minutes but the collector
+accepted no spans. Check `MANAGEMENT_TRACING_EXPORT_ENABLED` (someone set it to `false`) and
+`MANAGEMENT_OTLP_TRACING_ENDPOINT` on the app container (`docker compose exec app env`), then the
+app log for OTLP exporter errors. If export was switched off on purpose, silence the alert.
+
 ## client-error-spike
 
 `BackendFunerariaClientErrorSpike`: more than 5 uncaught browser errors per minute for 10

@@ -166,7 +166,7 @@ The service includes a production-oriented observability baseline:
 - Prometheus metrics exposure
 - request tracing through `X-Trace-Id` and optional `X-Correlation-Id`
 - distributed tracing via Micrometer Tracing bridged to the OpenTelemetry SDK; spans ship over
-  OTLP/HTTP when `MANAGEMENT_TRACING_EXPORT_ENABLED=true`
+  OTLP/HTTP to the OTel Collector (on by default in compose, ADR-0018)
 - optional local Prometheus, Grafana, Alertmanager, OpenTelemetry Collector and Tempo stack
   through Docker Compose
 
@@ -238,11 +238,12 @@ Provisioned datasources:
   - `{service="backend-funeraria-app"} | traceId="<id from X-Trace-Id>"`
   The `traceId` field of a log line links straight to the trace in Tempo.
 
-To ship spans from the application to the local stack, set `MANAGEMENT_TRACING_EXPORT_ENABLED=true`
-(in your shell or `.env`) before running the observability profile. The endpoint defaults to the
-compose collector (`MANAGEMENT_OTLP_TRACING_ENDPOINT`, never empty). With export off the
-application still produces spans in process and the `traceId` continues to flow into MDC and
-response headers, but nothing is exported.
+Tracing export is on by default in compose (ADR-0018): the app ships spans to the OTel Collector,
+which is part of the base stack, and the collector forwards them to Tempo when the observability
+profile is running. Opt out with `MANAGEMENT_TRACING_EXPORT_ENABLED=false`. The endpoint defaults
+to the compose collector (`MANAGEMENT_OTLP_TRACING_ENDPOINT`, never empty). The
+`backend-funeraria-tracing` alert group fires when the collector is down, export to Tempo fails, or
+app traffic produces no spans. Outside compose (`mvn spring-boot:run`) export stays off.
 
 Spring Boot 4 note: tracing needs `spring-boot-starter-opentelemetry` (the auto-configuration
 moved into its own modules) and the exporter property is

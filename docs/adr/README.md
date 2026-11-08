@@ -23,6 +23,7 @@ every PR description.
 | [0015](0015-retention-policy.md)                | Retention policy for outbox + activity-log (two-phase soft + hard delete) | `RetentionUseCase`, `RetentionScheduler`, `deleted_at` columns, V7 migration, `app.retention.*` properties |
 | [0016](0016-business-metrics-and-alert-routing.md) | Business and background-job metrics, alert routing | `OutboxBacklogMetrics`, `DomainEventMetricsConsumer`, `RetentionScheduler` meters, business alert rules + promtool tests, Alertmanager routing |
 | [0017](0017-centralized-logs-and-pinned-observability-stack.md) | Centralized logs (Loki + Alloy), pinned observability images, Boot 4 tracing module | `config/observability/{loki,alloy}`, pinned images in `docker-compose.yml`, Alertmanager `entrypoint.sh`, `spring-boot-starter-opentelemetry` |
+| [0018](0018-tracing-export-on-by-default.md) | Tracing export on by default, OTel Collector in the base stack, tracing pipeline alerts | `docker-compose.yml`, `config/observability/otel-collector`, `backend-funeraria-tracing` alert group |
 
 ## When to add a new ADR
 
