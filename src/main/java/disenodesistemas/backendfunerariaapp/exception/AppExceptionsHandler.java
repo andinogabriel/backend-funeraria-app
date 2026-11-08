@@ -9,10 +9,18 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.ErrorResponse;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 @Slf4j
@@ -93,6 +101,64 @@ public class AppExceptionsHandler {
     pd.setProperty("retryAfterSeconds", ex.getRetryAfterSeconds());
     attachTraceId(pd, request);
     return pd;
+  }
+
+  /**
+   * Client errors raised by Spring MVC itself (unknown route, wrong HTTP method, unsupported
+   * media type, missing request parameter). They implement {@link ErrorResponse}, so the status
+   * comes from the exception. Without this handler they fell into the generic 500 below: a
+   * client mistake was reported as a server error, logged at ERROR with a stack trace, and
+   * inflated the 5xx-ratio alert.
+   */
+  @ExceptionHandler({
+    NoResourceFoundException.class,
+    HttpRequestMethodNotSupportedException.class,
+    HttpMediaTypeNotSupportedException.class,
+    MissingServletRequestParameterException.class
+  })
+  public ProblemDetail handleFrameworkClientError(
+      final Exception ex, final HttpServletRequest request) {
+    final HttpStatusCode status = ((ErrorResponse) ex).getStatusCode();
+    return clientError(status, clientErrorKey(status), ex, request);
+  }
+
+  /**
+   * Unreadable bodies (malformed JSON, wrong field types) and path/query values that cannot be
+   * converted (e.g. {@code ?date=not-a-date}): always the caller's fault, so 400.
+   */
+  @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
+  public ProblemDetail handleMalformedRequest(final Exception ex, final HttpServletRequest request) {
+    return clientError(HttpStatus.BAD_REQUEST, "error.request.malformed", ex, request);
+  }
+
+  private ProblemDetail clientError(
+      final HttpStatusCode status,
+      final String code,
+      final Exception ex,
+      final HttpServletRequest request) {
+    // WARN without stack trace: expected traffic (typos, bots, stale clients), not a defect.
+    log.atWarn()
+        .addKeyValue("event", "request.rejected")
+        .addKeyValue("status", status.value())
+        .addKeyValue("exceptionType", ex.getClass().getSimpleName())
+        .addKeyValue("method", request.getMethod())
+        .addKeyValue("path", request.getRequestURI())
+        .log("request.rejected");
+    final ProblemDetail pd = ProblemDetail.forStatus(status);
+    pd.setTitle(messageResolverPort.getMessage("error.request.title"));
+    pd.setDetail(messageResolverPort.getMessage(code));
+    pd.setProperty("code", code);
+    attachTraceId(pd, request);
+    return pd;
+  }
+
+  private static String clientErrorKey(final HttpStatusCode status) {
+    return switch (status.value()) {
+      case 404 -> "error.request.not_found";
+      case 405 -> "error.request.method_not_allowed";
+      case 415 -> "error.request.unsupported_media_type";
+      default -> "error.request.malformed";
+    };
   }
 
   @ExceptionHandler(Exception.class)

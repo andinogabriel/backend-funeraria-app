@@ -144,6 +144,62 @@ class AppExceptionsHandlerTest {
         .containsEntry("code", "brand.error.invalid.delete");
   }
 
+  @Test
+  @DisplayName(
+      "Given an unknown route when it is handled then the response is 404 with the not-found code instead of 500")
+  void givenAnUnknownRouteWhenItIsHandledThenTheResponseIs404() {
+    final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/nope");
+    when(messageResolverPort.getMessage("error.request.title")).thenReturn("Solicitud invalida");
+    when(messageResolverPort.getMessage("error.request.not_found"))
+        .thenReturn("El recurso solicitado no existe.");
+
+    final ProblemDetail problemDetail =
+        appExceptionsHandler.handleFrameworkClientError(
+            new org.springframework.web.servlet.resource.NoResourceFoundException(
+                org.springframework.http.HttpMethod.GET, "/api/v1/nope", "api/v1/nope"),
+            request);
+
+    assertThat(problemDetail.getStatus()).isEqualTo(404);
+    assertThat(problemDetail.getProperties()).containsEntry("code", "error.request.not_found");
+  }
+
+  @Test
+  @DisplayName(
+      "Given an unsupported HTTP method when it is handled then the response is 405")
+  void givenAnUnsupportedMethodWhenItIsHandledThenTheResponseIs405() {
+    final MockHttpServletRequest request =
+        new MockHttpServletRequest("DELETE", "/api/v1/metrics/dashboard");
+    when(messageResolverPort.getMessage("error.request.title")).thenReturn("Solicitud invalida");
+    when(messageResolverPort.getMessage("error.request.method_not_allowed")).thenReturn("x");
+
+    final ProblemDetail problemDetail =
+        appExceptionsHandler.handleFrameworkClientError(
+            new org.springframework.web.HttpRequestMethodNotSupportedException("DELETE"), request);
+
+    assertThat(problemDetail.getStatus()).isEqualTo(405);
+    assertThat(problemDetail.getProperties())
+        .containsEntry("code", "error.request.method_not_allowed");
+  }
+
+  @Test
+  @DisplayName(
+      "Given a malformed JSON body when it is handled then the response is 400 with the malformed code")
+  void givenAMalformedBodyWhenItIsHandledThenTheResponseIs400() {
+    final MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/affiliates");
+    when(messageResolverPort.getMessage("error.request.title")).thenReturn("Solicitud invalida");
+    when(messageResolverPort.getMessage("error.request.malformed")).thenReturn("x");
+
+    final ProblemDetail problemDetail =
+        appExceptionsHandler.handleMalformedRequest(
+            new org.springframework.http.converter.HttpMessageNotReadableException(
+                "JSON parse error",
+                new org.springframework.mock.http.MockHttpInputMessage(new byte[0])),
+            request);
+
+    assertThat(problemDetail.getStatus()).isEqualTo(400);
+    assertThat(problemDetail.getProperties()).containsEntry("code", "error.request.malformed");
+  }
+
   @SuppressWarnings("unused")
   private void sampleMethod(@Valid final DummyRequest request) {}
 
