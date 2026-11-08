@@ -67,6 +67,16 @@ tests:
               description: The app has handled requests for 15 minutes but the collector received no spans.
               runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#traces-not-received
 
+  # Idle stack: only actuator scrapes, no spans -> must stay silent.
+  - interval: 1m
+    input_series:
+      - series: 'http_server_requests_seconds_count{job="backend-funeraria-app",uri="/actuator/prometheus"}'
+        values: '0+4x45'
+    alert_rule_test:
+      - eval_time: 40m
+        alertname: BackendFunerariaTracesNotReceived
+        exp_alerts: []
+
   - interval: 1m
     input_series:
       - series: 'http_server_requests_seconds_count{job="backend-funeraria-app",uri="/api/v1/items"}'
