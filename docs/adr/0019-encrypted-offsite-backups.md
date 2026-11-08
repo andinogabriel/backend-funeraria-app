@@ -28,7 +28,8 @@ affiliates, relatives, DNI), so they cannot simply be synced to a cloud folder i
 - Hourly runs (the copy is incremental, so cheap). After each run the job confirms the newest local
   dump is present remotely and writes `backup_offsite.prom` next to `backup.prom`; Alloy already
   exposes that directory. Alerts: off-host copy failing for 3 h (critical), newest off-host dump
-  older than 28 h (critical), off-host copy not configured (warning).
+  older than 28 h (critical), job not running for 3 h (warning), off-host copy not configured
+  (warning).
 - Restore path built in: `docker compose run --rm backup-offsite list | fetch [name]` downloads and
   decrypts into `./backups/restore`, then `scripts/backup/restore-verify.sh` proves it restores.
 
@@ -46,6 +47,11 @@ Cons:
 - `--ignore-existing` means a deliberately replaced dump with the same name is not re-uploaded
   (dump names are unique UTC timestamps, so this does not happen in normal operation).
 - `BackupOffsiteDisabled` fires on machines that never configure a remote; silence it there.
+- The passphrase is passed to `rclone obscure` as a process argument for a moment at each run.
+  Acceptable in a single-purpose container; it never reaches logs or the remote.
+- Local retention must stay shorter than remote retention (`BACKUP_KEEP` daily dumps, default 14,
+  versus `BACKUP_OFFSITE_KEEP_DAYS`, default 90). Otherwise a local dump older than the remote cutoff
+  would be uploaded and deleted again on every run.
 
 ## Validation
 

@@ -41,6 +41,12 @@ touch "$RCLONE_CONFIG"
 
 log() { echo "level=$1 event=$2${3:+ $3}"; }
 
+# Running as PID 1, sh gets no default SIGTERM handling: exit explicitly, and sleep in the
+# background + wait so the signal is handled immediately instead of after the sleep (otherwise
+# `docker compose stop` waits 10 s and SIGKILLs).
+trap 'exit 0' TERM INT
+pause() { sleep "$1" & wait $!; }
+
 write_metrics() {
   # $1 enabled (0/1), $2 run success (0/1 or empty when disabled), $3 newest offsite dump mtime,
   # $4 remote file count
@@ -87,6 +93,8 @@ configure_crypt() {
 run_once() {
   newest="$(ls -1t "$BACKUP_DIR"/daily/*.dump 2>/dev/null | head -1 || true)"
   if [ -z "$newest" ]; then
+    # Metrics are left untouched on purpose: BackupOffsiteStale (and BackupStale) cover a host
+    # that keeps producing no dumps.
     log WARN backup.offsite.skipped 'reason="no local dump yet"'
     return 0
   fi
@@ -124,7 +132,7 @@ if [ -z "$REMOTE" ]; then
   if [ "${1:-}" = "" ]; then
     log WARN backup.offsite.disabled 'reason="BACKUP_OFFSITE_REMOTE is empty; dumps stay on this host only"'
     write_metrics 0
-    while true; do sleep 86400; done
+    while true; do pause 86400; done
   fi
   echo "BACKUP_OFFSITE_REMOTE is empty: nothing to $1." >&2
   exit 1
@@ -150,7 +158,7 @@ case "${1:-}" in
     log INFO backup.offsite.started "remote=$REMOTE intervalSeconds=$INTERVAL keepDays=$KEEP_DAYS"
     while true; do
       guarded_run || true
-      sleep "$INTERVAL"
+      pause "$INTERVAL"
     done
     ;;
   *)

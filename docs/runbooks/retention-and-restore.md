@@ -164,7 +164,7 @@ dump to an rclone remote (S3, Backblaze B2, Google Drive, SFTP, another disk...)
 - encrypted client side with rclone `crypt` (contents and file names) using
   `BACKUP_OFFSITE_PASSPHRASE`; the job refuses to upload when the passphrase is empty;
 - hourly, copy only (local rotation never deletes remote copies); remote retention
-  `BACKUP_OFFSITE_KEEP_DAYS` (default 90);
+  `BACKUP_OFFSITE_KEEP_DAYS` (default 90; keep it longer than local retention `BACKUP_KEEP`);
 - after each run it confirms the newest local dump is present remotely and writes
   `./backups/metrics/backup_offsite.prom` (alerts `BackendFunerariaBackupOffsite*`).
 

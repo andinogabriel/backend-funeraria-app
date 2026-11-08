@@ -229,6 +229,22 @@ groups:
           description: The newest dump stored off-host is {{ $value | humanizeDuration }} old.
           runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#backup-offsite-stale
 
+      # The backup-offsite container stopped running: no run recorded for three hours while the
+      # copy is configured (runs are hourly). Much faster than waiting for OffsiteStale.
+      - alert: BackendFunerariaBackupOffsiteNotRunning
+        expr: |
+          time() - max(backup_offsite_last_run_timestamp_seconds{job="db-backup"}) > 10800
+          and on()
+          max(backup_offsite_enabled{job="db-backup"}) == 1
+        for: 15m
+        labels:
+          severity: warning
+          service: backend-funeraria-app
+        annotations:
+          summary: Off-host backup job is not running
+          description: The last off-host copy run was {{ $value | humanizeDuration }} ago; runs are hourly.
+          runbook_url: https://github.com/andinogabriel/backend-funeraria-app/blob/master/docs/runbooks/alerts.md#backup-offsite-not-running
+
       # Off-host copy not configured: a disk or host loss would take every backup with it.
       - alert: BackendFunerariaBackupOffsiteDisabled
         expr: max(backup_offsite_enabled{job="db-backup"}) == 0
