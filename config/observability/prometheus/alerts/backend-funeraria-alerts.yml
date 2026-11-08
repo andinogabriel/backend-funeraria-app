@@ -103,9 +103,10 @@ groups:
       - alert: BackendFunerariaTracesNotReceived
         # The app serves traffic but the collector accepts no spans: export switched off or the
         # app cannot reach the collector. `or vector(0)` covers a collector that never received a
-        # span (the counter only appears after the first one).
+        # span (the counter only appears after the first one). Actuator traffic (Prometheus scrapes,
+        # healthchecks) is excluded: it never stops and is not traced, so an idle stack would fire.
         expr: |
-          sum(rate(http_server_requests_seconds_count{job="backend-funeraria-app"}[15m])) > 0
+          sum(rate(http_server_requests_seconds_count{job="backend-funeraria-app",uri!~"/actuator.*"}[15m])) > 0
           and on()
           (sum(rate(otelcol_receiver_accepted_spans{job="otel-collector"}[15m])) or on() vector(0)) == 0
         for: 15m
