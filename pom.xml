@@ -8,7 +8,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.0.6</version>
+    <version>4.1.2</version>
     <relativePath/>
   </parent>
 
@@ -22,20 +22,20 @@
     <java.version>25</java.version>
 
     <!-- versions for libs NOT managed by Spring Boot -->
-    <lombok.version>1.18.46</lombok.version>
+    <lombok.version>1.18.48</lombok.version>
     <mapstruct.version>1.6.3</mapstruct.version>
     <jjwt.version>0.13.0</jjwt.version>
-    <aws.sdk.version>2.44.0</aws.sdk.version>
+    <aws.sdk.version>2.57.10</aws.sdk.version>
     <expiringmap.version>0.5.11</expiringmap.version>
-    <commons-collections4.version>4.5.0</commons-collections4.version>
+    <commons-collections4.version>4.6.0</commons-collections4.version>
     <mockito.version>5.20.0</mockito.version>
-    <jacoco.version>0.8.14</jacoco.version>
-    <archunit.version>1.4.2</archunit.version>
+    <jacoco.version>0.8.16</jacoco.version>
+    <archunit.version>1.5.1</archunit.version>
     <testcontainers.version>1.21.4</testcontainers.version>
     <logstash.logback.encoder.version>9.0</logstash.logback.encoder.version>
     <checkstyle.plugin.version>3.6.0</checkstyle.plugin.version>
-    <jackson2.version>2.21.3</jackson2.version>
-    <git-commit-id-plugin.version>10.0.0</git-commit-id-plugin.version>
+    <jackson2.version>2.22.4</jackson2.version>
+    <git-commit-id-plugin.version>10.0.1</git-commit-id-plugin.version>
     <cucumber.version>7.20.1</cucumber.version>
     <!-- OpenPDF: LGPL fork of iText 5, single dependency, no transitive licence
          concerns. Used by infrastructure/pdf/ to render the funeral service
