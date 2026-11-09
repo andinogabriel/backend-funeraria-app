@@ -61,6 +61,9 @@ public class AffiliateCommandUseCase {
    * <p>Billing (ADR-0020): the holder ("titular") is resolved by DNI (created or reused) and the
    * monthly fee is priced from the tariff with the affiliate's attained age and the requested
    * health tier. A non-insurable applicant is rejected with 409 before anything is written.
+   *
+   * <p>The enrolment date defaults to today (business zone) when the request omits it; a
+   * back-dated one is kept as sent, since it is what the claim waiting period counts from.
    */
   @Transactional
   public AffiliateResponseDto create(final AffiliateRequestDto affiliate) {
@@ -70,6 +73,9 @@ public class AffiliateCommandUseCase {
     final MembershipPrice price = priceFor(affiliate.birthDate(), affiliate.healthTierCode());
     affiliateEntity.setUser(actor);
     affiliateEntity.setDeceased(Boolean.FALSE);
+    if (affiliateEntity.getEnrolmentDate() == null) {
+      affiliateEntity.setEnrolmentDate(today());
+    }
     affiliateEntity.setHolder(membershipHolderUseCase.resolveForEnrolment(affiliate.holder(), actor));
     applyPrice(affiliateEntity, price);
     final AffiliateEntity saved = affiliatePersistencePort.save(affiliateEntity);

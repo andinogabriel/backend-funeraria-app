@@ -18,7 +18,7 @@ public interface MembershipDueRepository extends JpaRepository<MembershipDueEnti
       left join fetch a.ageBand
       where a.deletedAt is null
         and a.deceased = false
-        and coalesce(a.startDate, :periodEnd) <= :periodEnd
+        and a.enrolmentDate <= :periodEnd
       order by a.id
       """)
   List<AffiliateEntity> findBillableAffiliates(@Param("periodEnd") LocalDate periodEnd);

@@ -151,7 +151,7 @@ class RemainingUseCasesCoverageTest {
     final AffiliateResponseDto response =
         new AffiliateResponseDto(
             "Juan", "Perez", 30111222, LocalDate.of(1980, 1, 1), null, Boolean.FALSE, null, null,
-            null, List.of(), List.of(), null, null, null, null, null, null, null);
+            null, List.of(), List.of(), null, null, null, null, null, null, null, null);
 
     when(affiliatePersistencePort.findAllByDeceasedFalseOrderByStartDateDesc()).thenReturn(List.of(affiliate));
     when(affiliatePersistencePort.findAllByOrderByStartDateDesc()).thenReturn(List.of(affiliate));

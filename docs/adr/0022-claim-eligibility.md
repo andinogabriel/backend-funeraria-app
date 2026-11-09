@@ -19,7 +19,7 @@ the funeral? The rules agreed with the owner:
 ## Decision
 
 - **Verdict** (`MembershipEligibilityUseCase`): covered when the affiliate has a holder and a
-  health tier, the claim date is on or after `startDate + tier.waitingPeriodMonths` (skipped for
+  health tier, the claim date is on or after `enrolmentDate + tier.waitingPeriodMonths` (skipped for
   an accidental death), and the dues of the holder past their due date on the claim date and not
   fully paid are at most `overdueGraceCount`. Each failing rule adds a reason code
   (`MISSING_BILLING_DATA`, `WAITING_PERIOD`, `ACCOUNT_IN_ARREARS`), so the desk sees all of them
@@ -39,6 +39,12 @@ the funeral? The rules agreed with the owner:
   is flagged as deceased. Later payments or tariff edits do not rewrite it.
 - Rows from before billing (no holder or tier) are reported as `MISSING_BILLING_DATA`; enrolment
   dates unknown to the system (null) apply no waiting period.
+- **Enrolment date is explicit** (`affiliates.enrolment_date`, V21): the waiting period first used
+  `startDate`, the `@CreatedDate` audit stamp, so back-dated and legacy affiliates got wrong
+  `WAITING_PERIOD` verdicts. `enrolmentDate` is the business "fecha de alta": optional on
+  create/update (today on create, unchanged on update when omitted, never in the future),
+  backfilled from `start_date`, and also the first billable date for the dues job. `startDate`
+  keeps meaning "record created".
 
 ## Consequences
 
