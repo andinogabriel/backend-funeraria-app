@@ -158,4 +158,41 @@ class MembershipTariffQueryUseCaseTest {
         .isInstanceOf(ConflictException.class)
         .hasMessage("affiliate.error.not.insurable.band");
   }
+
+  @Test
+  @DisplayName("Given an existing member when pricing a renewal then the band covering the attained age prices the fee with the member's tier")
+  void renewalUsesCoveringBand() {
+    when(port.findSettings()).thenReturn(Optional.of(settings()));
+    when(port.findAgeBandsOrdered())
+        .thenReturn(List.of(band(18, 35, "1.00", "18-35"), band(51, 65, "1.80", "51-65")));
+
+    final MembershipPrice price = useCase.priceForRenewal(55, tier());
+
+    assertThat(price.band().getLabel()).isEqualTo("51-65");
+    assertThat(price.monthlyFee()).isEqualByComparingTo("5040.00");
+  }
+
+  @Test
+  @DisplayName("Given a member older than every band when pricing a renewal then the top band applies (no max issue age for members)")
+  void renewalAboveTopBandKeepsTopBand() {
+    when(port.findSettings()).thenReturn(Optional.of(settings()));
+    when(port.findAgeBandsOrdered())
+        .thenReturn(List.of(band(18, 35, "1.00", "18-35"), band(76, 85, "3.50", "76-85")));
+
+    final MembershipPrice price = useCase.priceForRenewal(92, tier());
+
+    assertThat(price.band().getLabel()).isEqualTo("76-85");
+    assertThat(price.monthlyFee()).isEqualByComparingTo("9800.00"); // 2000 * 3.50 * 1.40
+  }
+
+  @Test
+  @DisplayName("Given a tariff without bands when pricing a renewal then it is a 404")
+  void renewalWithoutBands() {
+    when(port.findSettings()).thenReturn(Optional.of(settings()));
+    when(port.findAgeBandsOrdered()).thenReturn(List.of());
+
+    assertThatThrownBy(() -> useCase.priceForRenewal(40, tier()))
+        .isInstanceOf(NotFoundException.class)
+        .hasMessage("membership.error.bands.empty");
+  }
 }

@@ -2417,6 +2417,107 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
 
+  /api/v1/membership/holders/{dni}/account:
+    get:
+      tags: [Membership]
+      summary: Estado de cuenta de un titular
+      description: Cuotas, pagos, deuda, saldo a favor y cuotas vencidas. Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DniPath'
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Estado de cuenta.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MembershipAccountDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/membership/holders/{dni}/payments:
+    post:
+      tags: [Membership]
+      summary: Registrar un pago
+      description: |
+        Registra un pago del titular y lo aplica a sus cuotas impagas mas antiguas primero; el
+        excedente queda como saldo a favor para las proximas cuotas. Devuelve el estado de cuenta
+        actualizado. Solo ADMIN. Acepta `Idempotency-Key` (reintento seguro).
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DniPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/XDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MembershipPaymentRequestDto'
+      responses:
+        '201':
+          description: Pago registrado; estado de cuenta actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MembershipAccountDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/membership/dues/generate:
+    post:
+      tags: [Membership]
+      summary: Generar las cuotas de un mes
+      description: |
+        Crea la cuota del mes para cada afiliado facturable que aun no la tenga (idempotente),
+        recalculando con la edad cumplida al primer dia del mes y el tarifario vigente. Un cron
+        diario hace lo mismo para el mes en curso. Mes futuro: 409. Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/XDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DuesGenerationRequestDto'
+      responses:
+        '200':
+          description: Resultado de la generacion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DuesGenerationResultDto'
+        '400':
+          $ref: '#/components/responses/ValidationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/client-telemetry/errors:
     post:
       tags: [Metrics]
@@ -3780,6 +3881,136 @@ components:
           type: number
           description: Suma de las cuotas de los afiliados vivos con cuota asignada.
           example: 4000.00
+    MembershipPaymentRequestDto:
+      type: object
+      description: Pago de un titular. Se aplica a sus cuotas impagas mas antiguas primero.
+      properties:
+        amount:
+          type: number
+          minimum: 0.01
+          example: 5200.00
+        paidOn:
+          type: string
+          format: date
+          description: Fecha del pago (ISO `yyyy-MM-dd`), no futura.
+          example: '2026-11-09'
+        method:
+          type: string
+          enum: [CASH, TRANSFER, CARD, OTHER]
+        reference:
+          type: string
+          maxLength: 100
+          description: Comprobante o numero de operacion (opcional).
+      required: [amount, paidOn, method]
+    DuesGenerationRequestDto:
+      type: object
+      properties:
+        period:
+          type: string
+          pattern: '^[0-9]{4}-[0-9]{2}$'
+          description: Mes a facturar (`yyyy-MM`), actual o pasado.
+          example: '2026-11'
+      required: [period]
+    DuesGenerationResultDto:
+      type: object
+      properties:
+        period:
+          type: string
+          example: '2026-11'
+        created:
+          type: integer
+          description: Cuotas creadas en esta corrida.
+        alreadyBilled:
+          type: integer
+          description: Afiliados que ya tenian la cuota del mes (la generacion es idempotente).
+        repriced:
+          type: integer
+          description: Afiliados cuya cuota cambio (nueva franja etaria o cambio de tarifario).
+        unbillable:
+          type: integer
+          description: Afiliados vivos sin titular o nivel de salud, que no se facturan.
+    MembershipDueDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        affiliateDni:
+          type: integer
+          format: int32
+        affiliateName:
+          type: string
+        period:
+          type: string
+          example: '2026-11'
+        dueDate:
+          type: string
+          format: date
+          example: '2026-11-10'
+        amount:
+          type: number
+          example: 2600.00
+        paidAmount:
+          type: number
+          example: 0.00
+        status:
+          type: string
+          enum: [PAID, PARTIAL, PENDING, OVERDUE]
+    MembershipPaymentDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        amount:
+          type: number
+        unallocated:
+          type: number
+          description: Parte del pago aun no aplicada a cuotas (saldo a favor).
+        paidOn:
+          type: string
+          format: date
+        method:
+          type: string
+          enum: [CASH, TRANSFER, CARD, OTHER]
+        reference:
+          type: string
+        registeredBy:
+          type: string
+    MembershipAccountDto:
+      type: object
+      description: Estado de cuenta de un titular.
+      properties:
+        holder:
+          $ref: '#/components/schemas/MembershipHolderResponseDto'
+        activeAffiliates:
+          type: integer
+        monthlyTotal:
+          type: number
+        totalBilled:
+          type: number
+        totalPaid:
+          type: number
+        outstanding:
+          type: number
+          description: Lo adeudado en cuotas no pagadas por completo.
+        credit:
+          type: number
+          description: Pagos aun no aplicados (saldo a favor).
+        balance:
+          type: number
+          description: '`outstanding - credit`. Positivo = deuda, negativo = saldo a favor.'
+        overdueCount:
+          type: integer
+          description: Cuotas vencidas e impagas.
+        dues:
+          type: array
+          items:
+            $ref: '#/components/schemas/MembershipDueDto'
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/MembershipPaymentDto'
     MembershipHolderDetailDto:
       type: object
       properties:

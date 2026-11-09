@@ -10,6 +10,8 @@ import disenodesistemas.backendfunerariaapp.mapping.MembershipTariffMapper;
 import disenodesistemas.backendfunerariaapp.web.dto.response.FeeQuoteResponseDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.TariffConfigResponseDto;
 import java.math.BigDecimal;
+import java.util.Comparator;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -94,6 +96,29 @@ public class MembershipTariffQueryUseCase {
               : "affiliate.error.not.insurable.band");
     }
     return resolution.price();
+  }
+
+  /**
+   * Prices an existing member for a new billing period (ADR-0021): the band covering the attained
+   * age, with the current base amount and the member's tier. Unlike enrolment there is no max
+   * issue age: a member who ages past the top band stays covered and keeps paying the top band.
+   *
+   * @throws NotFoundException when the tariff has no age bands or no settings
+   */
+  @Transactional(readOnly = true)
+  public MembershipPrice priceForRenewal(final int age, final HealthTierEntity tier) {
+    final FeeSettingsEntity settings = requireSettings();
+    final List<AgeBandEntity> bands = port.findAgeBandsOrdered();
+    final AgeBandEntity band =
+        bands.stream()
+            .filter(b -> b.covers(age))
+            .findFirst()
+            .or(() -> bands.stream().max(Comparator.comparing(AgeBandEntity::getMinAge)))
+            .orElseThrow(() -> new NotFoundException("membership.error.bands.empty"));
+    final BigDecimal fee =
+        MembershipFeeCalculator.computeMonthlyFee(
+            settings.getBaseAmount(), band.getAgeMultiplier(), tier.getHealthMultiplier());
+    return new MembershipPrice(tier, band, fee, age);
   }
 
   private Resolution resolve(final int age, final String healthTierCode) {
