@@ -132,6 +132,9 @@ class ClaimEligibilityPostgresIntegrationTest extends AbstractPostgresIntegratio
         "update membership_dues set paid_amount = amount where holder_id = ? and period = ?",
         holder.getId(),
         LocalDate.of(2026, 1, 1));
+    // The first evaluation loaded the dues into this transaction's persistence context; drop
+    // them so the second one reads the JDBC update instead of the cached entities.
+    entityManager.clear();
     final ClaimEligibilityDto twoOverdue = eligibilityUseCase.evaluate(AFFILIATE_DNI, june, null);
 
     assertThat(threeOverdue.overdueGraceCount()).isEqualTo(2);
