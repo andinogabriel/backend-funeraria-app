@@ -2258,6 +2258,43 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
 
+  /api/v1/metrics/trends:
+    get:
+      tags: [Metrics]
+      summary: Tendencias mensuales del negocio
+      description: |
+        Serie mensual (mes mas antiguo primero, el ultimo es el mes en curso y es parcial) con
+        servicios registrados y su facturacion, compras vigentes a proveedores, cuotas emitidas y
+        cobranzas recibidas. Un mes sin movimientos se informa en cero para que el eje sea
+        continuo. Las cobranzas se imputan al mes en que se pagaron, aunque cancelen periodos
+        anteriores. Solo administradores, porque casi todas las series son financieras.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - name: months
+          in: query
+          required: false
+          description: |
+            Cantidad de meses, incluido el actual. Por defecto 12. Los valores fuera de
+            `[3, 24]` no dan error: se ajustan al limite mas cercano.
+          schema:
+            type: integer
+            default: 12
+      responses:
+        '200':
+          description: Tendencias mensuales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyTrendsDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/membership/tariff:
     get:
       tags: [Membership]
@@ -5191,3 +5228,41 @@ components:
           items:
             $ref: '#/components/schemas/ActivityFeedEntryDto'
       required: [entries]
+    MonthlyTrendPointDto:
+      type: object
+      description: Un mes calendario de las tendencias. Montos en pesos con dos decimales.
+      properties:
+        month:
+          type: string
+          pattern: '^[0-9]{4}-[0-9]{2}$'
+          example: '2026-11'
+        funerals:
+          type: integer
+          format: int64
+          description: Servicios registrados en el mes, sin contar la papelera.
+        funeralRevenue:
+          type: number
+          description: Suma de los totales de esos servicios.
+        purchases:
+          type: number
+          description: Compras a proveedores vigentes (sin anuladas ni sus contrasientos).
+        duesBilled:
+          type: number
+          description: Cuotas emitidas con ese mes como periodo.
+        duesCollected:
+          type: number
+          description: Pagos de cuotas recibidos durante el mes, cualquiera sea el periodo que cancelen.
+      required: [month, funerals, funeralRevenue, purchases, duesBilled, duesCollected]
+    MonthlyTrendsDto:
+      type: object
+      properties:
+        asOf:
+          type: string
+          format: date
+          description: Fecha para la que se calcularon las tendencias.
+        points:
+          type: array
+          description: Un elemento por mes, del mas antiguo al actual, sin huecos.
+          items:
+            $ref: '#/components/schemas/MonthlyTrendPointDto'
+      required: [asOf, points]

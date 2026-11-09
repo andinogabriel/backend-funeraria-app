@@ -4,9 +4,11 @@ import disenodesistemas.backendfunerariaapp.application.usecase.metrics.Activity
 import disenodesistemas.backendfunerariaapp.application.usecase.metrics.DashboardMetricsQueryUseCase;
 import disenodesistemas.backendfunerariaapp.application.usecase.metrics.MetricKind;
 import disenodesistemas.backendfunerariaapp.application.usecase.metrics.MetricRange;
+import disenodesistemas.backendfunerariaapp.application.usecase.metrics.MonthlyTrendsQueryUseCase;
 import disenodesistemas.backendfunerariaapp.web.dto.response.ActivityFeedResponseDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.DashboardMetricsResponseDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.KpiMetricDto;
+import disenodesistemas.backendfunerariaapp.web.dto.response.MonthlyTrendsDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,6 +35,7 @@ public class MetricsController {
 
   private final DashboardMetricsQueryUseCase dashboardMetricsQueryUseCase;
   private final ActivityFeedQueryUseCase activityFeedQueryUseCase;
+  private final MonthlyTrendsQueryUseCase monthlyTrendsQueryUseCase;
 
   /**
    * Returns the current snapshot of dashboard KPIs (afiliados activos, planes activos,
@@ -73,5 +76,18 @@ public class MetricsController {
       @RequestParam(name = "limit", required = false) final Integer limit) {
     final int effective = limit == null ? ActivityFeedQueryUseCase.DEFAULT_LIMIT : limit;
     return ResponseEntity.ok(activityFeedQueryUseCase.getRecentActivity(effective));
+  }
+
+  /**
+   * Month-by-month services, revenue, purchases and membership dues for the dashboard charts.
+   * Admin-only because every series but the service count is financial. {@code months}
+   * defaults to {@link MonthlyTrendsQueryUseCase#DEFAULT_MONTHS} and is clamped server-side.
+   */
+  @PreAuthorize("hasRole('ADMIN')")
+  @GetMapping("/trends")
+  public ResponseEntity<MonthlyTrendsDto> trends(
+      @RequestParam(name = "months", required = false) final Integer months) {
+    final int effective = months == null ? MonthlyTrendsQueryUseCase.DEFAULT_MONTHS : months;
+    return ResponseEntity.ok(monthlyTrendsQueryUseCase.monthlyTrends(effective));
   }
 }
