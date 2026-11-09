@@ -10,6 +10,7 @@ import org.mapstruct.MappingTarget;
 @Mapper(config = MapStructConfig.class)
 public interface AffiliateMapper {
 
+  @Mapping(target = "ageBandLabel", source = "ageBand.label")
   AffiliateResponseDto toDto(AffiliateEntity entity);
 
   @Mapping(target = "id", ignore = true)
@@ -18,6 +19,13 @@ public interface AffiliateMapper {
   @Mapping(target = "deceased", ignore = true)
   @Mapping(target = "deletedAt", ignore = true)
   @Mapping(target = "deletedBy", ignore = true)
+  // Holder, tier, band and fee are resolved by AffiliateCommandUseCase from the tariff, never
+  // copied from the request (the request carries holder data and a tier code, not entities).
+  @Mapping(target = "holder", ignore = true)
+  @Mapping(target = "healthTier", ignore = true)
+  @Mapping(target = "ageBand", ignore = true)
+  @Mapping(target = "monthlyFee", ignore = true)
+  @Mapping(target = "feeCalculatedOn", ignore = true)
   AffiliateEntity toEntity(AffiliateRequestDto dto);
 
   @Mapping(target = "id", ignore = true)
@@ -26,5 +34,12 @@ public interface AffiliateMapper {
   @Mapping(target = "deceased", ignore = true)
   @Mapping(target = "deletedAt", ignore = true)
   @Mapping(target = "deletedBy", ignore = true)
+  // Holder, tier, band and fee are resolved by AffiliateCommandUseCase from the tariff, never
+  // copied from the request (the request carries holder data and a tier code, not entities).
+  @Mapping(target = "holder", ignore = true)
+  @Mapping(target = "healthTier", ignore = true)
+  @Mapping(target = "ageBand", ignore = true)
+  @Mapping(target = "monthlyFee", ignore = true)
+  @Mapping(target = "feeCalculatedOn", ignore = true)
   void updateEntity(AffiliateRequestDto dto, @MappingTarget AffiliateEntity entity);
 }
