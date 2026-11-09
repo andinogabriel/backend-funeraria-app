@@ -26,6 +26,8 @@ public interface AffiliateMapper {
   @Mapping(target = "ageBand", ignore = true)
   @Mapping(target = "monthlyFee", ignore = true)
   @Mapping(target = "feeCalculatedOn", ignore = true)
+  // enrolmentDate maps by name; null on create is defaulted by AffiliateCommandUseCase and null on
+  // update keeps the stored date (nullValuePropertyMappingStrategy = IGNORE in MapStructConfig).
   AffiliateEntity toEntity(AffiliateRequestDto dto);
 
   @Mapping(target = "id", ignore = true)

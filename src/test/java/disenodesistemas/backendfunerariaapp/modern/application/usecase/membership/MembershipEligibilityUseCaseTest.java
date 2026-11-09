@@ -75,7 +75,7 @@ class MembershipEligibilityUseCaseTest {
         .dni(40111222)
         .firstName("Ana")
         .lastName("Gomez")
-        .startDate(LocalDate.of(2026, 5, 1))
+        .enrolmentDate(LocalDate.of(2026, 5, 1))
         .holder(holder)
         .healthTier(graded)
         .build();
@@ -155,7 +155,7 @@ class MembershipEligibilityUseCaseTest {
   @DisplayName("Given a DNI, no date and an accidental death cause when evaluating then today is used and the cause waives the waiting period")
   void byDniDefaultsToTodayAndReadsCause() {
     final AffiliateEntity recent = affiliate();
-    recent.setStartDate(LocalDate.of(2026, 10, 1));
+    recent.setEnrolmentDate(LocalDate.of(2026, 10, 1));
     when(affiliatePort.findByDni(40111222)).thenReturn(Optional.of(recent));
     when(billingPort.findDuesOf(HOLDER_ID)).thenReturn(List.of());
     final DeathCauseEntity accident = new DeathCauseEntity("Accidente");
@@ -175,15 +175,30 @@ class MembershipEligibilityUseCaseTest {
 
   @Test
   @DisplayName("Given an enrolment date unknown (pre-dates the field) when evaluating then no waiting period applies")
-  void unknownStartDate() {
+  void unknownEnrolmentDate() {
     final AffiliateEntity affiliate = affiliate();
-    affiliate.setStartDate(null);
+    affiliate.setEnrolmentDate(null);
     when(billingPort.findDuesOf(HOLDER_ID)).thenReturn(List.of());
 
     final ClaimEligibilityDto result = useCase.evaluate(affiliate, LocalDate.of(2026, 11, 9), false);
 
     assertThat(result.eligible()).isTrue();
     assertThat(result.coveredFrom()).isNull();
+  }
+
+  @Test
+  @DisplayName("Given a back-dated enrolment on a record created today when evaluating then the waiting period counts from the enrolment date")
+  void waitingPeriodCountsFromEnrolmentNotRecordCreation() {
+    final AffiliateEntity backDated = affiliate();
+    backDated.setStartDate(LocalDate.of(2026, 11, 9));
+    backDated.setEnrolmentDate(LocalDate.of(2025, 1, 1));
+    when(billingPort.findDuesOf(HOLDER_ID)).thenReturn(List.of());
+
+    final ClaimEligibilityDto result =
+        useCase.evaluate(backDated, LocalDate.of(2026, 11, 9), false);
+
+    assertThat(result.eligible()).isTrue();
+    assertThat(result.coveredFrom()).isEqualTo(LocalDate.of(2025, 7, 1));
   }
 
   @Test

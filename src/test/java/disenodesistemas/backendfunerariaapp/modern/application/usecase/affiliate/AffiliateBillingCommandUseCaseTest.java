@@ -193,6 +193,40 @@ class AffiliateBillingCommandUseCaseTest {
     assertThat(legacy.getAgeBand()).isEqualTo(band);
   }
 
+  private void stubCreate(final AffiliateEntity mapped) {
+    when(mapper.toEntity(any())).thenReturn(mapped);
+    when(authenticatedUserPort.getAuthenticatedUser()).thenReturn(actor);
+    when(tariff.priceForEnrolment(46, "STANDARD"))
+        .thenReturn(new MembershipPrice(standard, band, new BigDecimal("2600.00"), 46));
+    when(holderUseCase.resolveForEnrolment(HOLDER, actor)).thenReturn(holder);
+    when(affiliatePort.save(mapped)).thenReturn(mapped);
+  }
+
+  @Test
+  @DisplayName("Given an enrolment without enrolment date when creating then it defaults to today's business date")
+  void enrolmentDateDefaultsToToday() {
+    final AffiliateEntity mapped = AffiliateEntity.builder().dni(30111222).birthDate(BIRTH).build();
+    stubCreate(mapped);
+
+    useCase.create(request(BIRTH, "STANDARD"));
+
+    assertThat(mapped.getEnrolmentDate()).isEqualTo(LocalDate.of(2026, 11, 8));
+  }
+
+  @Test
+  @DisplayName("Given a back-dated enrolment date when creating then it is kept as sent")
+  void backDatedEnrolmentIsKept() {
+    final LocalDate enrolled = LocalDate.of(2024, 2, 1);
+    // The mapper copies enrolmentDate by name from the request.
+    final AffiliateEntity mapped =
+        AffiliateEntity.builder().dni(30111222).birthDate(BIRTH).enrolmentDate(enrolled).build();
+    stubCreate(mapped);
+
+    useCase.create(request(BIRTH, "STANDARD").toBuilder().enrolmentDate(enrolled).build());
+
+    assertThat(mapped.getEnrolmentDate()).isEqualTo(enrolled);
+  }
+
   @Test
   @DisplayName("Given a non-insurable applicant when enrolling then the conflict propagates and nothing is written")
   void nonInsurableIsRejected() {

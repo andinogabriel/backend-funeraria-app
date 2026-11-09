@@ -40,5 +40,7 @@ public record AffiliateResponseDto(
     String ageBandLabel,
     /** Monthly fee assigned at enrolment / last repricing. Null for legacy rows. */
     BigDecimal monthlyFee,
-    @JsonFormat(pattern = "dd-MM-yyyy") LocalDate feeCalculatedOn
+    @JsonFormat(pattern = "dd-MM-yyyy") LocalDate feeCalculatedOn,
+    /** Enrolment date ("fecha de alta") the claim waiting period counts from. */
+    @JsonFormat(pattern = "dd-MM-yyyy") LocalDate enrolmentDate
 ) {}

@@ -84,11 +84,7 @@ class MembershipBillingPostgresIntegrationTest extends AbstractPostgresIntegrati
     enrol(41000001, true);
     enrol(41000002, true);
     enrol(41000003, false); // legacy: no holder, no tier
-    // @CreatedDate stamps today on insert; backdate the enrolment so past months are billable.
     entityManager.flush();
-    jdbcTemplate.update(
-        "update affiliates set start_date = ? where dni between 41000001 and 41000003",
-        current.minusMonths(3).atDay(1));
   }
 
   private void enrol(final int dni, final boolean billable) {
@@ -98,7 +94,8 @@ class MembershipBillingPostgresIntegrationTest extends AbstractPostgresIntegrati
             .firstName("Afiliado")
             .lastName("Gomez")
             .birthDate(LocalDate.of(current.getYear() - 40, 1, 1))
-            .startDate(current.minusMonths(3).atDay(1))
+            // Back-dated enrolment so the past months are billable.
+            .enrolmentDate(current.minusMonths(3).atDay(1))
             .deceased(false)
             .gender(entityManager.getReference(GenderEntity.class, 9201L))
             .relationship(entityManager.getReference(RelationshipEntity.class, 9201L));

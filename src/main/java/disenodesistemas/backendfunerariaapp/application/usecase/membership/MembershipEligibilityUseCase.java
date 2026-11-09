@@ -97,9 +97,9 @@ public class MembershipEligibilityUseCase {
     }
 
     final LocalDate coveredFrom =
-        affiliate.getStartDate() == null
+        affiliate.getEnrolmentDate() == null
             ? null
-            : affiliate.getStartDate().plusMonths(tier.getWaitingPeriodMonths());
+            : affiliate.getEnrolmentDate().plusMonths(tier.getWaitingPeriodMonths());
     if (!accidental && coveredFrom != null && onDate.isBefore(coveredFrom)) {
       reasons.add(WAITING_PERIOD);
     }

@@ -4102,6 +4102,13 @@ components:
           type: string
           description: Codigo del nivel de salud del tarifario (ej. STANDARD, GRADED, SPECIAL).
           example: STANDARD
+        enrolmentDate:
+          type: string
+          format: date
+          description: >-
+            Fecha de alta del afiliado; desde ella corre la carencia del nivel de salud. Opcional:
+            hoy al crear, sin cambios al editar si se omite. No puede ser futura.
+          example: 2025-03-01
       required: [firstName, lastName, birthDate, dni, relationship, gender, holder, healthTierCode]
     AffiliateResponseDto:
       type: object
@@ -4166,6 +4173,10 @@ components:
           type: string
           description: Fecha del calculo de la cuota, formato `dd-MM-yyyy`.
           example: 08-11-2026
+        enrolmentDate:
+          type: string
+          description: Fecha de alta (desde ella corre la carencia), formato `dd-MM-yyyy`.
+          example: 01-03-2025
     AffiliatePage:
       type: object
       description: Serializacion del `Page<AffiliateResponseDto>` devuelto por Spring Data.

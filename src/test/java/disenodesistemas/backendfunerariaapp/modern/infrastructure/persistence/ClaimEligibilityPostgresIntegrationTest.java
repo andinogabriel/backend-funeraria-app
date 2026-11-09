@@ -25,8 +25,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Claim eligibility against a real PostgreSQL (V20): the seeded accidental death cause, the
- * seeded tier waiting periods and grace count, and overdue dues read from {@code membership_dues}.
+ * Claim eligibility against a real PostgreSQL (V20, V21): the seeded accidental death cause, the
+ * seeded tier waiting periods and grace count, the waiting period counted from the persisted
+ * {@code enrolment_date} (not the {@code start_date} creation stamp), and overdue dues read from
+ * {@code membership_dues}.
  * Rolled back per test.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
@@ -78,11 +80,10 @@ class ClaimEligibilityPostgresIntegrationTest extends AbstractPostgresIntegratio
             .ageBand(price.band())
             .monthlyFee(price.monthlyFee())
             .feeCalculatedOn(ENROLLED)
+            // Back-dated enrolment: the record itself is created today (start_date).
+            .enrolmentDate(ENROLLED)
             .build());
-    // @CreatedDate stamps today on insert; set the real enrolment date.
     entityManager.flush();
-    jdbcTemplate.update(
-        "update affiliates set start_date = ? where dni = ?", ENROLLED, AFFILIATE_DNI);
     entityManager.clear();
   }
 
@@ -119,6 +120,34 @@ class ClaimEligibilityPostgresIntegrationTest extends AbstractPostgresIntegratio
     assertThat(natural.coveredFrom()).isEqualTo(LocalDate.of(2026, 4, 15));
     assertThat(accident.eligible()).isTrue();
     assertThat(accident.accidental()).isTrue();
+  }
+
+  @Test
+  @DisplayName("Given an affiliate saved without an enrolment date then it defaults to the record creation day")
+  void enrolmentDateDefaultsToCreationDay() {
+    affiliatePort.save(
+        AffiliateEntity.builder()
+            .dni(AFFILIATE_DNI + 1)
+            .firstName("Luis")
+            .lastName("Gomez")
+            .birthDate(LocalDate.of(1990, 6, 1))
+            .deceased(false)
+            .gender(entityManager.getReference(GenderEntity.class, 9301L))
+            .relationship(entityManager.getReference(RelationshipEntity.class, 9301L))
+            .build());
+    entityManager.flush();
+
+    final Boolean sameDay =
+        jdbcTemplate.queryForObject(
+            "select enrolment_date = start_date from affiliates where dni = ?",
+            Boolean.class,
+            AFFILIATE_DNI + 1);
+    final LocalDate seeded =
+        jdbcTemplate.queryForObject(
+            "select enrolment_date from affiliates where dni = ?", LocalDate.class, AFFILIATE_DNI);
+
+    assertThat(sameDay).isTrue();
+    assertThat(seeded).isEqualTo(ENROLLED);
   }
 
   @Test

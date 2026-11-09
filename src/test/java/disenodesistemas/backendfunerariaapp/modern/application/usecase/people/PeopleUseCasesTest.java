@@ -118,7 +118,7 @@ class PeopleUseCasesTest {
     final AffiliateResponseDto response =
         new AffiliateResponseDto(
             "Juan", "Perez", 30111222, LocalDate.of(1980, 1, 1), null, Boolean.FALSE, null, null,
-            null, List.of(), List.of(), null, null, null, null, null, null, null);
+            null, List.of(), List.of(), null, null, null, null, null, null, null, null);
 
     final MembershipHolderEntity holder = MembershipHolderEntity.builder().id(7L).dni(20111222).build();
     final HealthTierEntity tier = HealthTierEntity.builder().code("STANDARD").build();
@@ -219,7 +219,7 @@ class PeopleUseCasesTest {
     final AffiliateResponseDto response =
         new AffiliateResponseDto(
             "Juan", "Perez", 30111222, LocalDate.of(1980, 1, 1), null, Boolean.FALSE, null, null,
-            null, List.of(), List.of(), null, null, null, null, null, null, null);
+            null, List.of(), List.of(), null, null, null, null, null, null, null, null);
 
     when(authenticatedUserPort.getAuthenticatedEmail()).thenReturn(TestValues.USER_EMAIL);
     when(affiliatePersistencePort.findByUserEmailOrderByStartDateDesc(TestValues.USER_EMAIL))

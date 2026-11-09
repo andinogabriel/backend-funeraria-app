@@ -15,6 +15,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -51,8 +52,17 @@ public class AffiliateEntity implements Serializable {
     @Column(nullable = false)
     private LocalDate birthDate;
 
+    /** Audit stamp: the day the record was created. Not a business date; see {@link #enrolmentDate}. */
     @CreatedDate
     private LocalDate startDate;
+
+    /**
+     * Enrolment date ("fecha de alta"): the day the affiliate joined the membership, which drives
+     * the claim waiting period (ADR-0022) and the first billable month. Set explicitly on create
+     * and editable on update, so back-dated and legacy affiliates carry their real date.
+     */
+    @Column(name = "enrolment_date", nullable = false)
+    private LocalDate enrolmentDate;
 
     @Column(name = "deceased", columnDefinition = "boolean default false")
     private Boolean deceased;
@@ -107,6 +117,18 @@ public class AffiliateEntity implements Serializable {
 
     @Column(name = "fee_calculated_on")
     private LocalDate feeCalculatedOn;
+
+    /**
+     * Callers that do not state an enrolment date (seeds, internal callers) keep the behaviour from
+     * before the column existed: enrolled the day the record is created. Entity listeners run
+     * before this callback (JPA 3.1, section 3.5.4), so {@link #startDate} is already stamped.
+     */
+    @PrePersist
+    void defaultEnrolmentDate() {
+        if (enrolmentDate == null) {
+            enrolmentDate = startDate != null ? startDate : LocalDate.now();
+        }
+    }
 
     @Override
     public boolean equals(final Object o) {
