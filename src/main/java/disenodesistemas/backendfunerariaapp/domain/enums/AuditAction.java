@@ -56,5 +56,11 @@ public enum AuditAction {
    * and new values so audit consumers can see how the threshold evolved without
    * joining back to the items table.
    */
-  ITEM_THRESHOLD_UPDATED
+  ITEM_THRESHOLD_UPDATED,
+
+  /** An admin registered a membership payment for a holder. Payload: amount and method. */
+  MEMBERSHIP_PAYMENT_REGISTERED,
+
+  /** Monthly dues were generated for a period. Payload: period and counts. */
+  MEMBERSHIP_DUES_GENERATED
 }
