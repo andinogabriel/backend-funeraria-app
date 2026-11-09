@@ -7,5 +7,7 @@ import lombok.extern.jackson.Jacksonized;
 @Builder(toBuilder = true)
 public record DeathCauseDto(
     Long id,
-    String name
+    String name,
+    /** Optional; when null a new cause is not accidental and an update keeps the stored flag. */
+    Boolean accidental
 ) {}

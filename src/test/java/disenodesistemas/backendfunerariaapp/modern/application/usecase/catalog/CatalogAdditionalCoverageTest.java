@@ -217,7 +217,7 @@ class CatalogAdditionalCoverageTest {
     final DeathCauseCommandUseCase deathCauseCommandUseCase =
         new DeathCauseCommandUseCase(deathCausePersistencePort, deathCauseMapper, deathCauseQueryUseCase);
     final DeathCauseEntity entity = new DeathCauseEntity("Natural");
-    final DeathCauseResponseDto response = new DeathCauseResponseDto(1L, "Natural");
+    final DeathCauseResponseDto response = new DeathCauseResponseDto(1L, "Natural", false);
 
     when(deathCausePersistencePort.findAllByOrderByNameAsc()).thenReturn(List.of(entity));
     when(deathCausePersistencePort.findById(1L)).thenReturn(Optional.of(entity));

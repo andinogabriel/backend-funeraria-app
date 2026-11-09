@@ -58,6 +58,17 @@ public class DeceasedEntity implements Serializable {
   @Column(name = "affiliated", columnDefinition = "boolean default false")
   private boolean affiliated;
 
+  /**
+   * Whether the membership covered this death on the death date (ADR-0022). Recorded when the
+   * deceased is an affiliate; {@code null} otherwise.
+   */
+  @Column(name = "coverage_eligible")
+  private Boolean coverageEligible;
+
+  /** Comma-separated reason codes when not covered; {@code null} when covered or not affiliated. */
+  @Column(name = "coverage_reasons", length = 200)
+  private String coverageReasons;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "relationship_id")
   private RelationshipEntity deceasedRelationship;

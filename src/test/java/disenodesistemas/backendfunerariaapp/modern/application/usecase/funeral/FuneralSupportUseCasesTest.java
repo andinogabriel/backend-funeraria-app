@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import disenodesistemas.backendfunerariaapp.application.port.out.AffiliatePersistencePort;
 import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.DeceasedPersistencePort;
+import disenodesistemas.backendfunerariaapp.application.usecase.membership.MembershipEligibilityUseCase;
 import disenodesistemas.backendfunerariaapp.application.port.out.FuneralPersistencePort;
 import disenodesistemas.backendfunerariaapp.application.port.out.ReceiptNumberGeneratorPort;
 import disenodesistemas.backendfunerariaapp.application.usecase.funeral.FuneralAmountCalculator;
@@ -30,6 +31,7 @@ import disenodesistemas.backendfunerariaapp.mapping.ReceiptTypeMapper;
 import disenodesistemas.backendfunerariaapp.modern.support.SecurityTestDataFactory;
 import disenodesistemas.backendfunerariaapp.web.dto.ReceiptTypeDto;
 import disenodesistemas.backendfunerariaapp.web.dto.request.DeceasedRequestDto;
+import disenodesistemas.backendfunerariaapp.web.dto.response.ClaimEligibilityDto;
 import disenodesistemas.backendfunerariaapp.web.dto.request.FuneralRequestDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.FuneralResponseDto;
 import java.math.BigDecimal;
@@ -54,6 +56,7 @@ class FuneralSupportUseCasesTest {
   @Mock private AffiliatePersistencePort affiliatePersistencePort;
   @Mock private DeceasedMapper deceasedMapper;
   @Mock private AuthenticatedUserPort authenticatedUserPort;
+  @Mock private MembershipEligibilityUseCase eligibilityUseCase;
   @Mock private FuneralPersistencePort funeralPersistencePort;
   @Mock private FuneralMapper funeralMapper;
   @Mock private AuthenticatedUserPort funeralAuthenticatedUserPort;
@@ -198,7 +201,8 @@ class FuneralSupportUseCasesTest {
             deceasedPersistencePort,
             affiliatePersistencePort,
             deceasedMapper,
-            authenticatedUserPort);
+            authenticatedUserPort,
+            eligibilityUseCase);
     final UserEntity authenticatedUser = SecurityTestDataFactory.userEntity();
     final AffiliateEntity affiliate = AffiliateEntity.builder().dni(30111222).deceased(Boolean.FALSE).build();
     final DeceasedEntity mappedDeceased = new DeceasedEntity();
@@ -216,10 +220,27 @@ class FuneralSupportUseCasesTest {
     when(deceasedMapper.toEntity(request)).thenReturn(mappedDeceased);
     when(authenticatedUserPort.getAuthenticatedUser()).thenReturn(authenticatedUser);
     when(deceasedPersistencePort.save(mappedDeceased)).thenReturn(mappedDeceased);
+    when(eligibilityUseCase.evaluate(affiliate, LocalDate.of(2026, 4, 16), (Long) null))
+        .thenReturn(
+            new ClaimEligibilityDto(
+                30111222,
+                "Juan Perez",
+                null,
+                "Estandar",
+                LocalDate.of(2026, 4, 16),
+                false,
+                false,
+                List.of("WAITING_PERIOD", "ACCOUNT_IN_ARREARS"),
+                3,
+                LocalDate.of(2026, 6, 1),
+                3,
+                2));
 
     final DeceasedEntity saved = funeralDeceasedUseCase.registerDeceased(request);
 
     assertThat(saved).isEqualTo(mappedDeceased);
+    assertThat(mappedDeceased.getCoverageEligible()).isFalse();
+    assertThat(mappedDeceased.getCoverageReasons()).isEqualTo("WAITING_PERIOD,ACCOUNT_IN_ARREARS");
     assertThat(affiliate.getDeceased()).isTrue();
     assertThat(mappedDeceased.isAffiliated()).isTrue();
     assertThat(mappedDeceased.getDeceasedUser()).isEqualTo(authenticatedUser);
@@ -236,7 +257,8 @@ class FuneralSupportUseCasesTest {
             deceasedPersistencePort,
             affiliatePersistencePort,
             deceasedMapper,
-            authenticatedUserPort);
+            authenticatedUserPort,
+            eligibilityUseCase);
     final DeceasedRequestDto request =
         DeceasedRequestDto.builder()
             .firstName("Juan")

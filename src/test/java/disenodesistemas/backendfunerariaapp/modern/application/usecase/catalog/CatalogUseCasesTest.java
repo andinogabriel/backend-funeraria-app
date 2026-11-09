@@ -152,7 +152,7 @@ class CatalogUseCasesTest {
     final DeathCauseCommandUseCase deathCauseCommandUseCase =
         new DeathCauseCommandUseCase(deathCausePersistencePort, deathCauseMapper, deathCauseQueryUseCase);
     final DeathCauseEntity entity = DomainTestDataFactory.deathCauseEntity();
-    final DeathCauseResponseDto response = new DeathCauseResponseDto(1L, "Accidental");
+    final DeathCauseResponseDto response = new DeathCauseResponseDto(1L, "Accidental", true);
 
     when(deathCausePersistencePort.findById(1L)).thenReturn(Optional.of(entity));
     when(deathCausePersistencePort.save(entity)).thenReturn(entity);
@@ -164,6 +164,35 @@ class CatalogUseCasesTest {
     assertThat(updated).isEqualTo(response);
     assertThat(entity.getName()).isEqualTo("Accidental");
     verify(deathCausePersistencePort).save(entity);
+  }
+
+  @Test
+  @DisplayName(
+      "Given the accidental flag when a death cause is created or updated then it is stored, and an update without it keeps the stored value")
+  void givenTheAccidentalFlagWhenADeathCauseIsCreatedOrUpdatedThenItIsStored() {
+    final DeathCausePersistencePort deathCausePersistencePort = mock(DeathCausePersistencePort.class);
+    final DeathCauseMapper deathCauseMapper = mock(DeathCauseMapper.class);
+    final DeathCauseCommandUseCase deathCauseCommandUseCase =
+        new DeathCauseCommandUseCase(
+            deathCausePersistencePort,
+            deathCauseMapper,
+            new DeathCauseQueryUseCase(deathCausePersistencePort, deathCauseMapper));
+    when(deathCausePersistencePort.save(org.mockito.ArgumentMatchers.any()))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    deathCauseCommandUseCase.create(DeathCauseDto.builder().name("Ahogamiento").accidental(true).build());
+    final org.mockito.ArgumentCaptor<DeathCauseEntity> created =
+        org.mockito.ArgumentCaptor.forClass(DeathCauseEntity.class);
+    verify(deathCausePersistencePort).save(created.capture());
+    assertThat(created.getValue().isAccidental()).isTrue();
+
+    final DeathCauseEntity stored = new DeathCauseEntity("Caida");
+    stored.setAccidental(true);
+    when(deathCausePersistencePort.findById(2L)).thenReturn(Optional.of(stored));
+    deathCauseCommandUseCase.update(2L, DeathCauseDto.builder().name("Caida de altura").build());
+    assertThat(stored.isAccidental()).isTrue();
+    deathCauseCommandUseCase.update(2L, DeathCauseDto.builder().name("Caida").accidental(false).build());
+    assertThat(stored.isAccidental()).isFalse();
   }
 
   @Test

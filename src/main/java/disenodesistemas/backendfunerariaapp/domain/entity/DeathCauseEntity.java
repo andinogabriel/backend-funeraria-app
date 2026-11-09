@@ -28,6 +28,11 @@ public class DeathCauseEntity implements Serializable {
   @Column(nullable = false, length = 150)
   private String name;
 
+  /** Accidental deaths are covered without the waiting period of the health tier (ADR-0022). */
+  @Builder.Default
+  @Column(nullable = false)
+  private boolean accidental = false;
+
   @OneToMany(cascade = CascadeType.ALL, mappedBy = "deathCause")
   private List<DeceasedEntity> deceasedList;
 

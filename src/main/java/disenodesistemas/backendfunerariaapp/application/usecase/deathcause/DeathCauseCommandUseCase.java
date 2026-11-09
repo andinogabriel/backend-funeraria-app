@@ -23,6 +23,7 @@ public class DeathCauseCommandUseCase {
   @Transactional
   public DeathCauseResponseDto create(final DeathCauseDto deathCauseDto) {
     final DeathCauseEntity deathCauseEntity = new DeathCauseEntity(deathCauseDto.name());
+    deathCauseEntity.setAccidental(Boolean.TRUE.equals(deathCauseDto.accidental()));
     return deathCauseMapper.toDto(deathCausePersistencePort.save(deathCauseEntity));
   }
 
@@ -31,6 +32,9 @@ public class DeathCauseCommandUseCase {
   public DeathCauseResponseDto update(final Long id, final DeathCauseDto deathCauseDto) {
     final DeathCauseEntity deathCauseToUpdate = deathCauseQueryUseCase.findEntityById(id);
     deathCauseToUpdate.setName(deathCauseDto.name());
+    if (deathCauseDto.accidental() != null) {
+      deathCauseToUpdate.setAccidental(deathCauseDto.accidental());
+    }
     return deathCauseMapper.toDto(deathCausePersistencePort.save(deathCauseToUpdate));
   }
 
