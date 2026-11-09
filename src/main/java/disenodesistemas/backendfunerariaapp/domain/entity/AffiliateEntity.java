@@ -121,7 +121,9 @@ public class AffiliateEntity implements Serializable {
     /**
      * Callers that do not state an enrolment date (seeds, internal callers) keep the behaviour from
      * before the column existed: enrolled the day the record is created. Entity listeners run
-     * before this callback (JPA 3.1, section 3.5.4), so {@link #startDate} is already stamped.
+     * before this callback (JPA 3.1, section 3.5.4), so {@link #startDate} is already stamped and
+     * the JVM-zone {@code LocalDate.now()} branch only guards a disabled auditing listener. The
+     * use case path never reaches it: it sets the date from the business-zone clock.
      */
     @PrePersist
     void defaultEnrolmentDate() {

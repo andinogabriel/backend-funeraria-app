@@ -27,6 +27,7 @@ public record AffiliateRequestDto(
     @NotBlank(message = "{affiliate.error.healthTier.empty}") String healthTierCode,
     /**
      * Enrolment date ("fecha de alta"); drives the claim waiting period. Optional: today on
-     * create, unchanged on update when omitted.
+     * create, unchanged on update when omitted. {@code @PastOrPresent} checks against the JVM
+     * clock (UTC in production), which is ahead of the business zone: lenient, never stricter.
      */
     @PastOrPresent(message = "{affiliate.error.enrolmentDate.future}") LocalDate enrolmentDate) {}
