@@ -4,6 +4,9 @@ import disenodesistemas.backendfunerariaapp.application.port.out.AffiliatePersis
 import disenodesistemas.backendfunerariaapp.application.port.out.AuditEventPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.OutboxPort;
+import disenodesistemas.backendfunerariaapp.application.usecase.membership.MembershipHolderUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.membership.MembershipTariffQueryUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.membership.MembershipTariffQueryUseCase.MembershipPrice;
 import disenodesistemas.backendfunerariaapp.domain.entity.AffiliateEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
 import disenodesistemas.backendfunerariaapp.domain.enums.AuditAction;
@@ -17,6 +20,9 @@ import disenodesistemas.backendfunerariaapp.web.dto.request.AffiliateRequestDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.AffiliateResponseDto;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,12 +34,17 @@ public class AffiliateCommandUseCase {
 
   private static final String AUDIT_TARGET_TYPE = "AFFILIATE";
 
+  /** Ages and fee dates follow the business calendar, not UTC. */
+  private static final ZoneId BUSINESS_ZONE = ZoneId.of("America/Argentina/Buenos_Aires");
+
   private final AffiliatePersistencePort affiliatePersistencePort;
   private final AffiliateMapper affiliateMapper;
   private final AuthenticatedUserPort authenticatedUserPort;
   private final AffiliateQueryUseCase affiliateQueryUseCase;
   private final AuditEventPort auditEventPort;
   private final OutboxPort outboxPort;
+  private final MembershipHolderUseCase membershipHolderUseCase;
+  private final MembershipTariffQueryUseCase membershipTariffQueryUseCase;
   /**
    * Wall-clock read used for {@link AffiliateMarkedDeceased} and soft-delete
    * tombstones. Wired from the shared {@code TimeConfig} bean
@@ -42,17 +53,25 @@ public class AffiliateCommandUseCase {
   private final Clock clock;
 
   /**
-   * Persists a new affiliate owned by the currently authenticated user, then records an
+   * Persists a new affiliate registered by the currently authenticated user, then records an
    * {@link AuditAction#AFFILIATE_CREATED} audit entry so compliance reviews can reconstruct
    * who registered each affiliate. The dni is used as the audit {@code targetId} because the
    * domain treats it as the affiliate's stable identifier.
+   *
+   * <p>Billing (ADR-0020): the holder ("titular") is resolved by DNI (created or reused) and the
+   * monthly fee is priced from the tariff with the affiliate's attained age and the requested
+   * health tier. A non-insurable applicant is rejected with 409 before anything is written.
    */
   @Transactional
   public AffiliateResponseDto create(final AffiliateRequestDto affiliate) {
+    requireBillingData(affiliate);
     final AffiliateEntity affiliateEntity = affiliateMapper.toEntity(affiliate);
     final UserEntity actor = authenticatedUserPort.getAuthenticatedUser();
+    final MembershipPrice price = priceFor(affiliate.birthDate(), affiliate.healthTierCode());
     affiliateEntity.setUser(actor);
     affiliateEntity.setDeceased(Boolean.FALSE);
+    affiliateEntity.setHolder(membershipHolderUseCase.resolveForEnrolment(affiliate.holder(), actor));
+    applyPrice(affiliateEntity, price);
     final AffiliateEntity saved = affiliatePersistencePort.save(affiliateEntity);
 
     auditEventPort.record(
@@ -86,6 +105,7 @@ public class AffiliateCommandUseCase {
    */
   @Transactional
   public AffiliateResponseDto update(final Integer dni, final AffiliateRequestDto affiliate) {
+    requireBillingData(affiliate);
     final AffiliateEntity affiliateToUpdate = affiliateQueryUseCase.findByDni(dni);
 
     if (Boolean.TRUE.equals(affiliatePersistencePort.existsByDni(affiliate.dni()))
@@ -96,7 +116,25 @@ public class AffiliateCommandUseCase {
     // Snapshot the lifecycle flag before the mapper applies the request so we can detect
     // the false→true transition and emit AffiliateMarkedDeceased alongside the generic update.
     final boolean wasDeceased = Boolean.TRUE.equals(affiliateToUpdate.getDeceased());
+    // Reprice only when an input of the fee changed (or the row predates billing): editing a
+    // name must not silently move the fee to today's tariff. A deceased affiliate no longer
+    // pays, so correcting their data never prices them (nor rejects them as non-insurable).
+    final boolean repricing =
+        !wasDeceased
+            && (affiliateToUpdate.getMonthlyFee() == null
+            || !Objects.equals(affiliateToUpdate.getBirthDate(), affiliate.birthDate())
+            || affiliateToUpdate.getHealthTier() == null
+            || !Objects.equals(
+                affiliateToUpdate.getHealthTier().getCode(), affiliate.healthTierCode()));
+    final MembershipPrice price =
+        repricing ? priceFor(affiliate.birthDate(), affiliate.healthTierCode()) : null;
     affiliateMapper.updateEntity(affiliate, affiliateToUpdate);
+    affiliateToUpdate.setHolder(
+        membershipHolderUseCase.resolveForEnrolment(
+            affiliate.holder(), authenticatedUserPort.getAuthenticatedUser()));
+    if (price != null) {
+      applyPrice(affiliateToUpdate, price);
+    }
     final AffiliateEntity saved = affiliatePersistencePort.save(affiliateToUpdate);
 
     outboxPort.publish(
@@ -145,5 +183,34 @@ public class AffiliateCommandUseCase {
         null);
 
     outboxPort.publish(new AffiliateDeleted(dni));
+  }
+
+  /**
+   * Holder and health tier are mandatory for every enrolment and edit. Bean Validation enforces it
+   * at the HTTP boundary; this guard covers direct callers (BDD glue, future internal callers).
+   */
+  private static void requireBillingData(final AffiliateRequestDto affiliate) {
+    if (affiliate.holder() == null) {
+      throw new ConflictException("affiliate.error.holder.empty");
+    }
+    if (affiliate.healthTierCode() == null || affiliate.healthTierCode().isBlank()) {
+      throw new ConflictException("affiliate.error.healthTier.empty");
+    }
+  }
+
+  private MembershipPrice priceFor(final LocalDate birthDate, final String healthTierCode) {
+    final int age = Period.between(birthDate, today()).getYears();
+    return membershipTariffQueryUseCase.priceForEnrolment(age, healthTierCode);
+  }
+
+  private void applyPrice(final AffiliateEntity affiliate, final MembershipPrice price) {
+    affiliate.setHealthTier(price.tier());
+    affiliate.setAgeBand(price.band());
+    affiliate.setMonthlyFee(price.monthlyFee());
+    affiliate.setFeeCalculatedOn(today());
+  }
+
+  private LocalDate today() {
+    return LocalDate.now(clock.withZone(BUSINESS_ZONE));
   }
 }

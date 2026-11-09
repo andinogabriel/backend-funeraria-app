@@ -417,7 +417,11 @@ paths:
     post:
       tags: [Affiliates]
       summary: Crear afiliado
-      description: Disponible para ADMIN y USER.
+      description: |
+        Disponible para ADMIN y USER. Facturacion (ADR-0020): el titular se identifica por DNI
+        (se crea o se reutiliza) y la cuota mensual se calcula con el tarifario a partir de la
+        edad actual y `healthTierCode`. Un aspirante no asegurable (edad sobre el maximo de
+        ingreso o sin franja) devuelve 409; un `healthTierCode` desconocido, 404.
       security:
         - bearerAuth: []
       parameters:
@@ -2356,6 +2360,63 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
 
+  /api/v1/membership/holders:
+    get:
+      tags: [Membership]
+      summary: Buscar titulares
+      description: |
+        Titulares cuyo DNI empieza con `search` o cuyo nombre/apellido lo contiene (sin
+        distinguir mayusculas). Busqueda vacia devuelve lista vacia. Maximo 20 resultados.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema: { type: string }
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Titulares con su total mensual.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MembershipHolderSummaryDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/membership/holders/{dni}:
+    get:
+      tags: [Membership]
+      summary: Detalle de un titular
+      description: Titular, sus afiliados y el total mensual que paga. Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DniPath'
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Detalle del titular.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MembershipHolderDetailDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/client-telemetry/errors:
     post:
       tags: [Metrics]
@@ -3668,6 +3729,72 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MobileNumberResponseDto'
+    MembershipHolderRequestDto:
+      type: object
+      description: Titular que afilia, paga y reclama. El DNI lo identifica.
+      properties:
+        dni:
+          type: integer
+          format: int32
+          example: 20111222
+        firstName:
+          type: string
+          maxLength: 100
+        lastName:
+          type: string
+          maxLength: 70
+        phone:
+          type: string
+          maxLength: 30
+        email:
+          type: string
+          format: email
+          maxLength: 255
+      required: [dni, firstName, lastName]
+    MembershipHolderResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        dni:
+          type: integer
+          format: int32
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+    MembershipHolderSummaryDto:
+      type: object
+      properties:
+        holder:
+          $ref: '#/components/schemas/MembershipHolderResponseDto'
+        activeAffiliates:
+          type: integer
+          description: Afiliados vivos con cuota asignada.
+        monthlyTotal:
+          type: number
+          description: Suma de las cuotas de los afiliados vivos con cuota asignada.
+          example: 4000.00
+    MembershipHolderDetailDto:
+      type: object
+      properties:
+        holder:
+          $ref: '#/components/schemas/MembershipHolderResponseDto'
+        activeAffiliates:
+          type: integer
+        monthlyTotal:
+          type: number
+          example: 4000.00
+        affiliates:
+          type: array
+          description: Todos los afiliados no eliminados del titular (incluye fallecidos).
+          items:
+            $ref: '#/components/schemas/AffiliateResponseDto'
     AffiliateRequestDto:
       type: object
       properties:
@@ -3689,7 +3816,13 @@ components:
           $ref: '#/components/schemas/RelationshipDto'
         gender:
           $ref: '#/components/schemas/GenderDto'
-      required: [firstName, lastName, birthDate, dni, relationship, gender]
+        holder:
+          $ref: '#/components/schemas/MembershipHolderRequestDto'
+        healthTierCode:
+          type: string
+          description: Codigo del nivel de salud del tarifario (ej. STANDARD, GRADED, SPECIAL).
+          example: STANDARD
+      required: [firstName, lastName, birthDate, dni, relationship, gender, holder, healthTierCode]
     AffiliateResponseDto:
       type: object
       properties:
@@ -3737,6 +3870,22 @@ components:
             Email del admin que ejecutó el soft-delete. Misma semántica de presencia que
             `deletedAt`.
           example: admin@example.com
+        holder:
+          $ref: '#/components/schemas/MembershipHolderResponseDto'
+        healthTier:
+          $ref: '#/components/schemas/HealthTierDto'
+        ageBandLabel:
+          type: string
+          description: Franja etaria con la que se calculo la cuota.
+          example: 36-50
+        monthlyFee:
+          type: number
+          description: Cuota mensual asignada al alta o en el ultimo recalculo. Ausente en afiliados previos a la facturacion.
+          example: 2600.00
+        feeCalculatedOn:
+          type: string
+          description: Fecha del calculo de la cuota, formato `dd-MM-yyyy`.
+          example: 08-11-2026
     AffiliatePage:
       type: object
       description: Serializacion del `Page<AffiliateResponseDto>` devuelto por Spring Data.

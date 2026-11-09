@@ -12,6 +12,7 @@ import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repositor
 import disenodesistemas.backendfunerariaapp.web.dto.GenderDto;
 import disenodesistemas.backendfunerariaapp.web.dto.RelationshipDto;
 import disenodesistemas.backendfunerariaapp.web.dto.request.AffiliateRequestDto;
+import disenodesistemas.backendfunerariaapp.web.dto.request.MembershipHolderRequestDto;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -35,6 +36,11 @@ public class AffiliateLifecycleStepDefinitions {
 
   /** Reuses the gender/relationship rows seeded by V2 (id 2 = Masculino, id 1 = Padre). */
   private static final GenderDto DEFAULT_GENDER = GenderDto.builder().id(2L).name("Masculino").build();
+
+  // Billing (ADR-0020): every enrolment carries a holder and a health tier from the V16 seed.
+  private static final MembershipHolderRequestDto DEFAULT_HOLDER =
+      MembershipHolderRequestDto.builder().dni(20999888).firstName("Rosa").lastName("Titular").build();
+  private static final String DEFAULT_HEALTH_TIER = "STANDARD";
 
   private static final RelationshipDto DEFAULT_RELATIONSHIP =
       RelationshipDto.builder().id(1L).name("Padre").build();
@@ -106,6 +112,8 @@ public class AffiliateLifecycleStepDefinitions {
             .birthDate(existing.getBirthDate())
             .gender(DEFAULT_GENDER)
             .relationship(DEFAULT_RELATIONSHIP)
+            .holder(DEFAULT_HOLDER)
+            .healthTierCode(DEFAULT_HEALTH_TIER)
             .build());
   }
 
@@ -139,6 +147,8 @@ public class AffiliateLifecycleStepDefinitions {
         .birthDate(LocalDate.of(1980, 1, 1))
         .gender(DEFAULT_GENDER)
         .relationship(DEFAULT_RELATIONSHIP)
+        .holder(DEFAULT_HOLDER)
+        .healthTierCode(DEFAULT_HEALTH_TIER)
         .build();
   }
 

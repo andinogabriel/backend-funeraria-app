@@ -6,9 +6,11 @@ import static org.mockito.Mockito.when;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.MembershipTariffPersistencePort;
 import disenodesistemas.backendfunerariaapp.application.usecase.membership.MembershipTariffQueryUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.membership.MembershipTariffQueryUseCase.MembershipPrice;
 import disenodesistemas.backendfunerariaapp.domain.entity.AgeBandEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.FeeSettingsEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.HealthTierEntity;
+import disenodesistemas.backendfunerariaapp.exception.ConflictException;
 import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
 import disenodesistemas.backendfunerariaapp.mapping.MembershipTariffMapper;
 import disenodesistemas.backendfunerariaapp.web.dto.response.FeeQuoteResponseDto;
@@ -115,5 +117,45 @@ class MembershipTariffQueryUseCaseTest {
     when(port.findHealthTierByCode("NOPE")).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> useCase.quote(40, "NOPE")).isInstanceOf(NotFoundException.class);
+  }
+
+  @Test
+  @DisplayName("Given an insurable applicant when pricing an enrolment then it returns the fee with the tier and band rows that produced it")
+  void pricesEnrolment() {
+    final HealthTierEntity graded = tier();
+    final AgeBandEntity band = band(51, 65, "1.80", "51-65");
+    when(port.findHealthTierByCode("GRADED")).thenReturn(Optional.of(graded));
+    when(port.findSettings()).thenReturn(Optional.of(settings()));
+    when(port.findAgeBandsOrdered()).thenReturn(List.of(band(18, 35, "1.00", "18-35"), band));
+
+    final MembershipPrice price = useCase.priceForEnrolment(55, "GRADED");
+
+    assertThat(price.monthlyFee()).isEqualByComparingTo("5040.00");
+    assertThat(price.tier()).isSameAs(graded);
+    assertThat(price.band()).isSameAs(band);
+    assertThat(price.age()).isEqualTo(55);
+  }
+
+  @Test
+  @DisplayName("Given an applicant over the max issue age when pricing an enrolment then it is rejected as a conflict")
+  void rejectsEnrolmentOverMaxAge() {
+    when(port.findHealthTierByCode("GRADED")).thenReturn(Optional.of(tier()));
+    when(port.findSettings()).thenReturn(Optional.of(settings()));
+
+    assertThatThrownBy(() -> useCase.priceForEnrolment(90, "GRADED"))
+        .isInstanceOf(ConflictException.class)
+        .hasMessage("affiliate.error.not.insurable.age");
+  }
+
+  @Test
+  @DisplayName("Given an age no band covers when pricing an enrolment then it is rejected as a conflict")
+  void rejectsEnrolmentWithoutBand() {
+    when(port.findHealthTierByCode("GRADED")).thenReturn(Optional.of(tier()));
+    when(port.findSettings()).thenReturn(Optional.of(settings()));
+    when(port.findAgeBandsOrdered()).thenReturn(List.of(band(18, 35, "1.00", "18-35")));
+
+    assertThatThrownBy(() -> useCase.priceForEnrolment(10, "GRADED"))
+        .isInstanceOf(ConflictException.class)
+        .hasMessage("affiliate.error.not.insurable.band");
   }
 }

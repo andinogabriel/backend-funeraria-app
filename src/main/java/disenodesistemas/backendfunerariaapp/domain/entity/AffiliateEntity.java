@@ -1,6 +1,7 @@
 package disenodesistemas.backendfunerariaapp.domain.entity;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Objects;
@@ -84,6 +85,28 @@ public class AffiliateEntity implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "relationship_id")
     private RelationshipEntity relationship;
+
+    /** Who enrols, pays and claims for this affiliate. Null only for pre-V18 legacy rows. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "holder_id")
+    private MembershipHolderEntity holder;
+
+    /** Health tier the fee was priced with (also drives the claim waiting period). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "health_tier_id")
+    private HealthTierEntity healthTier;
+
+    /** Age band the fee was priced with; a different band at a later date means repricing. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "age_band_id")
+    private AgeBandEntity ageBand;
+
+    /** Monthly fee snapshot: base x age multiplier x health multiplier at {@link #feeCalculatedOn}. */
+    @Column(name = "monthly_fee", precision = 12, scale = 2)
+    private BigDecimal monthlyFee;
+
+    @Column(name = "fee_calculated_on")
+    private LocalDate feeCalculatedOn;
 
     @Override
     public boolean equals(final Object o) {

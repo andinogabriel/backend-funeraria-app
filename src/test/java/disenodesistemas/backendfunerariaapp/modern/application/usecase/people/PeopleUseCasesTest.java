@@ -3,6 +3,8 @@ package disenodesistemas.backendfunerariaapp.modern.application.usecase.people;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -17,6 +19,14 @@ import disenodesistemas.backendfunerariaapp.application.port.out.OutboxPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.RolePersistencePort;
 import disenodesistemas.backendfunerariaapp.application.port.out.UserPersistencePort;
 import disenodesistemas.backendfunerariaapp.application.usecase.affiliate.AffiliateCommandUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.membership.MembershipHolderUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.membership.MembershipTariffQueryUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.membership.MembershipTariffQueryUseCase.MembershipPrice;
+import disenodesistemas.backendfunerariaapp.domain.entity.AgeBandEntity;
+import disenodesistemas.backendfunerariaapp.domain.entity.HealthTierEntity;
+import disenodesistemas.backendfunerariaapp.domain.entity.MembershipHolderEntity;
+import disenodesistemas.backendfunerariaapp.web.dto.request.MembershipHolderRequestDto;
+import java.math.BigDecimal;
 import disenodesistemas.backendfunerariaapp.application.usecase.affiliate.AffiliateQueryUseCase;
 import disenodesistemas.backendfunerariaapp.application.usecase.deceased.DeceasedCommandUseCase;
 import disenodesistemas.backendfunerariaapp.application.usecase.deceased.DeceasedQueryUseCase;
@@ -63,6 +73,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 @DisplayName("People Use Cases")
 class PeopleUseCasesTest {
 
+  private static final MembershipHolderRequestDto HOLDER_REQUEST =
+      MembershipHolderRequestDto.builder().dni(20111222).firstName("Rosa").lastName("Perez").build();
+
   @Test
   @DisplayName(
       "Given an affiliate request when the affiliate is created then it assigns the authenticated user, marks the affiliate as alive and persists it")
@@ -74,6 +87,8 @@ class PeopleUseCasesTest {
     final AffiliateQueryUseCase affiliateQueryUseCase =
         new AffiliateQueryUseCase(affiliatePersistencePort, affiliateMapper, authenticatedUserPort);
     final OutboxPort outboxPort = mock(OutboxPort.class);
+    final MembershipHolderUseCase holderUseCase = mock(MembershipHolderUseCase.class);
+    final MembershipTariffQueryUseCase tariffQueryUseCase = mock(MembershipTariffQueryUseCase.class);
     final AffiliateCommandUseCase affiliateCommandUseCase =
         new AffiliateCommandUseCase(
             affiliatePersistencePort,
@@ -82,6 +97,8 @@ class PeopleUseCasesTest {
             affiliateQueryUseCase,
             auditEventPort,
             outboxPort,
+            holderUseCase,
+            tariffQueryUseCase,
             Clock.systemUTC());
     final AffiliateRequestDto request =
         AffiliateRequestDto.builder()
@@ -92,6 +109,8 @@ class PeopleUseCasesTest {
             .birthDate(LocalDate.of(1980, 1, 1))
             .gender(GenderDto.builder().id(1L).name("Masculino").build())
             .relationship(RelationshipDto.builder().id(1L).name("Padre").build())
+            .holder(HOLDER_REQUEST)
+            .healthTierCode("STANDARD")
             .build();
     final UserEntity authenticatedUser = SecurityTestDataFactory.userEntity();
     final AffiliateEntity entity = new AffiliateEntity();
@@ -99,10 +118,16 @@ class PeopleUseCasesTest {
     final AffiliateResponseDto response =
         new AffiliateResponseDto(
             "Juan", "Perez", 30111222, LocalDate.of(1980, 1, 1), null, Boolean.FALSE, null, null,
-            null, List.of(), List.of(), null, null);
+            null, List.of(), List.of(), null, null, null, null, null, null, null);
 
+    final MembershipHolderEntity holder = MembershipHolderEntity.builder().id(7L).dni(20111222).build();
+    final HealthTierEntity tier = HealthTierEntity.builder().code("STANDARD").build();
+    final AgeBandEntity band = AgeBandEntity.builder().label("36-50").build();
     when(affiliateMapper.toEntity(request)).thenReturn(entity);
     when(authenticatedUserPort.getAuthenticatedUser()).thenReturn(authenticatedUser);
+    when(holderUseCase.resolveForEnrolment(HOLDER_REQUEST, authenticatedUser)).thenReturn(holder);
+    when(tariffQueryUseCase.priceForEnrolment(anyInt(), eq("STANDARD")))
+        .thenReturn(new MembershipPrice(tier, band, new BigDecimal("2600.00"), 46));
     when(affiliatePersistencePort.save(entity)).thenReturn(entity);
     when(affiliateMapper.toDto(entity)).thenReturn(response);
 
@@ -111,6 +136,11 @@ class PeopleUseCasesTest {
     assertThat(created).isEqualTo(response);
     assertThat(entity.getUser()).isEqualTo(authenticatedUser);
     assertThat(entity.getDeceased()).isFalse();
+    assertThat(entity.getHolder()).isEqualTo(holder);
+    assertThat(entity.getHealthTier()).isEqualTo(tier);
+    assertThat(entity.getAgeBand()).isEqualTo(band);
+    assertThat(entity.getMonthlyFee()).isEqualByComparingTo("2600.00");
+    assertThat(entity.getFeeCalculatedOn()).isNotNull();
     verify(auditEventPort)
         .record(
             AuditAction.AFFILIATE_CREATED,
@@ -137,6 +167,8 @@ class PeopleUseCasesTest {
             affiliateQueryUseCase,
             mock(AuditEventPort.class),
             mock(OutboxPort.class),
+            mock(MembershipHolderUseCase.class),
+            mock(MembershipTariffQueryUseCase.class),
             Clock.systemUTC());
     final AffiliateEntity existing = AffiliateEntity.builder().dni(30111222).build();
     final AffiliateRequestDto request =
@@ -147,6 +179,8 @@ class PeopleUseCasesTest {
             .birthDate(LocalDate.of(1980, 1, 1))
             .gender(GenderDto.builder().id(1L).name("Masculino").build())
             .relationship(RelationshipDto.builder().id(1L).name("Padre").build())
+            .holder(HOLDER_REQUEST)
+            .healthTierCode("STANDARD")
             .build();
 
     when(affiliatePersistencePort.findByDni(30111222)).thenReturn(Optional.of(existing));
@@ -185,7 +219,7 @@ class PeopleUseCasesTest {
     final AffiliateResponseDto response =
         new AffiliateResponseDto(
             "Juan", "Perez", 30111222, LocalDate.of(1980, 1, 1), null, Boolean.FALSE, null, null,
-            null, List.of(), List.of(), null, null);
+            null, List.of(), List.of(), null, null, null, null, null, null, null);
 
     when(authenticatedUserPort.getAuthenticatedEmail()).thenReturn(TestValues.USER_EMAIL);
     when(affiliatePersistencePort.findByUserEmailOrderByStartDateDesc(TestValues.USER_EMAIL))

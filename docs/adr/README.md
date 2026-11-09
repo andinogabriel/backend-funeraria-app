@@ -25,6 +25,7 @@ every PR description.
 | [0017](0017-centralized-logs-and-pinned-observability-stack.md) | Centralized logs (Loki + Alloy), pinned observability images, Boot 4 tracing module | `config/observability/{loki,alloy}`, pinned images in `docker-compose.yml`, Alertmanager `entrypoint.sh`, `spring-boot-starter-opentelemetry` |
 | [0018](0018-tracing-export-on-by-default.md) | Tracing export on by default, OTel Collector in the base stack, tracing pipeline alerts | `docker-compose.yml`, `config/observability/otel-collector`, `backend-funeraria-tracing` alert group |
 | [0019](0019-encrypted-offsite-backups.md) | Encrypted off-host backup copy with rclone (crypt, copy never sync, alerts) | `config/backup/offsite.sh`, `backup-offsite` service, `BackendFunerariaBackupOffsite*` alerts |
+| [0020](0020-membership-holder-and-enrolment-fee.md) | Membership holder (titular) and fee priced at enrolment | `membership_holders` (V18), `MembershipHolderUseCase`, `AffiliateCommandUseCase` pricing |
 
 ## When to add a new ADR
 
