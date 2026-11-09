@@ -98,6 +98,8 @@ class FuneralCommandUseCaseTest {
                 null,
                 null,
                 null,
+                null,
+                null,
                 null),
             null,
             null,

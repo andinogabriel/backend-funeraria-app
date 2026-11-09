@@ -2518,6 +2518,48 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
 
+  /api/v1/membership/eligibility:
+    get:
+      tags: [Membership]
+      summary: Elegibilidad para el servicio
+      description: |
+        Indica si la membresia del afiliado cubre el servicio a una fecha: requiere titular y nivel
+        de salud, haber cumplido la carencia del nivel (salvo muerte accidental) y no superar las
+        cuotas en mora toleradas. Informativo: no bloquea el alta de un servicio. Solo ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: dni
+          in: query
+          required: true
+          schema: { type: integer, format: int32 }
+        - name: date
+          in: query
+          required: false
+          description: Fecha a evaluar (ISO `yyyy-MM-dd`); por defecto hoy.
+          schema: { type: string, format: date }
+        - name: deathCauseId
+          in: query
+          required: false
+          description: Causa de muerte; si es accidental no aplica la carencia.
+          schema: { type: integer, format: int64 }
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Veredicto de elegibilidad.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimEligibilityDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/client-telemetry/errors:
     post:
       tags: [Metrics]
@@ -3663,6 +3705,11 @@ components:
           format: int64
         name:
           type: string
+        accidental:
+          type: boolean
+          description: |
+            Muerte accidental: cubierta sin periodo de carencia (ADR-0022). Opcional: al crear,
+            ausente = false; al editar, ausente conserva el valor guardado.
     DeathCauseResponseDto:
       type: object
       properties:
@@ -3671,6 +3718,8 @@ components:
           format: int64
         name:
           type: string
+        accidental:
+          type: boolean
     UserRegisterDto:
       type: object
       properties:
@@ -4213,6 +4262,54 @@ components:
           $ref: '#/components/schemas/GenderResponseDto'
         deathCause:
           $ref: '#/components/schemas/DeathCauseResponseDto'
+        coverageEligible:
+          type: boolean
+          description: |
+            Si la membresia cubria el servicio a la fecha de fallecimiento, registrado al dar de
+            alta el servicio (ADR-0022). Ausente si el difunto no era afiliado.
+        coverageReasons:
+          type: array
+          description: Motivos por los que no estaba cubierto. Ausente si estaba cubierto.
+          items:
+            type: string
+            enum: [MISSING_BILLING_DATA, WAITING_PERIOD, ACCOUNT_IN_ARREARS]
+    ClaimEligibilityDto:
+      type: object
+      description: Elegibilidad de un afiliado para el servicio a una fecha (ADR-0022).
+      properties:
+        affiliateDni:
+          type: integer
+          format: int32
+        affiliateName:
+          type: string
+        holder:
+          $ref: '#/components/schemas/MembershipHolderResponseDto'
+        healthTierName:
+          type: string
+        evaluatedOn:
+          type: string
+          format: date
+        accidental:
+          type: boolean
+        eligible:
+          type: boolean
+        reasons:
+          type: array
+          items:
+            type: string
+            enum: [MISSING_BILLING_DATA, WAITING_PERIOD, ACCOUNT_IN_ARREARS]
+        waitingPeriodMonths:
+          type: integer
+        coveredFrom:
+          type: string
+          format: date
+          description: Fin de la carencia (alta + meses del nivel de salud).
+        overdueCount:
+          type: integer
+          description: Cuotas del titular vencidas e impagas a la fecha evaluada.
+        overdueGraceCount:
+          type: integer
+          description: Cuotas en mora toleradas segun el tarifario.
     ItemRequestPlanDto:
       type: object
       properties:

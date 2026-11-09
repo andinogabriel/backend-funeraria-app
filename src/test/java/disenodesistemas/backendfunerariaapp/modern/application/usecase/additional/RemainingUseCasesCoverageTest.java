@@ -244,7 +244,7 @@ class RemainingUseCasesCoverageTest {
             .deathDate(LocalDate.of(2026, 4, 16))
             .build();
     final DeceasedResponseDto response =
-        new DeceasedResponseDto(1L, "Juan", "Perez", 30111222, false, LocalDate.of(1970, 1, 1), null, LocalDate.of(2026, 4, 16), null, null, null, null, null);
+        new DeceasedResponseDto(1L, "Juan", "Perez", 30111222, false, LocalDate.of(1970, 1, 1), null, LocalDate.of(2026, 4, 16), null, null, null, null, null, null, null);
 
     when(deceasedMapper.toEntity(request)).thenReturn(entity);
     when(deceasedPersistencePort.save(entity)).thenReturn(entity);

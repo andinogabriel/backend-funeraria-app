@@ -273,7 +273,7 @@ class PeopleUseCasesTest {
     entity.setDni(30111222);
     final DeceasedResponseDto response =
         new DeceasedResponseDto(
-            1L, "Juan", "Perez", 30111222, false, LocalDate.of(1970, 1, 1), null, LocalDate.now(), null, null, null, null, null);
+            1L, "Juan", "Perez", 30111222, false, LocalDate.of(1970, 1, 1), null, LocalDate.now(), null, null, null, null, null, null, null);
 
     when(deceasedPersistencePort.findAllByOrderByRegisterDateDesc()).thenReturn(List.of(entity));
     when(deceasedMapper.toDto(entity)).thenReturn(response);

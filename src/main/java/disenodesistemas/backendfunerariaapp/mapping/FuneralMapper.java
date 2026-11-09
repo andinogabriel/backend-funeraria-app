@@ -6,7 +6,7 @@ import disenodesistemas.backendfunerariaapp.web.dto.response.FuneralResponseDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 
-@Mapper(config = MapStructConfig.class)
+@Mapper(config = MapStructConfig.class, uses = DeceasedMapper.class)
 public interface FuneralMapper {
 
   FuneralResponseDto toDto(Funeral entity);
