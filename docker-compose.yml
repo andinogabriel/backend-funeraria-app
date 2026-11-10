@@ -7,7 +7,10 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      # Loopback only by default: the app reaches Postgres over the compose network, and the host
+      # port exists for psql and IDE access from this machine. Set POSTGRES_BIND_ADDRESS=0.0.0.0
+      # only on a trusted network, and with a real POSTGRES_PASSWORD.
+      - "${POSTGRES_BIND_ADDRESS:-127.0.0.1}:${POSTGRES_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-funerariadb}"]
       interval: 10s
@@ -136,7 +139,7 @@ services:
       - --storage.tsdb.path=/prometheus
       - --web.enable-lifecycle
     ports:
-      - "${PROMETHEUS_PORT:-9090}:9090"
+      - "${OBSERVABILITY_BIND_ADDRESS:-127.0.0.1}:${PROMETHEUS_PORT:-9090}:9090"
     volumes:
       - ./config/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./config/observability/prometheus/alerts:/etc/prometheus/rules:ro
@@ -164,7 +167,7 @@ services:
       # Dead-man's switch ping URL (healthchecks.io / Better Stack). Empty = Watchdog not exported.
       ALERTMANAGER_WATCHDOG_URL: ${ALERTMANAGER_WATCHDOG_URL:-}
     ports:
-      - "${ALERTMANAGER_PORT:-9093}:9093"
+      - "${OBSERVABILITY_BIND_ADDRESS:-127.0.0.1}:${ALERTMANAGER_PORT:-9093}:9093"
     volumes:
       - ./config/observability/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - ./config/observability/alertmanager/entrypoint.sh:/etc/alertmanager/entrypoint.sh:ro
@@ -193,7 +196,7 @@ services:
     container_name: backend-funeraria-tempo
     command: ["-config.file=/etc/tempo/tempo.yaml"]
     ports:
-      - "${TEMPO_HTTP_PORT:-3200}:3200"
+      - "${OBSERVABILITY_BIND_ADDRESS:-127.0.0.1}:${TEMPO_HTTP_PORT:-3200}:3200"
     volumes:
       - ./config/observability/tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
       - tempo_data:/var/tempo
@@ -206,7 +209,7 @@ services:
     container_name: backend-funeraria-loki
     command: ["-config.file=/etc/loki/loki.yaml"]
     ports:
-      - "${LOKI_PORT:-3100}:3100"
+      - "${OBSERVABILITY_BIND_ADDRESS:-127.0.0.1}:${LOKI_PORT:-3100}:3100"
     volumes:
       - ./config/observability/loki/loki.yaml:/etc/loki/loki.yaml:ro
       - loki_data:/loki
@@ -223,7 +226,7 @@ services:
       loki:
         condition: service_started
     ports:
-      - "${ALLOY_PORT:-12345}:12345"
+      - "${OBSERVABILITY_BIND_ADDRESS:-127.0.0.1}:${ALLOY_PORT:-12345}:12345"
     volumes:
       - ./config/observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -247,7 +250,7 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
       GF_USERS_ALLOW_SIGN_UP: "false"
     ports:
-      - "${GRAFANA_PORT:-3000}:3000"
+      - "${OBSERVABILITY_BIND_ADDRESS:-127.0.0.1}:${GRAFANA_PORT:-3000}:3000"
     volumes:
       - ./config/observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
       - ./config/observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
