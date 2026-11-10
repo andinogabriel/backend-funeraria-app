@@ -6,6 +6,7 @@ import disenodesistemas.backendfunerariaapp.domain.entity.RefreshToken;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserDevice;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
 import disenodesistemas.backendfunerariaapp.web.dto.JwtDto;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,15 +22,24 @@ public class UserSessionTokenService {
   private final JwtTokenPort jwtTokenPort;
   private final RefreshTokenPort refreshTokenPort;
 
-  /**
-   * Resolves a refresh token from the raw client value and verifies that it is still usable. The
-   * method centralizes lookup plus active-state validation so refresh flows can work with a trusted
-   * token entity instead of repeating revocation and expiry checks in multiple places.
-   */
-  public RefreshToken resolveActiveRefreshToken(final String rawRefreshToken) {
-    final RefreshToken refreshToken = refreshTokenPort.findByToken(rawRefreshToken);
+  /** Looks up the session whose current refresh token is the raw client value. */
+  public Optional<RefreshToken> findCurrent(final String rawRefreshToken) {
+    return refreshTokenPort.findByToken(rawRefreshToken);
+  }
+
+  /** Looks up the session whose previous, already rotated refresh token is the raw value. */
+  public Optional<RefreshToken> findSuperseded(final String rawRefreshToken) {
+    return refreshTokenPort.findBySupersededToken(rawRefreshToken);
+  }
+
+  /** Whether a superseded token arrived soon enough after its rotation to be a benign race. */
+  public boolean isWithinReuseGrace(final RefreshToken refreshToken) {
+    return refreshTokenPort.isWithinReuseGrace(refreshToken);
+  }
+
+  /** Rejects a revoked or expired refresh session. */
+  public void verifyActive(final RefreshToken refreshToken) {
     refreshTokenPort.verifyActive(refreshToken);
-    return refreshToken;
   }
 
   /**

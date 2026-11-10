@@ -13,6 +13,7 @@ import disenodesistemas.backendfunerariaapp.domain.entity.UserDevice;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
 import disenodesistemas.backendfunerariaapp.modern.support.SecurityTestDataFactory;
 import disenodesistemas.backendfunerariaapp.web.dto.JwtDto;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,15 +51,20 @@ class UserSessionTokenServiceTest {
 
   @Test
   @DisplayName(
-      "Given a raw refresh token when the active refresh token is resolved then it loads the stored token and verifies that it is still active")
-  void givenARawRefreshTokenWhenTheActiveRefreshTokenIsResolvedThenItLoadsTheStoredTokenAndVerifiesThatItIsStillActive() {
+      "Given a raw refresh token when it is looked up then current, superseded, grace and active checks delegate to the port")
+  void givenARawRefreshTokenWhenItIsLookedUpThenCurrentSupersededGraceAndActiveChecksDelegateToThePort() {
     final RefreshToken refreshToken =
         SecurityTestDataFactory.refreshToken(
             SecurityTestDataFactory.userDevice(SecurityTestDataFactory.userEntity()));
 
-    when(refreshTokenPort.findByToken("raw-refresh")).thenReturn(refreshToken);
+    when(refreshTokenPort.findByToken("raw-refresh")).thenReturn(Optional.of(refreshToken));
+    when(refreshTokenPort.findBySupersededToken("old-refresh")).thenReturn(Optional.of(refreshToken));
+    when(refreshTokenPort.isWithinReuseGrace(refreshToken)).thenReturn(true);
 
-    assertThat(userSessionTokenService.resolveActiveRefreshToken("raw-refresh")).isEqualTo(refreshToken);
+    assertThat(userSessionTokenService.findCurrent("raw-refresh")).contains(refreshToken);
+    assertThat(userSessionTokenService.findSuperseded("old-refresh")).contains(refreshToken);
+    assertThat(userSessionTokenService.isWithinReuseGrace(refreshToken)).isTrue();
+    userSessionTokenService.verifyActive(refreshToken);
     verify(refreshTokenPort).verifyActive(refreshToken);
   }
 

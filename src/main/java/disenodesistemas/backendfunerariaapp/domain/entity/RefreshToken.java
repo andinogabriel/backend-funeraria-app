@@ -31,6 +31,13 @@ public class RefreshToken {
   @Column(nullable = false, unique = true, length = 64)
   private String tokenHash;
 
+  /** Hash of the token this one replaced, kept to recognise a replay of the old value. */
+  @Column(unique = true, length = 64)
+  private String previousTokenHash;
+
+  /** When {@link #previousTokenHash} stopped being valid; starts the reuse grace window. */
+  private Instant rotatedAt;
+
   @OneToOne(optional = false, cascade = CascadeType.ALL)
   @JoinColumn(name = "user_device_id", unique = true)
   private UserDevice userDevice;
