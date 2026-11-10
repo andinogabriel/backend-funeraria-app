@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     container_name: backend-funeraria-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-funerariadb}
@@ -70,7 +70,7 @@ services:
   # ./backups/metrics feeds the backup alerts through Grafana Alloy. Verify restorability with
   # scripts/backup/restore-verify.sh. See docs/runbooks/retention-and-restore.md.
   db-backup:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     container_name: backend-funeraria-db-backup
     depends_on:
       postgres:
