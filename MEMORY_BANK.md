@@ -33,7 +33,8 @@ The service is **not** plain stateless JWT. The auth surface includes:
 
 - Argon2 password hashing with application peppering
 - device-bound access tokens
-- opaque rotating refresh tokens stored as hashes
+- opaque rotating refresh tokens stored as hashes, sent only in an HttpOnly `refresh_token`
+  cookie, with reuse detection (ADR-0023)
 - fingerprint validation (device id + user agent + secret)
 - adaptive threat protection and blacklist escalation
 - login rate limiting

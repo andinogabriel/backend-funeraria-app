@@ -128,8 +128,10 @@ paths:
       tags: [Authentication]
       summary: Iniciar sesion
       description: |
-        Autentica por email y password y devuelve un access token JWT mas un refresh token opaco.
-        El token queda ligado al dispositivo declarado en `deviceInfo`.
+        Autentica por email y password y devuelve un access token JWT. El refresh token opaco viaja
+        solo en la cookie `refresh_token` (HttpOnly, Secure, SameSite=Strict, Path=/api/v1/users),
+        nunca en el body, para que el script de la pagina no pueda leerlo. La sesion queda ligada
+        al dispositivo declarado en `deviceInfo`.
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -141,6 +143,9 @@ paths:
       responses:
         '200':
           description: Sesion iniciada correctamente.
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/RefreshTokenSetCookie'
           content:
             application/json:
               schema:
@@ -158,9 +163,25 @@ paths:
     post:
       tags: [Authentication]
       summary: Rotar refresh token
-      description: Valida el refresh token y el dispositivo y devuelve un nuevo par de tokens.
+      description: |
+        Lee el refresh token de la cookie `refresh_token`, valida el dispositivo, rota el token
+        (nueva cookie) y devuelve un access token nuevo.
+
+        Deteccion de reuso: la rotacion recuerda el token reemplazado. Si ese token vuelve a
+        presentarse dentro de la ventana de gracia (30 s por defecto) se responde 409
+        `refresh.token.error.superseded`: es una carrera benigna entre pestanas y el cliente debe
+        reintentar con la cookie que ya recibio. Pasada la ventana, quien lo presenta no es quien
+        tiene el token nuevo: la sesion del dispositivo se cierra (refresh revocado, access tokens
+        invalidados), se audita `REFRESH_TOKEN_REUSE_DETECTED` y se responde 401
+        `refresh.token.error.reused`.
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
+        - in: cookie
+          name: refresh_token
+          required: true
+          schema:
+            type: string
+          description: Refresh token opaco emitido por login o por el refresh anterior.
       requestBody:
         required: true
         content:
@@ -170,6 +191,9 @@ paths:
       responses:
         '200':
           description: Tokens rotados correctamente.
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/RefreshTokenSetCookie'
           content:
             application/json:
               schema:
@@ -187,7 +211,9 @@ paths:
     put:
       tags: [Authentication]
       summary: Cerrar sesion
-      description: Invalida la sesion activa del dispositivo informado.
+      description: |
+        Invalida la sesion activa del dispositivo informado y expira la cookie `refresh_token`
+        (el `Set-Cookie` se envia aunque el logout falle).
       security:
         - bearerAuth: []
       parameters:
@@ -201,6 +227,11 @@ paths:
       responses:
         '200':
           description: Sesion invalidada.
+          headers:
+            Set-Cookie:
+              description: "`refresh_token=; Max-Age=0; Path=/api/v1/users; HttpOnly; SameSite=Strict`"
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -3378,6 +3409,14 @@ components:
       schema:
         type: string
         example: corr-request-0001
+    RefreshTokenSetCookie:
+      description: |
+        Refresh token rotado. `HttpOnly; Secure; SameSite=Strict; Path=/api/v1/users`, con
+        Max-Age igual a la vida del refresh token. `Secure` se puede apagar solo para un despliegue
+        por http plano (`SECURITY_REFRESH_TOKEN_COOKIE_SECURE=false`).
+      schema:
+        type: string
+        example: refresh_token=Zk9...; Max-Age=604800; Path=/api/v1/users; Secure; HttpOnly; SameSite=Strict
   schemas:
     ProblemDetail:
       type: object
@@ -3809,12 +3848,11 @@ components:
       required: [email, password, deviceInfo]
     TokenRefreshRequestDto:
       type: object
+      description: El refresh token viaja en la cookie `refresh_token`, no en el body.
       properties:
-        refreshToken:
-          type: string
         deviceInfo:
           $ref: '#/components/schemas/DeviceInfo'
-      required: [refreshToken, deviceInfo]
+      required: [deviceInfo]
     LogOutRequestDto:
       type: object
       properties:
@@ -3849,9 +3887,6 @@ components:
         authorization:
           type: string
           description: Access token JWT.
-        refreshToken:
-          type: string
-          description: Refresh token opaco rotatorio.
         expiryDuration:
           type: integer
           format: int64
@@ -3860,7 +3895,7 @@ components:
           type: array
           items:
             type: string
-      required: [authorization, refreshToken, expiryDuration, authorities]
+      required: [authorization, expiryDuration, authorities]
     RolRequestDto:
       type: object
       properties:

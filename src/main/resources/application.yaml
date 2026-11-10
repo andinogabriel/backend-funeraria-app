@@ -28,6 +28,11 @@ security:
   refresh-token:
     expiration-seconds: 604800
     random-bytes-length: 32
+    # A rotated token presented again within this window is a race between tabs (409, retry);
+    # after it, it is a replay and the device session is revoked.
+    reuse-grace-seconds: ${SECURITY_REFRESH_TOKEN_REUSE_GRACE_SECONDS:30}
+    # The refresh_token cookie is Secure unless the app is served over plain http by IP.
+    cookie-secure: ${SECURITY_REFRESH_TOKEN_COOKIE_SECURE:true}
   threat-protection:
     failed-login-blacklist-threshold: 10
     suspicious-request-threshold: 2
