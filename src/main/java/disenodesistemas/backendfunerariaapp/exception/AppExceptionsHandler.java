@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
@@ -130,6 +131,17 @@ public class AppExceptionsHandler {
   @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
   public ProblemDetail handleMalformedRequest(final Exception ex, final HttpServletRequest request) {
     return clientError(HttpStatus.BAD_REQUEST, "error.request.malformed", ex, request);
+  }
+
+  /**
+   * Two requests changed the same row at once and this one lost the optimistic-lock check (for
+   * example two refreshes with the same cookie, one from a page that was navigated away). Nothing
+   * was written by the loser, so 409 lets the client retry; the SPA already does for refresh.
+   */
+  @ExceptionHandler(OptimisticLockingFailureException.class)
+  public ProblemDetail handleConcurrentUpdate(
+      final OptimisticLockingFailureException ex, final HttpServletRequest request) {
+    return clientError(HttpStatus.CONFLICT, "error.request.concurrent_update", ex, request);
   }
 
   private ProblemDetail clientError(

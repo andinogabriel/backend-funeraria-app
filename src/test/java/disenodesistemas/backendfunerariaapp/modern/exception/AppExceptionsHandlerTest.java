@@ -200,6 +200,25 @@ class AppExceptionsHandlerTest {
     assertThat(problemDetail.getProperties()).containsEntry("code", "error.request.malformed");
   }
 
+  @Test
+  @DisplayName(
+      "Given a request that lost an optimistic-lock race when it is handled then it answers 409 so the client can retry")
+  void lostOptimisticLockIsAConflict() {
+    final MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/users/refresh");
+    when(messageResolverPort.getMessage("error.request.title")).thenReturn("Solicitud invalida");
+    when(messageResolverPort.getMessage("error.request.concurrent_update")).thenReturn("x");
+
+    final ProblemDetail problemDetail =
+        appExceptionsHandler.handleConcurrentUpdate(
+            new org.springframework.orm.ObjectOptimisticLockingFailureException(
+                "RefreshToken", 100L),
+            request);
+
+    assertThat(problemDetail.getStatus()).isEqualTo(409);
+    assertThat(problemDetail.getProperties())
+        .containsEntry("code", "error.request.concurrent_update");
+  }
+
   @SuppressWarnings("unused")
   private void sampleMethod(@Valid final DummyRequest request) {}
 
