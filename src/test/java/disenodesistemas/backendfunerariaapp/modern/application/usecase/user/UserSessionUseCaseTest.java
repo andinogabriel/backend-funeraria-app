@@ -19,6 +19,7 @@ import disenodesistemas.backendfunerariaapp.application.usecase.user.UserAuthent
 import disenodesistemas.backendfunerariaapp.application.usecase.user.UserSessionDeviceService;
 import disenodesistemas.backendfunerariaapp.application.usecase.user.UserSessionSecurityService;
 import disenodesistemas.backendfunerariaapp.application.usecase.user.UserSessionTokenService;
+import disenodesistemas.backendfunerariaapp.application.usecase.user.UserSessionRevocationService;
 import disenodesistemas.backendfunerariaapp.application.usecase.user.UserSessionUseCase;
 import disenodesistemas.backendfunerariaapp.domain.entity.RefreshToken;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserDevice;
@@ -61,6 +62,7 @@ class UserSessionUseCaseTest {
   @Mock private RequestMetadataPort requestMetadataPort;
   @Mock private AuthIdempotencyPort authIdempotencyPort;
   @Mock private AuditEventPort auditEventPort;
+  @Mock private UserSessionRevocationService userSessionRevocationService;
 
   @InjectMocks private UserSessionUseCase userSessionUseCase;
 
@@ -104,6 +106,7 @@ class UserSessionUseCaseTest {
     verify(userSessionSecurityService)
         .recordLoginSuccess(userEntity.getEmail(), loginDto.deviceInfo().deviceId(), requestMetadata);
     verify(authIdempotencyPort).storeJwtResponse(eq("user.login"), eq("idem-123"), any(), eq(response));
+    verify(userSessionRevocationService).closeBeyondLimit(userEntity);
   }
 
   @Test
@@ -334,7 +337,9 @@ class UserSessionUseCaseTest {
 
     when(requestMetadataPort.currentRequest()).thenReturn(SecurityTestDataFactory.requestMetadata());
     when(authenticatedUserPort.getAuthenticatedUser()).thenReturn(userEntity);
-    when(userSessionDeviceService.findByUser(userEntity)).thenReturn(userDevice);
+    when(userSessionDeviceService.findLogoutSession(
+            userEntity, logoutRequest.deviceInfo(), SecurityTestDataFactory.requestMetadata()))
+        .thenReturn(userDevice);
     when(userSessionDeviceService.deactivateSession(userDevice)).thenReturn(userDevice);
     when(messageResolverPort.getMessage("user.logout.success")).thenReturn("Sesion cerrada correctamente");
 

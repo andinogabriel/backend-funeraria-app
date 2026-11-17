@@ -123,6 +123,84 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerErrorResponse'
 
+  /api/v1/users/me/sessions:
+    get:
+      tags: [Users]
+      summary: Listar las sesiones activas del usuario autenticado
+      description: |
+        Una sesion por dispositivo (navegador) que todavia puede renovar su token, la usada mas
+        recientemente primero. `current` marca la sesion que hace el pedido (ADR-0024).
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Sesiones activas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserSessionResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+    delete:
+      tags: [Users]
+      summary: Cerrar todas las demas sesiones
+      description: Cierra todas las sesiones del usuario salvo la actual y revoca sus refresh tokens.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+      responses:
+        '200':
+          description: Cantidad de sesiones cerradas.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [closed]
+                properties:
+                  closed:
+                    type: integer
+                    format: int32
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/v1/users/me/sessions/{id}:
+    delete:
+      tags: [Users]
+      summary: Cerrar una sesion del usuario autenticado
+      description: |
+        Desactiva la sesion y revoca su refresh token; sus access tokens dejan de valer en el
+        siguiente pedido. La sesion actual no se cierra aca (409): eso es un logout.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/XDeviceId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Sesion cerrada (o ya estaba cerrada).
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
   /api/v1/users/login:
     post:
       tags: [Authentication]
@@ -3520,6 +3598,32 @@ components:
           type: string
           example: Ana
       required: [email, lastName, firstName]
+    UserSessionResponse:
+      type: object
+      required: [id, current]
+      properties:
+        id:
+          type: integer
+          format: int64
+        deviceType:
+          type: string
+          nullable: true
+        userAgent:
+          type: string
+          nullable: true
+        ipAddress:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastSeenAt:
+          type: string
+          format: date-time
+          nullable: true
+        current:
+          type: boolean
     UserMeResource:
       allOf:
         - $ref: '#/components/schemas/UserDto'

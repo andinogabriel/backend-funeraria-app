@@ -3,6 +3,7 @@ package disenodesistemas.backendfunerariaapp.application.usecase.user;
 import disenodesistemas.backendfunerariaapp.utils.LogMasking;
 import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.MessageResolverPort;
+import disenodesistemas.backendfunerariaapp.application.port.out.RequestMetadataPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.UserPersistencePort;
 import disenodesistemas.backendfunerariaapp.domain.entity.AddressEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.MobileNumberEntity;
@@ -42,6 +43,8 @@ public class UserProfileUseCase {
   private final MobileNumberMapper mobileNumberMapper;
   private final PasswordEncoder passwordEncoder;
   private final MessageResolverPort messageResolverPort;
+  private final RequestMetadataPort requestMetadataPort;
+  private final UserSessionRevocationService userSessionRevocationService;
 
   @Transactional
   public Map<String, String> changeOldPassword(final PasswordResetDto passwordResetDto) {
@@ -61,9 +64,16 @@ public class UserProfileUseCase {
         .log("user.password.change.started");
     userEntity.setEncryptedPassword(passwordEncoder.encode(passwordResetDto.newPassword()));
     userPersistencePort.save(userEntity);
+    // Whoever knew the old password may hold a session elsewhere: keep only this one.
+    final int closedSessions =
+        userSessionRevocationService.closeOthers(
+            userEntity,
+            requestMetadataPort.currentRequest().deviceIdHeader(),
+            UserSessionRevocationService.REASON_PASSWORD_CHANGE);
     log.atInfo()
         .addKeyValue("event", "user.password.change.completed")
         .addKeyValue("email", LogMasking.maskEmail(userEntity.getEmail()))
+        .addKeyValue("closedSessions", closedSessions)
         .log("user.password.change.completed");
     return Map.of(
         "message",

@@ -7,9 +7,9 @@ import disenodesistemas.backendfunerariaapp.domain.entity.RefreshToken;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserDevice;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
 import disenodesistemas.backendfunerariaapp.exception.AppException;
-import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
 import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.UserDeviceRepository;
 import disenodesistemas.backendfunerariaapp.web.dto.DeviceInfo;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,37 +30,25 @@ public class UserDevicePersistenceAdapter implements UserDevicePort {
   private final UserDeviceRepository userDeviceRepository;
 
   /**
-   * Returns the persisted device session identified by the supplied user id. The method is used in
-   * contexts where session presence is mandatory and a missing record should be treated as a real
-   * application error rather than an optional lookup.
+   * Looks up the session a user holds on one device. A user has one session per device id, so
+   * login reuses the row of a device that signed in before and creates one for a new device.
    */
   @Override
-  public UserDevice findByUserId(final Long userId) {
-    return userDeviceRepository
-        .findByUserId(userId)
-        .orElseThrow(() -> new NotFoundException("user.device.error.not.found"));
+  public Optional<UserDevice> findByUserAndDeviceId(
+      final UserEntity userEntity, final String deviceId) {
+    return userDeviceRepository.findByUserAndDeviceId(userEntity, deviceId);
   }
 
-  /**
-   * Returns the device session associated with the supplied user aggregate. This lookup is the
-   * common path for logout and profile-related security checks that need the full persisted device
-   * state tied to the authenticated user.
-   */
+  /** Sessions still flagged as able to refresh, most recently used first. */
   @Override
-  public UserDevice findByUser(final UserEntity user) {
-    return userDeviceRepository
-        .findByUser(user)
-        .orElseThrow(() -> new NotFoundException("user.device.error.not.found"));
+  public List<UserDevice> findActiveByUser(final UserEntity userEntity) {
+    return userDeviceRepository.findByUserAndIsRefreshActiveTrueOrderByLastSeenAtDesc(userEntity);
   }
 
-  /**
-   * Looks up the device session for the supplied user without failing when none exists yet. The
-   * optional form is useful during first-login scenarios where the application may need to create
-   * the initial session record from scratch.
-   */
+  /** A session by id, scoped to its owner so one user can never reach another user's session. */
   @Override
-  public Optional<UserDevice> findOptionalByUser(final UserEntity userEntity) {
-    return userDeviceRepository.findByUser(userEntity);
+  public Optional<UserDevice> findByIdAndUser(final Long id, final UserEntity userEntity) {
+    return userDeviceRepository.findByIdAndUser(id, userEntity);
   }
 
   /**

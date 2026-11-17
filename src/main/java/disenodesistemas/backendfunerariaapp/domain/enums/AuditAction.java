@@ -68,5 +68,11 @@ public enum AuditAction {
    * A refresh token that had already been rotated was presented again after the grace window, so
    * the device session was revoked. Payload: device id and request IP.
    */
-  REFRESH_TOKEN_REUSE_DETECTED
+  REFRESH_TOKEN_REUSE_DETECTED,
+
+  /**
+   * A user closed one of their own device sessions, or a password change closed the others.
+   * Payload: reason ({@code user} or {@code password_change}).
+   */
+  USER_SESSION_REVOKED
 }

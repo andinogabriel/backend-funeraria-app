@@ -175,16 +175,19 @@ class SecurityInfrastructureAdaptersTest {
     final UserDevice userDevice = SecurityTestDataFactory.userDevice(user);
     final RefreshToken refreshToken = SecurityTestDataFactory.refreshToken(userDevice);
 
-    when(userDeviceRepository.findByUserId(1L)).thenReturn(Optional.of(userDevice));
-    when(userDeviceRepository.findByUser(user)).thenReturn(Optional.of(userDevice));
+    when(userDeviceRepository.findByUserAndDeviceId(user, TestValues.DEVICE_ID))
+        .thenReturn(Optional.of(userDevice));
+    when(userDeviceRepository.findByUserAndIsRefreshActiveTrueOrderByLastSeenAtDesc(user))
+        .thenReturn(java.util.List.of(userDevice));
+    when(userDeviceRepository.findByIdAndUser(7L, user)).thenReturn(Optional.of(userDevice));
     when(userDeviceRepository.findByUserEmailAndDeviceId(TestValues.USER_EMAIL, TestValues.DEVICE_ID))
         .thenReturn(Optional.of(userDevice));
     when(userDeviceRepository.findByRefreshToken(refreshToken)).thenReturn(Optional.of(userDevice));
     when(userDeviceRepository.save(userDevice)).thenReturn(userDevice);
 
-    assertThat(adapter.findByUserId(1L)).isEqualTo(userDevice);
-    assertThat(adapter.findByUser(user)).isEqualTo(userDevice);
-    assertThat(adapter.findOptionalByUser(user)).contains(userDevice);
+    assertThat(adapter.findByUserAndDeviceId(user, TestValues.DEVICE_ID)).contains(userDevice);
+    assertThat(adapter.findActiveByUser(user)).containsExactly(userDevice);
+    assertThat(adapter.findByIdAndUser(7L, user)).contains(userDevice);
     assertThat(adapter.findByUserEmailAndDeviceId(TestValues.USER_EMAIL, TestValues.DEVICE_ID))
         .contains(userDevice);
     assertThat(adapter.findByRefreshToken(refreshToken)).isEqualTo(userDevice);

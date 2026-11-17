@@ -7,8 +7,10 @@ import disenodesistemas.backendfunerariaapp.domain.entity.RefreshToken;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserDevice;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
 import disenodesistemas.backendfunerariaapp.exception.AppException;
+import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
 import disenodesistemas.backendfunerariaapp.web.dto.DeviceInfo;
 import java.time.Instant;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
@@ -28,13 +30,16 @@ public class UserSessionDeviceService {
   private final DeviceFingerprintPort deviceFingerprintPort;
   private final UserSessionSecurityService userSessionSecurityService;
 
-  /**
-   * Loads the persisted device session associated with the supplied user aggregate. Callers use
-   * this helper when a session must already exist, such as logout flows that operate on the active
-   * device state previously established during login.
-   */
-  public UserDevice findByUser(final UserEntity userEntity) {
-    return userDevicePort.findByUser(userEntity);
+  /** Sessions of the user that can still refresh, most recently used first. */
+  public List<UserDevice> findActiveSessions(final UserEntity userEntity) {
+    return userDevicePort.findActiveByUser(userEntity);
+  }
+
+  /** One of the user's own sessions; another user's id is reported as not found. */
+  public UserDevice findOwnedSession(final Long sessionId, final UserEntity userEntity) {
+    return userDevicePort
+        .findByIdAndUser(sessionId, userEntity)
+        .orElseThrow(() -> new NotFoundException("user.session.error.not.found"));
   }
 
   /**
@@ -60,7 +65,7 @@ public class UserSessionDeviceService {
     final String fingerprintHash = resolveFingerprint(deviceId, requestMetadata);
     final UserDevice userDevice =
         userDevicePort
-            .findOptionalByUser(userEntity)
+            .findByUserAndDeviceId(userEntity, deviceId)
             .orElseGet(() -> userDevicePort.createUserDevice(deviceInfo));
 
     userDevice.registerSession(
@@ -69,27 +74,30 @@ public class UserSessionDeviceService {
         deviceType,
         fingerprintHash,
         requestMetadata.ipAddress(),
+        requestMetadata.userAgent(),
         nextTokenVersion(userDevice),
         Instant.now());
     return userDevicePort.save(userDevice);
   }
 
   /**
-   * Validates that the logout request comes from the same device that owns the active session. If
-   * the request device id differs from the persisted session, the anomaly is reported as suspicious
-   * activity and the logout is rejected before session state is modified.
+   * Resolves the session that a logout closes: the one the user holds on the requesting device.
+   * A device id with no session for that user is reported as suspicious activity and the logout is
+   * rejected before any session state is modified.
    */
-  public void assertLogoutAllowed(
-      final String principal,
-      final UserDevice userDevice,
+  public UserDevice findLogoutSession(
+      final UserEntity userEntity,
       final DeviceInfo deviceInfo,
       final RequestMetadata requestMetadata) {
     final String requestDeviceId = resolveDeviceId(deviceInfo);
-    if (!userDevice.hasDeviceId(requestDeviceId)) {
-      userSessionSecurityService.recordSuspiciousRequest(
-          principal, requestDeviceId, requestMetadata, "logout_device_id_mismatch");
-      throw new AppException("user.error.invalid.device.id", HttpStatus.EXPECTATION_FAILED);
-    }
+    return userDevicePort
+        .findByUserAndDeviceId(userEntity, requestDeviceId)
+        .orElseThrow(
+            () -> {
+              userSessionSecurityService.recordSuspiciousRequest(
+                  userEntity.getEmail(), requestDeviceId, requestMetadata, "logout_device_id_mismatch");
+              return new AppException("user.error.invalid.device.id", HttpStatus.EXPECTATION_FAILED);
+            });
   }
 
   /**

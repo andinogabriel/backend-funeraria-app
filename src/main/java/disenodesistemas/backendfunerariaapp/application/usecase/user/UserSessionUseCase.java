@@ -58,6 +58,7 @@ public class UserSessionUseCase {
   private final RequestMetadataPort requestMetadataPort;
   private final AuthIdempotencyPort authIdempotencyPort;
   private final AuditEventPort auditEventPort;
+  private final UserSessionRevocationService userSessionRevocationService;
 
   /**
    * Executes the login flow from credential validation through token issuance. The method applies
@@ -94,6 +95,7 @@ public class UserSessionUseCase {
 
     final UserDevice userDevice =
         userSessionDeviceService.registerLoginDevice(user, loginUser.deviceInfo(), requestMetadata);
+    userSessionRevocationService.closeBeyondLimit(user);
     final JwtDto jwtDto = userSessionTokenService.issueLoginTokens(user, userDevice);
 
     authIdempotencyPort.storeJwtResponse(
@@ -111,11 +113,11 @@ public class UserSessionUseCase {
   public OperationStatusModel logoutUser(final LogOutRequestDto logOutRequest) {
     final RequestMetadata requestMetadata = requestMetadataPort.currentRequest();
     final UserEntity userEntity = authenticatedUserPort.getAuthenticatedUser();
-    final UserDevice userDevice = userSessionDeviceService.findByUser(userEntity);
     logLogoutStarted(userEntity.getEmail(), logOutRequest.deviceInfo());
 
-    userSessionDeviceService.assertLogoutAllowed(
-        userEntity.getEmail(), userDevice, logOutRequest.deviceInfo(), requestMetadata);
+    final UserDevice userDevice =
+        userSessionDeviceService.findLogoutSession(
+            userEntity, logOutRequest.deviceInfo(), requestMetadata);
     final UserDevice updatedUserDevice = userSessionDeviceService.deactivateSession(userDevice);
     userSessionTokenService.revokeIfPresent(updatedUserDevice);
 

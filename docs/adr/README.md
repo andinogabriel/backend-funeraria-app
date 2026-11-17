@@ -29,6 +29,7 @@ every PR description.
 | [0021](0021-membership-dues-and-payments.md) | Monthly membership dues, payments and account statement | `membership_dues` / `membership_payments` (V19), `MembershipDuesUseCase`, `MembershipAccountUseCase` |
 | [0022](0022-claim-eligibility.md) | Claim eligibility (waiting period, arrears grace, accidental death) | `MembershipEligibilityUseCase`, `death_causes.accidental` + deceased coverage snapshot (V20) |
 | [0023](0023-refresh-token-cookie-and-reuse-detection.md) | Refresh token in an HttpOnly cookie, with reuse detection | `UserController` cookie, `UserSessionUseCase.resolveRefreshToken`, `refresh_tokens.previous_token_hash` (V22) |
+| [0024](0024-multi-device-sessions.md) | Multiple device sessions per user, listed and closable by their owner | `UserActiveSessionsUseCase`, `UserSessionRevocationService`, `/users/me/sessions`, `user_devices (user_id, device_id)` (V23) |
 
 ## When to add a new ADR
 
