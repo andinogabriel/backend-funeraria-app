@@ -2,6 +2,7 @@ package disenodesistemas.backendfunerariaapp.web.controller;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
 import disenodesistemas.backendfunerariaapp.application.usecase.user.UserAccountUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.user.UserActiveSessionsUseCase;
 import disenodesistemas.backendfunerariaapp.application.usecase.user.UserProfileUseCase;
 import disenodesistemas.backendfunerariaapp.application.usecase.user.UserQueryUseCase;
 import disenodesistemas.backendfunerariaapp.application.usecase.user.UserRoleUseCase;
@@ -23,6 +24,7 @@ import disenodesistemas.backendfunerariaapp.web.dto.response.AddressResponseDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.MobileNumberResponseDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.UserAddressAndPhoneDto;
 import disenodesistemas.backendfunerariaapp.web.dto.response.UserResponseDto;
+import disenodesistemas.backendfunerariaapp.web.dto.response.UserSessionResponseDto;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -35,6 +37,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -57,6 +60,7 @@ public class UserController {
   private final UserModelAssembler userModelAssembler;
   private final AuthenticatedUserPort authenticatedUserPort;
   private final RefreshTokenCookies refreshTokenCookies;
+  private final UserActiveSessionsUseCase userActiveSessionsUseCase;
 
   @GetMapping(path = "/me")
   public EntityModel<UserDto> getUser() {
@@ -109,6 +113,28 @@ public class UserController {
     return ResponseEntity.ok()
         .header(HttpHeaders.SET_COOKIE, refreshTokenCookies.issue(session.refreshToken()).toString())
         .body(session);
+  }
+
+  /** The device sessions of the authenticated user that can still refresh (ADR-0024). */
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  @GetMapping(path = "/me/sessions")
+  public ResponseEntity<List<UserSessionResponseDto>> listMySessions() {
+    return ResponseEntity.ok(userActiveSessionsUseCase.listMine());
+  }
+
+  /** Closes another session of the authenticated user; the current one is a logout (409). */
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  @DeleteMapping(path = "/me/sessions/{id}")
+  public ResponseEntity<Void> closeMySession(@PathVariable("id") final Long id) {
+    userActiveSessionsUseCase.closeMine(id);
+    return ResponseEntity.noContent().build();
+  }
+
+  /** Closes every session of the authenticated user except the current one. */
+  @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+  @DeleteMapping(path = "/me/sessions")
+  public ResponseEntity<Map<String, Integer>> closeMyOtherSessions() {
+    return ResponseEntity.ok(Map.of("closed", userActiveSessionsUseCase.closeOthers()));
   }
 
   @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")

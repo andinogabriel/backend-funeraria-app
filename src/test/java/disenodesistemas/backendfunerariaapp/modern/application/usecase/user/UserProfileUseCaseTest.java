@@ -3,12 +3,16 @@ package disenodesistemas.backendfunerariaapp.modern.application.usecase.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.MessageResolverPort;
+import disenodesistemas.backendfunerariaapp.application.port.out.RequestMetadataPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.UserPersistencePort;
 import disenodesistemas.backendfunerariaapp.application.usecase.user.UserProfileUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.user.UserSessionRevocationService;
+import disenodesistemas.backendfunerariaapp.modern.support.TestValues;
 import disenodesistemas.backendfunerariaapp.domain.entity.MobileNumberEntity;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
 import disenodesistemas.backendfunerariaapp.exception.AppException;
@@ -42,6 +46,8 @@ class UserProfileUseCaseTest {
   @Mock private MobileNumberMapper mobileNumberMapper;
   @Mock private PasswordEncoder passwordEncoder;
   @Mock private MessageResolverPort messageResolverPort;
+  @Mock private RequestMetadataPort requestMetadataPort;
+  @Mock private UserSessionRevocationService userSessionRevocationService;
 
   @InjectMocks private UserProfileUseCase userProfileUseCase;
 
@@ -63,12 +69,16 @@ class UserProfileUseCaseTest {
     when(passwordEncoder.encode(passwordResetDto.newPassword())).thenReturn("argon2-hash");
     when(messageResolverPort.getMessage("user.password.changed.correctly"))
         .thenReturn("Contrasena actualizada");
+    when(requestMetadataPort.currentRequest()).thenReturn(SecurityTestDataFactory.requestMetadata());
 
     final Map<String, String> response = userProfileUseCase.changeOldPassword(passwordResetDto);
 
     assertThat(response).containsEntry("message", "Contrasena actualizada");
     assertThat(userEntity.getEncryptedPassword()).isEqualTo("argon2-hash");
     verify(userPersistencePort).save(userEntity);
+    verify(userSessionRevocationService)
+        .closeOthers(
+            userEntity, TestValues.DEVICE_ID, UserSessionRevocationService.REASON_PASSWORD_CHANGE);
   }
 
   @Test
@@ -91,6 +101,7 @@ class UserProfileUseCaseTest {
         .isInstanceOf(AppException.class)
         .extracting("message")
         .isEqualTo("user.error.actual.password.not.match");
+    verifyNoInteractions(userSessionRevocationService);
   }
 
   @Test

@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.MessageResolverPort;
 import disenodesistemas.backendfunerariaapp.application.usecase.user.UserAccountUseCase;
+import disenodesistemas.backendfunerariaapp.application.usecase.user.UserActiveSessionsUseCase;
 import disenodesistemas.backendfunerariaapp.application.usecase.user.UserProfileUseCase;
 import disenodesistemas.backendfunerariaapp.application.usecase.user.UserQueryUseCase;
 import disenodesistemas.backendfunerariaapp.application.usecase.user.UserRoleUseCase;
@@ -57,7 +58,8 @@ class UserControllerSessionCookieTest {
             mock(UserQueryUseCase.class),
             mock(UserModelAssembler.class),
             mock(AuthenticatedUserPort.class),
-            new RefreshTokenCookies(new RefreshTokenSecurityProperties(604800, 32, 30, true)));
+            new RefreshTokenCookies(new RefreshTokenSecurityProperties(604800, 32, 30, true)),
+            mock(UserActiveSessionsUseCase.class));
     mockMvc =
         MockMvcBuilders.standaloneSetup(controller)
             .setControllerAdvice(new AppExceptionsHandler(mock(MessageResolverPort.class)))
