@@ -205,7 +205,7 @@ services:
   loki:
     profiles:
       - observability
-    image: grafana/loki:3.7.9
+    image: grafana/loki:3.7.10
     container_name: backend-funeraria-loki
     command: ["-config.file=/etc/loki/loki.yaml"]
     ports:
