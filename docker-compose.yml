@@ -219,7 +219,7 @@ services:
   alloy:
     profiles:
       - observability
-    image: grafana/alloy:v1.21.3
+    image: grafana/alloy:v1.22.0
     container_name: backend-funeraria-alloy
     command: ["run", "--server.http.listen-addr=0.0.0.0:12345", "/etc/alloy/config.alloy"]
     depends_on:
