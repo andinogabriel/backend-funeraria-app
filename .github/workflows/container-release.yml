@@ -25,6 +25,10 @@ permissions:
   contents: read
   packages: write
   security-events: write
+  # Keyless signing: the job's OIDC token is exchanged for a short-lived Sigstore
+  # certificate bound to this workflow, and the provenance lands in the repo attestations.
+  id-token: write
+  attestations: write
 
 env:
   REGISTRY: ghcr.io
@@ -38,7 +42,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           fetch-depth: 0
 
@@ -60,7 +64,7 @@ jobs:
           fi
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Prepare image metadata
         id: image
@@ -107,7 +111,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Build Docker image
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: ./Dockerfile
@@ -125,7 +129,7 @@ jobs:
         run: bash .github/scripts/container-smoke-test.sh
 
       - name: Generate image SBOM
-        uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
           image: ${{ steps.image.outputs.primary_tag }}
           artifact-name: backend-funeraria-app-sbom.spdx.json
@@ -135,7 +139,7 @@ jobs:
           upload-release-assets: false
 
       - name: Run Trivy vulnerability scan
-        uses: aquasecurity/trivy-action@v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ steps.image.outputs.primary_tag }}
           format: sarif
@@ -146,20 +150,20 @@ jobs:
 
       - name: Upload Trivy SARIF
         if: always() && hashFiles('trivy-results.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           sarif_file: trivy-results.sarif
 
       - name: Upload Trivy SARIF artifact
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: trivy-results
           path: trivy-results.sarif
           if-no-files-found: ignore
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v4
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -169,6 +173,47 @@ jobs:
         shell: bash
         run: docker image push --all-tags "${{ steps.image.outputs.image_ref }}"
 
+      # Everything below works on the pushed digest, never on a tag: a tag can be moved,
+      # the digest is the image content.
+      - name: Resolve pushed digest
+        id: digest
+        shell: bash
+        env:
+          IMAGE_REF: ${{ steps.image.outputs.image_ref }}
+          PRIMARY_TAG: ${{ steps.image.outputs.primary_tag }}
+        run: |
+          repo_digest="$(docker image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$PRIMARY_TAG" \
+            | grep "^${IMAGE_REF}@sha256:" | head -1)"
+          if [ -z "$repo_digest" ]; then
+            echo "Could not resolve the pushed digest for $PRIMARY_TAG." >&2
+            exit 1
+          fi
+          {
+            echo "digest=${repo_digest#*@}"
+            echo "ref=$repo_digest"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+
+      - name: Sign image and attach the SBOM attestation
+        shell: bash
+        env:
+          IMAGE_DIGEST_REF: ${{ steps.digest.outputs.ref }}
+        run: |
+          cosign sign --yes "$IMAGE_DIGEST_REF"
+          cosign attest --yes --type spdxjson \
+            --predicate backend-funeraria-app-sbom.spdx.json "$IMAGE_DIGEST_REF"
+
+      - name: Generate SLSA build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          # The repository without a tag: the attestation is bound to the digest, and
+          # push-to-registry stores it next to the image under that name.
+          subject-name: ${{ steps.image.outputs.image_ref }}
+          subject-digest: ${{ steps.digest.outputs.digest }}
+          push-to-registry: true
+
       - name: Summarize release
         if: always()
         shell: bash
@@ -176,12 +221,14 @@ jobs:
           IMAGE_REF: ${{ steps.image.outputs.image_ref }}
           PRIMARY_TAG: ${{ steps.image.outputs.primary_tag }}
           TAGS: ${{ steps.image.outputs.tags }}
+          DIGEST: ${{ steps.digest.outputs.digest }}
         run: |
           {
             echo "## Container Release"
             echo ""
             echo "- Image: \`$IMAGE_REF\`"
             echo "- Primary tag: \`$PRIMARY_TAG\`"
+            echo "- Digest: \`${DIGEST:-not pushed}\` (cosign signature, SBOM attestation, SLSA provenance)"
             echo "- Smoke test: Docker healthcheck passed before publishing"
             echo "- SBOM artifact: \`backend-funeraria-app-sbom.spdx.json\`"
             echo "- Trivy SARIF: \`trivy-results.sarif\`"

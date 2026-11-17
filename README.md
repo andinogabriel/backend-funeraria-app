@@ -657,8 +657,13 @@ workflows:
   - container smoke test before publishing
   - image SBOM generation through Syft
   - Trivy image vulnerability scanning before publishing
+  - keyless cosign signature, SBOM attestation and SLSA build provenance on the pushed digest
 - Dependabot
   - weekly dependency updates for Maven and GitHub Actions
+
+Every action in the workflows is pinned to a full commit SHA with a `# vX.Y.Z` comment; a tag
+can be moved by the action's owner, a SHA cannot. Dependabot keeps proposing upgrades in that
+form, and `WorkflowActionPinningGuardrailsTest` fails the build on any `uses:` that is not pinned.
 
 Workflow files:
 
@@ -677,6 +682,20 @@ Release tags:
 - `sha-<commit>` is always published
 - `v*` Git tags publish the matching version tag and `latest`
 - manual runs from `master` can publish an optional custom tag and optionally `latest`
+
+Verify an image before deploying it. Both checks fail unless the image was built by this repo's
+`Container Release` workflow (the signature is keyless: Sigstore binds it to the workflow's
+GitHub OIDC identity, there is no key to leak):
+
+```bash
+IMAGE=ghcr.io/andinogabriel/backend-funeraria-app:v1.2.3
+cosign verify "$IMAGE" \
+  --certificate-identity-regexp '^https://github.com/andinogabriel/backend-funeraria-app/\.github/workflows/container-release\.yml@refs/(heads/master|tags/v.+)$' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+gh attestation verify "oci://$IMAGE" -R andinogabriel/backend-funeraria-app
+```
+
+`cosign verify-attestation --type spdxjson` (same identity flags) returns the signed SBOM.
 
 The runtime image defines a Docker `HEALTHCHECK` against `/actuator/health/liveness`. CI and
 container releases both start PostgreSQL, apply the Flyway migrations, start the built image and
