@@ -236,7 +236,7 @@ services:
   grafana:
     profiles:
       - observability
-    image: grafana/grafana:13.3.0
+    image: grafana/grafana:13.3.1
     container_name: backend-funeraria-grafana
     depends_on:
       prometheus:
