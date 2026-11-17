@@ -511,6 +511,39 @@ Default development credentials created automatically in Docker profile:
 - `.env.example` documents the runtime variables expected by Docker Compose; keep it in sync when
   adding configuration knobs
 
+### Deployment requirements
+
+**Published ports.** Only the API (`SERVER_PORT`, 8081) listens on every interface.
+
+- **Postgres** is published on `POSTGRES_BIND_ADDRESS` (default `127.0.0.1`). The app reaches it
+  over the compose network, so the host port only serves `psql` and IDEs on this machine.
+- **The observability UIs** (Prometheus, Alertmanager, Tempo, Loki, Alloy, Grafana) are
+  published on `OBSERVABILITY_BIND_ADDRESS` (default `127.0.0.1`), because most of them have
+  no login.
+- **The actuator** (8082) and the OTLP collector are always loopback only.
+- To use any of these from another machine, prefer an SSH tunnel
+  (`ssh -L 3000:localhost:3000 server`) over `0.0.0.0`. If you do open Postgres, change
+  `POSTGRES_PASSWORD` first.
+
+**Session cookie.** The refresh token travels only in an HttpOnly `refresh_token` cookie
+(`Secure`, `SameSite=Strict`, `Path=/api/v1/users`; see ADR-0023).
+
+- **Serve the SPA and the API from the same origin.** The frontend's nginx proxies `/api`, and
+  `ng serve` uses a dev proxy. CORS (`APP_WEB_CORS_ENABLED`, off by default) never allows
+  credentials, so an SPA on another origin never receives the cookie and every reload lands on
+  the login page. Do not widen CORS to credentialed foreign origins to "fix" that.
+- **HTTPS, or `localhost`.** Browsers accept the `Secure` cookie over plain http only on
+  `localhost`. If users reach the app over plain http by IP or hostname (for example on the
+  office LAN), set `SECURITY_REFRESH_TOKEN_COOKIE_SECURE=false` until HTTPS is in place.
+- **Deploy order.** Deploy the backend before a frontend that relies on the cookie. An older
+  frontend keeps working against this backend, because the browser sends the cookie on its
+  own.
+- **Reuse alerts.** A rotated refresh token replayed more than
+  `SECURITY_REFRESH_TOKEN_REUSE_GRACE_SECONDS` (30) after rotation closes that device session.
+  The event is written to the audit log as `REFRESH_TOKEN_REUSE_DETECTED`, plus a
+  `user.token.refresh.reuse_detected` warning in the logs. Repeated entries for the same user
+  mean a stolen token, not a bug.
+
 ### Useful Docker commands
 
 Start in detached mode:
