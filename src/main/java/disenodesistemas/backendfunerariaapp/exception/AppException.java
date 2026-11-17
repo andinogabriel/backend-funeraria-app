@@ -14,7 +14,7 @@ import org.springframework.http.HttpStatus;
  */
 @Getter
 public sealed class AppException extends RuntimeException
-    permits NotFoundException, ConflictException {
+    permits NotFoundException, ConflictException, RefreshTokenReuseException {
 
   private final HttpStatus status;
 

@@ -44,6 +44,7 @@ public class AppExceptionsHandler {
     final String event = switch (ex) {
       case NotFoundException ignored -> "exception.resource.not_found";
       case ConflictException ignored -> "exception.resource.conflict";
+      case RefreshTokenReuseException ignored -> "security.refresh_token.reuse_detected";
       case AppException ignored -> "exception.application";
     };
 

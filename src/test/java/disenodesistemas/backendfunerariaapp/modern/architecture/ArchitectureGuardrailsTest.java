@@ -1,5 +1,7 @@
 package disenodesistemas.backendfunerariaapp.modern.architecture;
 
+import static com.tngtech.archunit.base.DescribedPredicate.not;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
@@ -120,4 +122,18 @@ class ArchitectureGuardrailsTest {
               "security adapters and properties live under 'infrastructure.security' and Bean "
                   + "Validation annotations under 'web.dto.validation'; the legacy top-level "
                   + "'security' package was consolidated and must not return");
+
+  @ArchTest
+  static final ArchRule web_layer_must_not_depend_on_infrastructure =
+      noClasses()
+          .that()
+          .resideInAPackage("..web..")
+          .should()
+          .dependOnClassesThat(
+              resideInAPackage("..infrastructure..")
+                  .and(not(resideInAPackage("..infrastructure.security.config.."))))
+          .because(
+              "HTTP concerns (controllers, DTOs, the refresh-token cookie in 'web.support') reach "
+                  + "the rest of the system through use cases and ports; only configuration "
+                  + "property carriers under 'infrastructure.security.config' may be read");
 }

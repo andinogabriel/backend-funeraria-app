@@ -9,4 +9,6 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "security.refresh-token")
 public record RefreshTokenSecurityProperties(
     @DefaultValue("604800") @Min(60) long expirationSeconds,
-    @DefaultValue("32") @Min(16) int randomBytesLength) {}
+    @DefaultValue("32") @Min(16) int randomBytesLength,
+    @DefaultValue("30") @Min(0) long reuseGraceSeconds,
+    @DefaultValue("true") boolean cookieSecure) {}

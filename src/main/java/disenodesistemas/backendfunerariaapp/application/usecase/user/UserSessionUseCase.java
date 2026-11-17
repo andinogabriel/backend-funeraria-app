@@ -2,6 +2,7 @@ package disenodesistemas.backendfunerariaapp.application.usecase.user;
 
 import disenodesistemas.backendfunerariaapp.utils.LogMasking;
 import disenodesistemas.backendfunerariaapp.application.model.RequestMetadata;
+import disenodesistemas.backendfunerariaapp.application.port.out.AuditEventPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.AuthIdempotencyPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.AuthenticatedUserPort;
 import disenodesistemas.backendfunerariaapp.application.port.out.MessageResolverPort;
@@ -9,8 +10,12 @@ import disenodesistemas.backendfunerariaapp.application.port.out.RequestMetadata
 import disenodesistemas.backendfunerariaapp.domain.entity.RefreshToken;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserDevice;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserEntity;
+import disenodesistemas.backendfunerariaapp.domain.enums.AuditAction;
 import disenodesistemas.backendfunerariaapp.event.OnUserLogoutSuccessEvent;
 import disenodesistemas.backendfunerariaapp.exception.AppException;
+import disenodesistemas.backendfunerariaapp.exception.ConflictException;
+import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
+import disenodesistemas.backendfunerariaapp.exception.RefreshTokenReuseException;
 import disenodesistemas.backendfunerariaapp.utils.OperationStatusModel;
 import disenodesistemas.backendfunerariaapp.web.dto.DeviceInfo;
 import disenodesistemas.backendfunerariaapp.web.dto.JwtDto;
@@ -21,9 +26,11 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +57,7 @@ public class UserSessionUseCase {
   private final MessageResolverPort messageResolverPort;
   private final RequestMetadataPort requestMetadataPort;
   private final AuthIdempotencyPort authIdempotencyPort;
+  private final AuditEventPort auditEventPort;
 
   /**
    * Executes the login flow from credential validation through token issuance. The method applies
@@ -124,14 +132,18 @@ public class UserSessionUseCase {
    * refresh token, verifies device continuity, supports idempotent retries and returns the rotated
    * token pair that replaces the previous access and refresh credentials.
    */
-  @Transactional
-  public JwtDto refreshJwtToken(final TokenRefreshRequestDto tokenRefreshRequestDto) {
+  @Transactional(noRollbackFor = RefreshTokenReuseException.class)
+  public JwtDto refreshJwtToken(
+      final String rawRefreshToken, final TokenRefreshRequestDto tokenRefreshRequestDto) {
+    if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
+      throw new AppException("refresh.token.error.blank.token", HttpStatus.UNAUTHORIZED);
+    }
     final RequestMetadata requestMetadata = requestMetadataPort.currentRequest();
     final String deviceId = userSessionDeviceService.resolveDeviceId(tokenRefreshRequestDto.deviceInfo());
     logRefreshStarted(deviceId, requestMetadata);
 
     final String idempotencyFingerprint =
-        refreshFingerprint(tokenRefreshRequestDto, requestMetadata);
+        refreshFingerprint(rawRefreshToken, tokenRefreshRequestDto, requestMetadata);
     final JwtDto cachedResponse =
         authIdempotencyPort
             .findJwtResponse(
@@ -142,7 +154,7 @@ public class UserSessionUseCase {
     }
 
     final RefreshToken refreshToken =
-        userSessionTokenService.resolveActiveRefreshToken(tokenRefreshRequestDto.refreshToken());
+        resolveRefreshToken(rawRefreshToken, deviceId, requestMetadata);
     final UserDevice userDevice =
         userSessionDeviceService.refreshSession(
             refreshToken, tokenRefreshRequestDto.deviceInfo(), requestMetadata, refreshToken.getUserDevice().getUser().getEmail());
@@ -154,6 +166,74 @@ public class UserSessionUseCase {
         REFRESH_OPERATION, requestMetadata.idempotencyKey(), idempotencyFingerprint, jwtDto);
     logRefreshCompleted(userEntity.getEmail(), userDevice);
     return jwtDto;
+  }
+
+  /**
+   * Resolves the session behind a raw refresh token and applies reuse detection.
+   *
+   * <ul>
+   *   <li>The current token of a session: checked for revocation and expiry, then returned.
+   *   <li>The previous token of a session, within the grace window: a benign race (two tabs, a
+   *       retried request) whose winner already rotated the cookie, so 409 tells the client to
+   *       retry with the cookie it now holds.
+   *   <li>The previous token after the grace window: the value was replayed by whoever does not
+   *       hold the new one. The device session is closed and its access tokens invalidated, the
+   *       event is audited and logged, and the request fails with 401. The
+   *       surrounding transaction does not roll back on that exception, so the revocation sticks.
+   *   <li>Anything else: 404, as before.
+   * </ul>
+   */
+  private RefreshToken resolveRefreshToken(
+      final String rawRefreshToken,
+      final String deviceId,
+      final RequestMetadata requestMetadata) {
+    final Optional<RefreshToken> current = userSessionTokenService.findCurrent(rawRefreshToken);
+    if (current.isPresent()) {
+      userSessionTokenService.verifyActive(current.get());
+      return current.get();
+    }
+
+    final RefreshToken superseded =
+        userSessionTokenService
+            .findSuperseded(rawRefreshToken)
+            .orElseThrow(() -> new NotFoundException("refresh.token.error.not.found"));
+    userSessionTokenService.verifyActive(superseded);
+    if (userSessionTokenService.isWithinReuseGrace(superseded)) {
+      throw new ConflictException("refresh.token.error.superseded");
+    }
+
+    final UserDevice userDevice = superseded.getUserDevice();
+    final UserEntity user = userDevice.getUser();
+    // Deliberately not reported to the threat-protection blacklist: with the production policy
+    // that blocks the principal outright, a thief replaying a stolen token would lock the real
+    // user out of logging in again. Closing the session is the containment; the audit entry and
+    // the warn log are the alert.
+    final UserDevice closedDevice = userSessionDeviceService.deactivateSession(userDevice);
+    userSessionTokenService.revokeIfPresent(closedDevice);
+    auditEventPort.record(
+        AuditAction.REFRESH_TOKEN_REUSE_DETECTED,
+        user.getEmail(),
+        user.getId(),
+        "USER_DEVICE",
+        closedDevice.getDeviceId(),
+        "{\"requestDeviceId\":\""
+            + jsonSafe(deviceId)
+            + "\",\"ipAddress\":\""
+            + jsonSafe(requestMetadata.ipAddress())
+            + "\"}");
+    log.atWarn()
+        .addKeyValue("event", "user.token.refresh.reuse_detected")
+        .addKeyValue("email", LogMasking.maskEmail(user.getEmail()))
+        .addKeyValue("deviceId", closedDevice.getDeviceId())
+        .addKeyValue("requestDeviceId", deviceId)
+        .addKeyValue("ipAddress", requestMetadata.ipAddress())
+        .log("user.token.refresh.reuse_detected");
+    throw new RefreshTokenReuseException();
+  }
+
+  /** Keeps request-supplied strings from breaking out of the hand-built audit JSON payload. */
+  private static String jsonSafe(final String value) {
+    return value == null ? "" : value.replaceAll("[^A-Za-z0-9._:\\-]", "_");
   }
 
   /**
@@ -181,11 +261,13 @@ public class UserSessionUseCase {
    * agent before hashing so replay detection remains deterministic and opaque.
    */
   private String refreshFingerprint(
-      final TokenRefreshRequestDto tokenRefreshRequestDto, final RequestMetadata requestMetadata) {
+      final String rawRefreshToken,
+      final TokenRefreshRequestDto tokenRefreshRequestDto,
+      final RequestMetadata requestMetadata) {
     return sha256(
         REFRESH_OPERATION
             + '|'
-            + tokenRefreshRequestDto.refreshToken()
+            + rawRefreshToken
             + '|'
             + userSessionDeviceService.resolveDeviceId(tokenRefreshRequestDto.deviceInfo())
             + '|'

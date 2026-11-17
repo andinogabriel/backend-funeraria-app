@@ -62,5 +62,11 @@ public enum AuditAction {
   MEMBERSHIP_PAYMENT_REGISTERED,
 
   /** Monthly dues were generated for a period. Payload: period and counts. */
-  MEMBERSHIP_DUES_GENERATED
+  MEMBERSHIP_DUES_GENERATED,
+
+  /**
+   * A refresh token that had already been rotated was presented again after the grace window, so
+   * the device session was revoked. Payload: device id and request IP.
+   */
+  REFRESH_TOKEN_REUSE_DETECTED
 }

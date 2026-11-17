@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 import disenodesistemas.backendfunerariaapp.domain.entity.RefreshToken;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserDevice;
 import disenodesistemas.backendfunerariaapp.exception.AppException;
-import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
 import disenodesistemas.backendfunerariaapp.modern.support.SecurityTestDataFactory;
 import disenodesistemas.backendfunerariaapp.modern.support.TestValues;
 import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.RefreshTokenRepository;
@@ -31,7 +30,7 @@ class RefreshTokenPersistenceAdapterTest {
   @Mock private RefreshTokenRepository refreshTokenRepository;
 
   private final RefreshTokenSecurityProperties properties =
-      new RefreshTokenSecurityProperties(604800, 32);
+      new RefreshTokenSecurityProperties(604800, 32, 30, true);
 
   private RefreshTokenPersistenceAdapter adapter;
 
@@ -72,6 +71,8 @@ class RefreshTokenPersistenceAdapterTest {
 
     assertThat(rawToken).isNotBlank();
     assertThat(refreshToken.getTokenHash()).isNotEqualTo(previousHash);
+    assertThat(refreshToken.getPreviousTokenHash()).isEqualTo(previousHash);
+    assertThat(refreshToken.getRotatedAt()).isNotNull();
     assertThat(refreshToken.getRefreshCount()).isEqualTo(1L);
     verify(refreshTokenRepository).save(refreshToken);
   }
@@ -137,23 +138,68 @@ class RefreshTokenPersistenceAdapterTest {
     when(refreshTokenRepository.findByTokenHash(org.mockito.ArgumentMatchers.anyString()))
         .thenReturn(Optional.of(refreshToken));
 
-    final RefreshToken resolved = adapter.findByToken(rawToken);
-
-    assertThat(resolved).isSameAs(refreshToken);
+    assertThat(adapter.findByToken(rawToken)).containsSame(refreshToken);
     verify(refreshTokenRepository).findByTokenHash(org.mockito.ArgumentMatchers.anyString());
   }
 
   @Test
   @DisplayName(
-      "Given a raw refresh token that is not persisted when it is searched then the adapter throws not found")
-  void givenARawRefreshTokenThatIsNotPersistedWhenItIsSearchedThenTheAdapterThrowsNotFound() {
+      "Given a raw refresh token that is not persisted when it is searched then the adapter returns empty instead of throwing")
+  void givenARawRefreshTokenThatIsNotPersistedWhenItIsSearchedThenTheAdapterReturnsEmptyInsteadOfThrowing() {
     when(refreshTokenRepository.findByTokenHash(org.mockito.ArgumentMatchers.anyString()))
         .thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> adapter.findByToken(TestValues.MISSING_REFRESH_TOKEN))
-        .isInstanceOf(NotFoundException.class)
-        .extracting("message")
-        .isEqualTo("refresh.token.error.not.found");
+    assertThat(adapter.findByToken(TestValues.MISSING_REFRESH_TOKEN)).isEmpty();
+  }
+
+  @Test
+  @DisplayName(
+      "Given a token that was rotated away when it is searched as superseded then the adapter resolves it by the previous hash")
+  void givenATokenThatWasRotatedAwayWhenItIsSearchedAsSupersededThenTheAdapterResolvesItByThePreviousHash() {
+    final RefreshToken refreshToken =
+        SecurityTestDataFactory.refreshToken(
+            SecurityTestDataFactory.userDevice(SecurityTestDataFactory.userEntity()));
+    when(refreshTokenRepository.save(org.mockito.ArgumentMatchers.any(RefreshToken.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+    final String first = adapter.issueForDevice(refreshToken.getUserDevice());
+    adapter.rotate(refreshToken);
+    when(refreshTokenRepository.findByPreviousTokenHash(refreshToken.getPreviousTokenHash()))
+        .thenReturn(Optional.of(refreshToken));
+
+    assertThat(adapter.findBySupersededToken(first)).containsSame(refreshToken);
+  }
+
+  @Test
+  @DisplayName(
+      "Given rotation instants around the grace window when reuse grace is checked then only a recent rotation counts as a benign race")
+  void givenRotationInstantsAroundTheGraceWindowWhenReuseGraceIsCheckedThenOnlyARecentRotationCountsAsABenignRace() {
+    final RefreshToken refreshToken =
+        SecurityTestDataFactory.refreshToken(
+            SecurityTestDataFactory.userDevice(SecurityTestDataFactory.userEntity()));
+
+    refreshToken.setRotatedAt(null);
+    assertThat(adapter.isWithinReuseGrace(refreshToken)).isFalse();
+    refreshToken.setRotatedAt(Instant.now().minusSeconds(5));
+    assertThat(adapter.isWithinReuseGrace(refreshToken)).isTrue();
+    refreshToken.setRotatedAt(Instant.now().minusSeconds(31));
+    assertThat(adapter.isWithinReuseGrace(refreshToken)).isFalse();
+  }
+
+  @Test
+  @DisplayName(
+      "Given a session that was rotated before when a new login issues a token then the superseded hash is forgotten")
+  void givenASessionThatWasRotatedBeforeWhenANewLoginIssuesATokenThenTheSupersededHashIsForgotten() {
+    final UserDevice userDevice = SecurityTestDataFactory.userDevice(SecurityTestDataFactory.userEntity());
+    final RefreshToken refreshToken = SecurityTestDataFactory.refreshToken(userDevice);
+    refreshToken.setPreviousTokenHash("old-hash");
+    refreshToken.setRotatedAt(Instant.now());
+    when(refreshTokenRepository.save(org.mockito.ArgumentMatchers.any(RefreshToken.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    adapter.issueForDevice(userDevice);
+
+    assertThat(refreshToken.getPreviousTokenHash()).isNull();
+    assertThat(refreshToken.getRotatedAt()).isNull();
   }
 
   @Test

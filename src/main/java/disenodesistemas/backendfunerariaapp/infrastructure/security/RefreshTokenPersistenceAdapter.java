@@ -6,7 +6,6 @@ import disenodesistemas.backendfunerariaapp.application.port.out.RefreshTokenPor
 import disenodesistemas.backendfunerariaapp.domain.entity.RefreshToken;
 import disenodesistemas.backendfunerariaapp.domain.entity.UserDevice;
 import disenodesistemas.backendfunerariaapp.exception.AppException;
-import disenodesistemas.backendfunerariaapp.exception.NotFoundException;
 import disenodesistemas.backendfunerariaapp.infrastructure.persistence.repository.RefreshTokenRepository;
 import disenodesistemas.backendfunerariaapp.infrastructure.security.config.RefreshTokenSecurityProperties;
 import java.nio.charset.StandardCharsets;
@@ -16,6 +15,7 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.HexFormat;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -41,13 +41,36 @@ public class RefreshTokenPersistenceAdapter implements RefreshTokenPort {
   /**
    * Resolves the persisted refresh-token aggregate that corresponds to the raw client token. The
    * lookup hashes the incoming value first so the database comparison never relies on storing or
-   * querying the refresh secret in plain text.
+   * querying the refresh secret in plain text. Absence is returned instead of thrown so callers
+   * can go on to check whether the value is a superseded token without the surrounding
+   * transaction having been marked rollback-only.
    */
   @Override
-  public RefreshToken findByToken(final String token) {
-    return refreshTokenRepository
-        .findByTokenHash(hash(token))
-        .orElseThrow(() -> new NotFoundException("refresh.token.error.not.found"));
+  public Optional<RefreshToken> findByToken(final String token) {
+    return refreshTokenRepository.findByTokenHash(hash(token));
+  }
+
+  /**
+   * Resolves the session whose previous (already rotated) token matches the raw client value.
+   * Only the immediately preceding token is remembered, which is enough to detect the replay of a
+   * stolen value: whoever presents it after the rotation is not the party holding the new one.
+   */
+  @Override
+  public Optional<RefreshToken> findBySupersededToken(final String token) {
+    return refreshTokenRepository.findByPreviousTokenHash(hash(token));
+  }
+
+  /**
+   * Tells a benign concurrent refresh (two tabs racing with the same cookie, a retried request)
+   * from a replay: the former reaches the server within a few seconds of the rotation.
+   */
+  @Override
+  public boolean isWithinReuseGrace(final RefreshToken refreshToken) {
+    return refreshToken.getRotatedAt() != null
+        && refreshToken
+            .getRotatedAt()
+            .plusSeconds(refreshTokenSecurityProperties.reuseGraceSeconds())
+            .isAfter(Instant.now());
   }
 
   /**
@@ -65,6 +88,8 @@ public class RefreshTokenPersistenceAdapter implements RefreshTokenPort {
     refreshToken.setUserDevice(userDevice);
     userDevice.setRefreshToken(refreshToken);
     refreshToken.setTokenHash(hash(rawToken));
+    refreshToken.setPreviousTokenHash(null);
+    refreshToken.setRotatedAt(null);
     refreshToken.setIssuedAt(Instant.now());
     refreshToken.setLastUsedAt(Instant.now());
     refreshToken.setRevokedAt(null);
@@ -84,14 +109,18 @@ public class RefreshTokenPersistenceAdapter implements RefreshTokenPort {
   /**
    * Rotates an existing refresh token and replaces the stored hash with a new secret. Once this
    * method completes, the previous raw token becomes unusable while audit metadata such as last use
-   * time and refresh count continue evolving on the same persisted aggregate.
+   * time and refresh count continue evolving on the same persisted aggregate. The replaced hash
+   * is kept as {@code previousTokenHash} so a later replay of it is recognised as reuse.
    */
   @Override
   @Transactional
   public String rotate(final RefreshToken refreshToken) {
     final String rawToken = generateRawToken();
+    final Instant now = Instant.now();
+    refreshToken.setPreviousTokenHash(refreshToken.getTokenHash());
+    refreshToken.setRotatedAt(now);
     refreshToken.setTokenHash(hash(rawToken));
-    refreshToken.setLastUsedAt(Instant.now());
+    refreshToken.setLastUsedAt(now);
     refreshToken.setRefreshCount(
         refreshToken.getRefreshCount() == null ? 1L : refreshToken.getRefreshCount() + 1);
     refreshToken.setExpiryDate(expiresAt());
