@@ -98,7 +98,7 @@ services:
   # itself as disabled. Restore: `docker compose run --rm backup-offsite fetch` then
   # scripts/backup/restore-verify.sh backups/restore/<file>. See docs/runbooks/retention-and-restore.md.
   backup-offsite:
-    image: rclone/rclone:1.75.2
+    image: rclone/rclone:1.76.0
     container_name: backend-funeraria-backup-offsite
     entrypoint: ["/bin/sh", "/scripts/offsite.sh"]
     environment:
