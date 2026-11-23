@@ -148,7 +148,7 @@ services:
   alertmanager:
     profiles:
       - observability
-    image: prom/alertmanager:v0.34.2
+    image: prom/alertmanager:v0.35.0
     container_name: backend-funeraria-alertmanager
     # Alertmanager cannot expand environment variables itself (there is no --config.expand-env
     # flag; the previous setup passing it made the container exit at startup). entrypoint.sh
